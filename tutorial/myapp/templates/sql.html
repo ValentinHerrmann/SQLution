@@ -1,0 +1,35 @@
+{% extends "base.html" %} {% block title %} Home Page {% endblock %}
+
+{% block content %}
+<h1>SQL-Abfrage ausführen</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Ausführen</button>
+    </form>
+
+    {% if error %}
+        <p style="color:red;">Fehler: {{ error }}</p>
+    {% endif %}
+
+    {% if result %}
+        {% if columns %}
+            <table border="1">
+                <tr>
+                    {% for col in columns %}
+                        <th>{{ col }}</th>
+                    {% endfor %}
+                </tr>
+                {% for row in result %}
+                    <tr>
+                        {% for cell in row %}
+                            <td>{{ cell }}</td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </table>
+        {% else %}
+            <p>{{ result }}</p>
+        {% endif %}
+    {% endif %}
+{% endblock %}

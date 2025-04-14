@@ -1,6 +1,18 @@
 {% extends "base.html" %} {% block title %} Home Page {% endblock %}
 
 {% block content %}
-  <h1>Welcome!</h1>
-  <p>This is the home page of your Django application.</p>
+<h1>Welcome to My Django App</h1>
+
+{% for tab in tables %}
+<li>
+  {{ tab }}
+</li>
+{% endfor %}
+
+<form method="post" action="{% url 'upload_json' %}" enctype="multipart/form-data">
+    {% csrf_token %}
+    <label for="json_file">JSON-Datei hochladen:</label>
+    <input type="file" name="json_file" accept=".json" required />
+    <button type="submit">Upload</button>
+  </form>
 {% endblock %}
