@@ -13,10 +13,10 @@
     {% endif %}
     <br>
 
-    <h3>Ergebnisse: {{ rowcount }} Zeilen</h3>
+    <h4>Ergebnisse: {{ rowcount }} </h4>
 
     {% if columns %}
-        <table border="1">
+        <table border="1" style="width: 100%;">
             <tr>
                 {% for col in columns %}
                     <th>{{ col }}</th>

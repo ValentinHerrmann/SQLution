@@ -1,16 +1,21 @@
 {% extends "base.html" %} {% block content %}
-<h1>Database Models</h1>
+<h1>Alle Tabellen der Datenbank:</h1>
 <table border="1">
-    <tr>
-        <th>updated</th>
-        <th>sql</th>
-        <th>json</th>
-    </tr>
     {% for mod in models %}
-        <tr>
-            <td>{{ mod.updated_at }}</td>
-            <td>{{ mod.sql }}</td>
-            <td>{{ mod.json }}</td>
-        </tr>
+        <h4>{{ mod.name }}</h4>
+        <table border="1" style="width: 100%;">
+            <tr>
+                {% for col in mod.columns %}
+                    <th>{{ col }}</th>
+                {% endfor %}
+            </tr>
+            {% for row in mod.rows %}
+                <tr>
+                    {% for cell in row %}
+                        <td>{{ cell }}</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </table>
     {% endfor %}
 {% endblock %}
