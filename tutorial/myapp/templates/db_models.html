@@ -1,0 +1,16 @@
+{% extends "base.html" %} {% block content %}
+<h1>Database Models</h1>
+<table border="1">
+    <tr>
+        <th>updated</th>
+        <th>sql</th>
+        <th>json</th>
+    </tr>
+    {% for mod in models %}
+        <tr>
+            <td>{{ mod.updated_at }}</td>
+            <td>{{ mod.sql }}</td>
+            <td>{{ mod.json }}</td>
+        </tr>
+    {% endfor %}
+{% endblock %}

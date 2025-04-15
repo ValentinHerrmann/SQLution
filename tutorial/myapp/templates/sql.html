@@ -1,4 +1,4 @@
-{% extends "base.html" %} {% block title %} Home Page {% endblock %}
+{% extends "base.html" %} {% block title %} SQLe {% endblock %}
 
 {% block content %}
 <h1>SQL-Abfrage ausführen</h1>
@@ -11,25 +11,26 @@
     {% if error %}
         <p style="color:red;">Fehler: {{ error }}</p>
     {% endif %}
+    <br>
 
-    {% if result %}
-        {% if columns %}
-            <table border="1">
+    <h3>Ergebnisse: {{ rowcount }} Zeilen</h3>
+
+    {% if columns %}
+        <table border="1">
+            <tr>
+                {% for col in columns %}
+                    <th>{{ col }}</th>
+                {% endfor %}
+            </tr>
+            {% for row in result %}
                 <tr>
-                    {% for col in columns %}
-                        <th>{{ col }}</th>
+                    {% for cell in row %}
+                        <td>{{ cell }}</td>
                     {% endfor %}
                 </tr>
-                {% for row in result %}
-                    <tr>
-                        {% for cell in row %}
-                            <td>{{ cell }}</td>
-                        {% endfor %}
-                    </tr>
-                {% endfor %}
-            </table>
-        {% else %}
-            <p>{{ result }}</p>
-        {% endif %}
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>{{ result }}</p>
     {% endif %}
 {% endblock %}

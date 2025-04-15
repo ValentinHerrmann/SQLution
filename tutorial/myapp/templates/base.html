@@ -12,24 +12,50 @@
   </head>
   <body>
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
-      <a class="navbar-brand" href="#">My Django App</a>
+      <a class="navbar-brand" href="{% url 'home' %}">My Django App</a>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav">
-          <li class="nav-item active">
-            <a class="nav-link" href="#">Home</a>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'sql' %}">SQL</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="#">About</a>
+            <a class="nav-link" href="{% url 'todos' %}">TODOs</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="#">Contact</a>
+            <a class="nav-link" href="{% url 'apollon' %}">Apollon</a>
           </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'db_models' %}">DB Models</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'index' %}">Index</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="">leer</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'admin' %}">Admin</a>
+          </li>
+        </ul>
+        <ul class="navbar-nav ml-auto">
+          {% if user.is_authenticated %}
+            <li>{{ user.get_username }}
+              <form id="logout-form" method="post" action="{% url 'logged_out' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-link">Logout</button>
+              </form>
+            </li>
+          {% else %}
+            <li><a href="{% url 'login' %}?next={{ request.path }}">Login</a></li>
+          {% endif %}
+
         </ul>
       </div>
     </nav>
     <div class="container">{% block content %} {% endblock %}</div>
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js" ></script>
+
   </body>
 </html>

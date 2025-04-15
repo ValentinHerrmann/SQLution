@@ -8,3 +8,10 @@ class TodoItem(models.Model):
     def __str__(self):
         return self.title + " - " + str(self.completed)
     
+class DatabaseModel(models.Model):
+    json = models.JSONField()
+    sql = models.CharField()
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return super().__str__()
