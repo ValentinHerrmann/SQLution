@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'myapp',
     'form_designer',
-    'admin_ordering',
+    'admin_ordering'
 ]
 
 MIDDLEWARE = [

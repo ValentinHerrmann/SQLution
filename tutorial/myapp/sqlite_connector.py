@@ -1,6 +1,7 @@
 import sqlite3
 import os
 from .models import DatabaseModel
+from datetime import datetime
 import re
 from html import escape
 
@@ -16,6 +17,8 @@ def get_db_name(username:str):
     if username is None or username == '':
         username = 'anonymous'
     os.makedirs('user_databases', exist_ok=True)
+    if(username.endswith('_admin')):
+        username = username[:-6]
     dbname = "user_databases/" + username + ".db"
     print(dbname)
     return dbname
@@ -46,10 +49,7 @@ def runSql(sql:str, username:str):
         for s in sql.split(';'):
             if s.strip() == '':
                 continue
-            try:
-                cur.execute(s)
-            except sqlite3.Error as e:
-                print(f"SQL error: {e}")
+            cur.execute(s)
         con.commit()
     return cur
 
@@ -110,7 +110,7 @@ def generate_html_table(name, columns, pks, fks):
     return f"{escape(name)}({', '.join(col_strs)})"
 
 def convert_sqlite_master_to_html(db_path):
-    cursor = runSql("SELECT name, sql FROM sqlite_master WHERE type='table' AND sql IS NOT NULL",db_path)
+    cursor = runSql("SELECT name, sql FROM sqlite_master WHERE sql IS NOT NULL AND type='table' AND NOT name LIKE 'sqlite_%'",db_path)
     result = cursor.fetchall()
 
     html_lines = []
@@ -120,3 +120,44 @@ def convert_sqlite_master_to_html(db_path):
         html_lines.append(html_line)
 
     return "<br>\n".join(html_lines)
+
+def storeDB(username:str):
+    dbname = get_db_name(username)
+    if(os.path.exists(dbname)):
+        with open(dbname, 'rb') as file:
+            binary_data = file.read()
+
+            cur = runSql(f"SELECT sql FROM sqlite_master WHERE type='table' AND NOT name LIKE 'sqlite_%'",username)
+            sqlCreationDump = ";".join(row[0] for row in cur.fetchall() if row[0])
+            
+            if DatabaseModel.objects.filter(user=username).exists():
+                db_model = DatabaseModel.objects.get(user=username)
+                db_model.updated_at = str(datetime.now())
+                print(f"Database {dbname} updated in the database.")
+                db_model.sql = sqlCreationDump
+
+                db_model.save()
+            else:
+                db_model = DatabaseModel.objects.create(user=username, db=binary_data, sql=sqlCreationDump, updated_at=str(datetime.now()))
+                db_model.save()
+            db_model.save()
+            print(f"Database {dbname} stored in the database.")
+        os.remove(dbname)
+        print(f"Database file {dbname} deleted after storing in the database.")
+
+def loadDB(username:str):
+    dbname = get_db_name(username)
+    try:
+        db_model = DatabaseModel.objects.get(user=username)
+
+        if(db_model.db is None or db_model.db == b''):
+            runSql(db_model.sql, username)
+
+            print(f"Database for user {username} is empty.")
+            return
+        else:
+            with open(dbname, 'wb') as file:
+                file.write(db_model.db)
+                print(f"Database {dbname} loaded from the database.")
+    except Exception as e:
+        print(f"Database for user {username} does not exist in the database.")
