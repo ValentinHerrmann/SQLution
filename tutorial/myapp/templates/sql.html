@@ -2,6 +2,7 @@
 
 {% block content %}
 <h1>SQL-Abfrage ausführen</h1>
+    {{ tablescheme|safe }}
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}

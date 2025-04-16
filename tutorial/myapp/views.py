@@ -27,6 +27,10 @@ def sql_query_view(request):
     columns = []
     rowcount = 0
 
+    html_output = convert_sqlite_master_to_html(request.user.username)
+    print(html_output)
+
+
     if request.method == 'POST':
         form = SQLQueryForm(request.POST)
         if form.is_valid():
@@ -59,7 +63,8 @@ def sql_query_view(request):
         'result': result,
         'error': error,
         'columns': columns,
-        'rowcount': rowcount
+        'rowcount': rowcount,
+        'tablescheme': html_output,
     })
 
 def db_models(request):
@@ -134,4 +139,5 @@ def index(request):
 
 def logged_out(request):
     request.session.flush()  # Clear the session data
+    return redirect('home')  # Redirect to the home page
     return render(request, 'logged_out.html')
