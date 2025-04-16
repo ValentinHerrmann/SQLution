@@ -23,7 +23,7 @@
             <a class="nav-link" href="{% url 'apollon' %}">Apollon</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{% url 'db_models' %}">DB Models</a>
+            <a class="nav-link" href="{% url 'db_models' %}">Datenbank</a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="{% url 'index' %}">Index</a>
@@ -31,8 +31,11 @@
           <li class="nav-item">
             <a class="nav-link" href="">leer</a>
           </li>
+          {% load extrafilters %}
           <li class="nav-item">
-            <a class="nav-link" href="{% url 'admin' %}">Admin</a>
+            {% if user.is_authenticated and user.username|endswith:'_admin' %}
+              <a class="nav-link" href="{% url 'admin' %}">Admin</a>
+            {% endif %}
           </li>
         </ul>
         <ul class="navbar-nav ml-auto">
