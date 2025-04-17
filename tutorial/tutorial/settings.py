@@ -25,7 +25,7 @@ SECRET_KEY = 'w#u41ecx0lb1$u(c^qxzob!p@n)71a)-1sfggi+m&#=7py0hd4'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['db.valentin-herrmann.com']
 
 
 # Application definition
