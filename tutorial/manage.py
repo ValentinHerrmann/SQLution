@@ -13,11 +13,3 @@ if __name__ == '__main__':
             "forget to activate a virtual environment?"
         ) from exc
     execute_from_command_line(sys.argv)
-    if not User.objects.filter(is_superuser=True).first():
-        user = User.objects.create(
-            username = 'admin',
-            email = '',
-            is_superuser = True
-        )
-        user.set_password('ernes123')
-        user.save()
