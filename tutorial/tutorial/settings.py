@@ -72,6 +72,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'tutorial.wsgi.application'
 
+CSRF_TRUSTED_ORIGINS = ['http://db.valentin-herrmann.com','http://127.0.0.1']
+
 
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
