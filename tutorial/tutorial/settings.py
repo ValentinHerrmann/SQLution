@@ -77,7 +77,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'tutorial.wsgi.application'
 
-CSRF_TRUSTED_ORIGINS = ['http://db.valentin-herrmann.com','http://127.0.0.1']
+CSRF_TRUSTED_ORIGINS = ['https://db.valentin-herrmann.com',
+                        'https://127.0.0.1','http://127.0.0.1',
+                        'https://localhost','http://localhost']
 
 
 # Database
