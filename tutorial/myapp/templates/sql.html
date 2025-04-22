@@ -1,7 +1,10 @@
-{% extends "base.html" %} {% block title %} SQLe {% endblock %}
+{% extends "base.html" %}
 
 {% block content %}
-<h1>SQL-Abfrage ausführen</h1>
+
+<div style="text-align: center;">
+    <h1>SQL-Abfrage ausführen</h1>
+</div>
     {{ tablescheme|safe }}
     <form method="post">
         {% csrf_token %}

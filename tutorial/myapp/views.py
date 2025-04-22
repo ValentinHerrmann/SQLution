@@ -1,29 +1,41 @@
 
 import pprint
-from django.http import HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render, redirect
 from django.db import connection, DatabaseError
 from django.apps import apps
 import form_designer
-from .forms import SQLQueryForm
+from .forms import SQLQueryForm,UploadFileForm
 from .models import *
 from .utils import *  # Assuming you have this function in utils.py
 from .sqlite_connector import *  # Import sqlite3 for SQLite database connection
 import json
 from datetime import datetime
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import redirect
+
 
 
 # Create your views here.
 def home(request):
     #tables = [m._meta.db_table for c in apps.get_app_configs() for m in c.get_models()]
-    if(request.user.username == ''):
-        loadDB('anonymous')
+    #if(request.user.username == ''):
+    #    loadDB('anonymous')
+    #else:
+    #    loadDB(request.user.username)
+        
+    if request.user.username.endswith('_admin'):
+        return redirect('db_models')  # Replace 'db_models' with the actual URL name for /db_models/
     else:
-        loadDB(request.user.username)
-    return render(request, 'home.html', {'tables': None})
+        return redirect('user_functions')  # Replace 'user' with the actual URL name for /user/
+    #return render(request, 'home.html', {'tables': None})
 
 def apollon(request):
     return render(request, 'apollon.html')
+
+def logged_in(request):
+    loadDB(request.user.username)
+    return redirect('home')  # Redirect to the home page after login
 
 
 def sql_query_view(request):
@@ -80,14 +92,21 @@ def db_models(request):
     tablenames = [row[0] for row in cursor.fetchall()]
 
     for t in tablenames:
-        cursor = runSql(f"SELECT * FROM {t};", request.user.username)
+        cursor11 = runSql(f"SELECT * FROM {t} LIMIT 11;", request.user.username)
+        cursor10 = runSql(f"SELECT * FROM {t} LIMIT 10;", request.user.username)
+        
+        #print(cursor10.fetchall())
+        c10_result = cursor10.fetchall()
+        c11_result = cursor11.fetchall()
+
         tables.append(
             {
-            'name': t,
-            'columns': [col[0] for col in cursor.description],
-            'rows': cursor.fetchall()
+                'name': t,
+                'columns': [col[0] for col in cursor10.description],
+                'rows': c10_result + ([['. . .' for _ in cursor10.description]] if len(c11_result) > len(c10_result) else [])
             }
         )
+        print(tables)
 
     return render(request, 'db_models.html', {
         'models': tables
@@ -140,3 +159,22 @@ def logged_out(request):
     request.session.flush()  # Clear the session data
     return redirect('home')  # Redirect to the home page
     return render(request, 'logged_out.html')
+
+def download_db(request):
+    try:
+        db_file = open(get_db_name(request.user.username), "rb").read()
+        response = HttpResponse(db_file, content_type='application/octet-stream')
+        response['Content-Disposition'] = f'attachment; filename="datenbank_{datetime.now().strftime("%Y-%m-%d_%H-%M")}.db"'
+        return response
+    except DatabaseModel.DoesNotExist:
+        return redirect('db_models')  # Redirect if no database exists for the user
+    return redirect('db_models')
+
+def upload_db(request):
+    print("Upload DB")
+    if request.method == "POST" and request.FILES.get('db_file'):
+        db_file = request.FILES['db_file']
+        with open(get_db_name(request.user.username), "wb+") as destination:
+            for chunk in db_file.chunks():
+                destination.write(chunk)
+    return redirect('db_models')

@@ -1,5 +1,51 @@
 {% extends "base.html" %} {% block content %}
-<h1>Alle Tabellen der Datenbank:</h1>
+
+<div style="text-align: center;">
+    <h2> Datenbank verwalten (download/upload): </h2>
+</div>
+<br/>
+
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 20px; width: 100%;">
+    <div style="flex: 1; text-align: center;">
+        <h4> SQLite Datenbank (.db) hochladen: </h4>
+        <p> Achtung: Hierdurch wird die aktuelle Datenbank gelöscht!</p>
+        <form id="uploadForm" method="post" action="{% url 'upload_db' %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input id="db_file" type="file" name="db_file" accept=".db" required class="btn btn-primary" style="margin-bottom: 20px; cursor: pointer;" onchange="this.form.submit();">
+        </form>
+    </div>
+    <div style="flex: 1; text-align: center;">
+        <h4> SQLite Datenbank (.db) herunterladen: </h4>
+        <p> Es werden keine SQL-Abfragen, Formulare oder das Klassendiagramm heruntergeladen!</p>
+        <a href="{% url 'download_db' %}" class="btn btn-primary" style="margin-bottom: 20px; ">Datenbank herunterladen (SQLite)</a>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const fileInput = document.getElementById('db_file');
+      const uploadForm = document.getElementById('uploadForm');
+  
+      // Prevent navigating away on dragover
+      dropZone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+      });
+  
+      // Handle the dropped file
+      dropZone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        fileInput.files = e.dataTransfer.files;
+        uploadForm.submit();
+      });
+    });
+  </script>
+
+
+<br/>
+<br/>
+
+<h2>Datenbank anzeigen (max. 10 Zeilen pro Tabelle):</h2>
 <table border="1">
     {% for mod in models %}
         <h4>{{ mod.name }}</h4>
