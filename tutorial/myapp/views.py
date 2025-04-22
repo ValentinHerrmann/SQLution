@@ -10,12 +10,17 @@ from .models import *
 from .utils import *  # Assuming you have this function in utils.py
 from .sqlite_connector import *  # Import sqlite3 for SQLite database connection
 import json
+from datetime import datetime
 
 
 # Create your views here.
 def home(request):
-    tables = [m._meta.db_table for c in apps.get_app_configs() for m in c.get_models()]
-    return render(request, 'home.html', {'tables': tables})
+    #tables = [m._meta.db_table for c in apps.get_app_configs() for m in c.get_models()]
+    if(request.user.username == ''):
+        loadDB('anonymous')
+    else:
+        loadDB(request.user.username)
+    return render(request, 'home.html', {'tables': None})
 
 def apollon(request):
     return render(request, 'apollon.html')
@@ -28,8 +33,6 @@ def sql_query_view(request):
     rowcount = 0
 
     html_output = convert_sqlite_master_to_html(request.user.username)
-    print(html_output)
-
 
     if request.method == 'POST':
         form = SQLQueryForm(request.POST)
@@ -45,16 +48,18 @@ def sql_query_view(request):
                 else:
                     result = ""
                     rowcount = f"{cursor.rowcount} Zeile(n) verändert."
-
-                    if query.strip().upper().startswith("INSERT INTO"):
-                        table_name = query.split()[2]
-                        select_query = f"SELECT * FROM {table_name}"
-                        cursor = runSql(select_query, request.user.username)
-                        columns = [col[0] for col in cursor.description]
-                        result = cursor.fetchall()
-
-            except DatabaseError as e:
+            except Exception as e:
+                rowcount = f"Keine Zeilen verändert."
                 error = str(e)
+            try:
+                if query.strip().upper().startswith("INSERT INTO"):
+                            table_name = query.split()[2]
+                            select_query = f"SELECT * FROM {table_name}"
+                            cursor = runSql(select_query, request.user.username)
+                            columns = [col[0] for col in cursor.description]
+                            result = cursor.fetchall()
+            except Exception as e:
+                print(str(e))
     else:
         form = SQLQueryForm()
 
@@ -71,7 +76,7 @@ def db_models(request):
     
     tables = []
 
-    cursor = runSql("SELECT name FROM sqlite_master WHERE type='table';", request.user.username)
+    cursor = runSql("SELECT name FROM sqlite_master WHERE type='table' AND NOT name LIKE 'sqlite_%';", request.user.username)
     tablenames = [row[0] for row in cursor.fetchall()]
 
     for t in tablenames:
@@ -84,23 +89,6 @@ def db_models(request):
             }
         )
 
-    models = [
-        {
-            "columns": ["ID", "Name", "Age"],
-            "rows": [
-                [1, "Alice", 30],
-                [2, "Bob", 25],
-            ],
-        },
-        {
-            "columns": ["ID", "Title", "Author"],
-            "rows": [
-                [1, "Book A", "Author A"],
-                [2, "Book B", "Author B"],
-            ],
-        },
-    ]
-
     return render(request, 'db_models.html', {
         'models': tables
     })
@@ -110,13 +98,23 @@ def upload_json(request):
         json_file = request.FILES['json_file']
         try:
             data = json.loads(json_file.read().decode('utf-8'))
-            print(data)
+
             # Call your existing extract_tables function to get SQL
             sql_output = format_sql(extract_tables(data))
             binaryDB = create_db(sql_output, request.user.username)  # Call the function to execute SQL statements
 
-            DatabaseModel.objects.filter(user=request.user.username).delete()  # Delete old entries for the user
-            DatabaseModel.objects.create(user=request.user.username,json=data, sql=sql_output, db=binaryDB)  # Create a new entry with the binary data
+            if DatabaseModel.objects.filter(user=request.user.username).exists():
+                db_model = DatabaseModel.objects.get(user=request.user.username)
+                db_model.json = data
+                db_model.sql = sql_output
+                db_model.db = binaryDB
+                db_model.save()  # Update the existing entry with the new data
+            else:
+                DatabaseModel.objects.create(user=request.user.username,json=data, sql=sql_output, db=binaryDB, updated_at=str(datetime.now()))  # Create a new entry with the binary data
+            DatabaseModel.save_base()
+
+            #DatabaseModel.objects.filter(user=request.user.username).delete()  # Delete old entries for the user
+            #DatabaseModel.objects.create(user=request.user.username,json=data, sql=sql_output, db=binaryDB)  # Create a new entry with the binary data
         except:
             return redirect('apollon')  # Redirect to home if error occurs
     return redirect('db_models')  # Redirect to home after processing
@@ -138,6 +136,7 @@ def index(request):
     return render(request, 'index.html', context=context)
 
 def logged_out(request):
+    storeDB(request.user.username)
     request.session.flush()  # Clear the session data
     return redirect('home')  # Redirect to the home page
     return render(request, 'logged_out.html')

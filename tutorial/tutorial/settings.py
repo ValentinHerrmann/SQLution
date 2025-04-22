@@ -11,22 +11,28 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 """
 
 import os
+from dotenv import load_dotenv
+
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+load_dotenv()
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'w#u41ecx0lb1$u(c^qxzob!p@n)71a)-1sfggi+m&#=7py0hd4'
+SECRET_KEY = os.getenv('SECRET_KEY')
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['db.valentin-herrmann.com','127.0.0.1','localhost']
 
+#SESSION_COOKIE_SECURE = True
+#CSRF_COOKIE_SECURE = True
 
 # Application definition
 
@@ -39,7 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'myapp',
     'form_designer',
-    'admin_ordering',
+    'admin_ordering'
 ]
 
 MIDDLEWARE = [
@@ -71,6 +77,10 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'tutorial.wsgi.application'
+
+CSRF_TRUSTED_ORIGINS = ['https://db.valentin-herrmann.com',
+                        'https://127.0.0.1','http://127.0.0.1',
+                        'https://localhost','http://localhost']
 
 
 # Database
@@ -126,6 +136,7 @@ LOGIN_REDIRECT_URL = '/'
 
 LOGOUT_REDIRECT_URL = '/logged_out/'
 
+STATIC_ROOT=os.path.join(BASE_DIR, 'myapp/staticfiles')
 
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'myapp/static/'),
