@@ -61,7 +61,10 @@
         </ul>
       </div>
     </nav>
-    <div class="container-fluid">{% block content %} {% endblock %}</div>
+    <div class="container-fluid">
+      {% block content %} 
+      {% endblock %} 
+    </div>
     <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
     {% include 'session_security/all.html' %}
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js" ></script>

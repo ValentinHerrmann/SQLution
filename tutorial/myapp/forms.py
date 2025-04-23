@@ -6,6 +6,12 @@ class SQLQueryForm(forms.Form):
         widget=forms.Textarea(attrs={"rows": 6, "style": "width: 100%;"}), 
         label=""
     )
+
+class SQLFileForm(forms.Form):
+    sqlfile = forms.CharField(
+        widget=forms.TextInput(), 
+        label=""
+    ) 
     
 class UploadFileForm(forms.Form):
     title = forms.CharField(max_length=50)

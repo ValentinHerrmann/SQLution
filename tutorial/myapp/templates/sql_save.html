@@ -16,18 +16,16 @@
         {% csrf_token %}
         {{ queryForm.as_p }}
         <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; margin-top: 20px;">
-            <button type="submit" class="btn btn-primary">Ausführen / Speichern</button>
-            
+            <button type="submit" class="btn btn-primary">Ausführen</button>
         </div>
-        <input type="checkbox" id="save_query" name="save_query" style="margin-left: 10px;">
-        <a>beim Ausführen Speichern als:  </a>
-        <input type="text" id="input_filename" name="input_filename" value="{{ file }}" style="margin: 0;">
-        <label for="input_filename">(unter diesem Namen wird die SQL-Abfrage dem Nutzer angezeigt)</label>
     </form>
     
+    <a href="{% url 'sql' %}?save=True" class="btn btn-secondary" style="margin-left: 50px">Speichern als</a>
+    <input type="text" id="input_filename" name="input_filename" value="{{ file }}" style="margin: 0;">
+    <label for="input_filename">(unter diesem Namen wird die SQL-Abfrage dem Nutzer angezeigt)</label>
 
     {% if error %}
-        <p style="color:red;">{{ error }}</p>
+        <p style="color:red;">Fehler: {{ error }}</p>
     {% endif %}
 
     {% if rowcount > -1 %}

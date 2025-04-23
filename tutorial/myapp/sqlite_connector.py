@@ -17,10 +17,11 @@ def get_db_name(username:str):
     if username is None or username == '':
         username = 'anonymous'
         return None
-    os.makedirs('user_databases', exist_ok=True)
     if(username.endswith('_admin')):
         username = username[:-6]
-    dbname = "user_databases/" + username + ".db"
+    os.makedirs('user_databases', exist_ok=True)
+    os.makedirs('user_databases/'+username, exist_ok=True)
+    dbname = "user_databases/" + username + "/datenbank.db"
     #print(dbname)
     return dbname
 
@@ -178,3 +179,4 @@ def loadDB(username:str):
                 #print(f"Database {dbname} loaded from the database.")
     except Exception as e:
         print(f"Database for user {username} does not exist in the database.")
+        

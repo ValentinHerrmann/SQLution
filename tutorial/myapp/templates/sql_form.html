@@ -1,0 +1,65 @@
+{% extends "base.html" %} 
+{% block content %}
+
+<div style="text-align: center;">
+
+{% load extrafilters %}  
+
+<br/>
+<h2>{{title}}</h2>
+
+<form method="post">
+    {% csrf_token %}
+        <div style="display: flex; gap: 10px; justify-content: center; align-items: center;">
+            {% for inp in inputs %}
+            <div style="display: flex; flex-direction: column; align-items: center;">
+                <label for="input_{{ inp }}">{{ inp }}</label>
+                <input type="text" id="input_{{ inp }}" name="input_{{ inp }}" value="">
+            </div>
+            {% endfor %}
+        </div>
+    <button type="submit" class="btn btn-primary" style="margin-bottom: 20px; margin-top: 20px;">Ausführen</button>
+</form>
+
+
+
+
+{% if error %}
+    <p style="color:red;">Fehler: {{ error }}</p>
+{% endif %}
+<br>
+
+
+
+{% if columns %}
+    <table border="1" style="width: 100%;">
+        <tr>
+            {% for col in columns %}
+                <th>{{ col }}</th>
+            {% endfor %}
+        </tr>
+        {% for row in result %}
+            <tr>
+                {% for cell in row %}
+                    <td>{{ cell }}</td>
+                {% endfor %}
+            </tr>
+        {% endfor %}
+    </table>
+{% endif %}
+
+
+
+{% if user.is_authenticated and user.username|endswith:'_admin' %}
+    <span style="color: blue;">
+        <i>{{query}}</i>
+        <a href="{% url 'sql' %}?file={{ title }}" class="btn btn-secondary" style="margin-bottom: 20px;  margin-top: 20px;">Bearbeiten</a>
+    </span>
+{% endif %}
+
+</div>
+
+{% endblock %}
+
+
+

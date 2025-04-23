@@ -1,0 +1,8 @@
+{% extends "base.html" %} {% block content %}
+
+<ul>
+  {% for file in sqlfiles %}
+    <a href="{% url 'sql_form' %}?file={{ file }}" class="btn btn-primary" style="margin-bottom: 20px;  margin-top: 20px;">{{ file }}</a>
+  {% endfor %}
+</ul>
+{% endblock %}

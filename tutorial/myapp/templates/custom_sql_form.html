@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div style="text-align: center;">
+    <h1>SQL-Abfrage ausführen</h1>
+</div>
+    {{ tablescheme|safe }}
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Ausführen</button>
+    </form>
+
+    {% if error %}
+        <p style="color:red;">Fehler: {{ error }}</p>
+    {% endif %}
+    <br>
+
+    <h4>Ergebnisse: {{ rowcount }} </h4>
+
+    {% if columns %}
+        <table border="1" style="width: 100%;">
+            <tr>
+                {% for col in columns %}
+                    <th>{{ col }}</th>
+                {% endfor %}
+            </tr>
+            {% for row in result %}
+                <tr>
+                    {% for cell in row %}
+                        <td>{{ cell }}</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </table>
+    {% endif %}
+{% endblock %}
