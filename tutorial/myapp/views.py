@@ -36,6 +36,8 @@ def apollon(request):
 
 def logged_in(request):
     print("Logged in: " + request.user.username)
+    if request.user.username == 'admin':
+        return redirect('admin')  # Redirect to the admin page
     loadDB(request.user.username)
     return redirect('home')  # Redirect to the home page after login
 
