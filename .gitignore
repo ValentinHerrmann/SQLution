@@ -173,3 +173,4 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 tutorial/myapp/staticfiles/
+user_databases/
