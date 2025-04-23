@@ -13,6 +13,7 @@ import json
 from datetime import datetime
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect
+from django.contrib.auth import logout
 
 
 
@@ -34,6 +35,7 @@ def apollon(request):
     return render(request, 'apollon.html')
 
 def logged_in(request):
+    print("Logged in: " + request.user.username)
     loadDB(request.user.username)
     return redirect('home')  # Redirect to the home page after login
 
@@ -68,6 +70,15 @@ def sql_query_view(request):
                             table_name = query.split()[2]
                             select_query = f"SELECT * FROM {table_name}"
                             cursor = runSql(select_query, request.user.username)
+                            if cursor is None:
+                                return render(request, 'sql.html', {
+                                    'form': form,
+                                    'result': {},
+                                    'error': 'No result found.',
+                                    'columns': [],
+                                    'rowcount': -1,
+                                    'tablescheme': html_output,
+                                })
                             columns = [col[0] for col in cursor.description]
                             result = cursor.fetchall()
             except Exception as e:
@@ -89,6 +100,11 @@ def db_models(request):
     tables = []
 
     cursor = runSql("SELECT name FROM sqlite_master WHERE type='table' AND NOT name LIKE 'sqlite_%';", request.user.username)
+    if(cursor is None):
+        print("No tables found.")
+        return render(request, 'db_models.html', {
+            'models': None
+        })
     tablenames = [row[0] for row in cursor.fetchall()]
 
     for t in tablenames:
@@ -155,10 +171,15 @@ def index(request):
     return render(request, 'index.html', context=context)
 
 def logged_out(request):
-    storeDB(request.user.username)
+    user = request.user.username
+    print("Logged out: " + user)
+    if user == '':
+        user = request.GET.get("user") 
+        print("Logged out (by param): " + user)
+    storeDB(user)
+    logout(request)  # Log out the user
     request.session.flush()  # Clear the session data
-    return redirect('home')  # Redirect to the home page
-    return render(request, 'logged_out.html')
+    return redirect('/accounts/login')  # Redirect to the login page
 
 def download_db(request):
     try:

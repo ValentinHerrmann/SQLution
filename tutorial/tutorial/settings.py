@@ -45,7 +45,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'myapp',
     'form_designer',
-    'admin_ordering'
+    'admin_ordering',
+    'session_security',
 ]
 
 MIDDLEWARE = [
@@ -56,9 +57,14 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'session_security.middleware.SessionSecurityMiddleware',
 ]
 
 ROOT_URLCONF = 'tutorial.urls'
+
+TEMPLATE_CONTEXT_PROECESSORS = [
+    'django.core.context_processors.request'
+]
 
 TEMPLATES = [
     {
@@ -132,12 +138,23 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-LOGIN_REDIRECT_URL = '/logged_in/'
-
-LOGOUT_REDIRECT_URL = '/logged_out/'
 
 STATIC_ROOT=os.path.join(BASE_DIR, 'myapp/staticfiles')
 
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'myapp/static/'),
 ]
+
+LOGIN_REDIRECT_URL = '/logged_in/'
+
+LOGOUT_REDIRECT_URL = '/logged_out/'
+
+SESSION_SECURITY_REDIRECT_TO_LOGOUT = False
+
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+#SESSION_SECURITY_INSECURE = True
+
+SESSION_SECURITY_WARN_AFTER = 600
+
+SESSION_SECURITY_EXPIRE_AFTER  = 610

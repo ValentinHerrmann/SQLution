@@ -16,6 +16,7 @@ def delete_db(username:str):
 def get_db_name(username:str):
     if username is None or username == '':
         username = 'anonymous'
+        return None
     os.makedirs('user_databases', exist_ok=True)
     if(username.endswith('_admin')):
         username = username[:-6]
@@ -25,6 +26,9 @@ def get_db_name(username:str):
 
 def create_db(sql:str, username:str):
     dbname = get_db_name(username)
+    if dbname is None:
+        print("No database name provided.")
+        return None
     delete_db(username)  # Delete the old database if it exists
 
     with sqlite3.connect(dbname) as con:
@@ -44,6 +48,9 @@ def create_db(sql:str, username:str):
 
 def runSql(sql:str, username:str):
     dbname = get_db_name(username)
+    if dbname is None:
+        print("No database name provided.")
+        return None
     with sqlite3.connect(dbname) as con:
         cur = con.cursor()
         for s in sql.split(';'):
@@ -123,6 +130,9 @@ def convert_sqlite_master_to_html(db_path):
 
 def storeDB(username:str):
     dbname = get_db_name(username)
+    if dbname is None:
+        print("No database name provided.")
+        return None
     if(os.path.exists(dbname)):
         with open(dbname, 'rb') as file:
             binary_data = file.read()
@@ -147,6 +157,9 @@ def storeDB(username:str):
 
 def loadDB(username:str):
     dbname = get_db_name(username)
+    if dbname is None:
+        print("No database name provided.")
+        return None
     try:
         db_model = DatabaseModel.objects.get(user=username)
 
