@@ -9,9 +9,9 @@ def delete_db(username:str):
     dbname = get_db_name(username)
     if os.path.exists(dbname):
         os.remove(dbname)
-        print(f"Database {dbname} deleted.")
-    else:
-        print(f"Database {dbname} does not exist.")
+        #print(f"Database {dbname} deleted.")
+    #else:
+        #print(f"Database {dbname} does not exist.")
 
 def get_db_name(username:str):
     if username is None or username == '':
@@ -21,13 +21,13 @@ def get_db_name(username:str):
     if(username.endswith('_admin')):
         username = username[:-6]
     dbname = "user_databases/" + username + ".db"
-    print(dbname)
+    #print(dbname)
     return dbname
 
 def create_db(sql:str, username:str):
     dbname = get_db_name(username)
     if dbname is None:
-        print("No database name provided.")
+        #print("No database name provided.")
         return None
     delete_db(username)  # Delete the old database if it exists
 
@@ -49,7 +49,7 @@ def create_db(sql:str, username:str):
 def runSql(sql:str, username:str):
     dbname = get_db_name(username)
     if dbname is None:
-        print("No database name provided.")
+        #print("No database name provided.")
         return None
     with sqlite3.connect(dbname) as con:
         cur = con.cursor()
@@ -133,7 +133,7 @@ def storeDB(username:str):
         username = username[:-6]
     dbname = get_db_name(username)
     if dbname is None:
-        print("No database name provided.")
+        #print("No database name provided.")
         return None
     if(os.path.exists(dbname)):
         with open(dbname, 'rb') as file:
@@ -145,7 +145,7 @@ def storeDB(username:str):
             if DatabaseModel.objects.filter(user=username).exists():
                 db_model = DatabaseModel.objects.get(user=username)
                 db_model.updated_at = str(datetime.now())
-                print(f"Database {dbname} updated in the database.")
+                #print(f"Database {dbname} updated in the database.")
                 db_model.sql = sqlCreationDump
 
                 db_model.save()
@@ -153,14 +153,14 @@ def storeDB(username:str):
                 db_model = DatabaseModel.objects.create(user=username, db=binary_data, sql=sqlCreationDump, updated_at=str(datetime.now()))
                 db_model.save()
             db_model.save()
-            print(f"Database {dbname} stored in the database.")
+            #print(f"Database {dbname} stored in the database.")
         os.remove(dbname)
-        print(f"Database file {dbname} deleted after storing in the database.")
+        #print(f"Database file {dbname} deleted after storing in the database.")
 
 def loadDB(username:str):
     dbname = get_db_name(username)
     if dbname is None:
-        print("No database name provided.")
+        #print("No database name provided.")
         return None
     try:
         if(username.endswith('_admin')):
@@ -170,11 +170,11 @@ def loadDB(username:str):
         if(db_model.db is None or db_model.db == b''):
             runSql(db_model.sql, username)
 
-            print(f"Database for user {username} is empty.")
+            #print(f"Database for user {username} is empty.")
             return
         else:
             with open(dbname, 'wb') as file:
                 file.write(db_model.db)
-                print(f"Database {dbname} loaded from the database.")
+                #print(f"Database {dbname} loaded from the database.")
     except Exception as e:
         print(f"Database for user {username} does not exist in the database.")

@@ -103,7 +103,7 @@ def db_models(request):
 
     cursor = runSql("SELECT name FROM sqlite_master WHERE type='table' AND NOT name LIKE 'sqlite_%';", request.user.username)
     if(cursor is None):
-        print("No tables found.")
+        #print("No tables found.")
         return render(request, 'db_models.html', {
             'models': None
         })
@@ -124,7 +124,7 @@ def db_models(request):
                 'rows': c10_result + ([['. . .' for _ in cursor10.description]] if len(c11_result) > len(c10_result) else [])
             }
         )
-        print(tables)
+        #print(tables)
 
     return render(request, 'db_models.html', {
         'models': tables
@@ -194,7 +194,7 @@ def download_db(request):
     return redirect('db_models')
 
 def upload_db(request):
-    print("Upload DB")
+    #print("Upload DB")
     if request.method == "POST" and request.FILES.get('db_file'):
         db_file = request.FILES['db_file']
         with open(get_db_name(request.user.username), "wb+") as destination:
