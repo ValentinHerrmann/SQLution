@@ -172,11 +172,11 @@ def index(request):
 
 def logged_out(request):
     user = request.user.username
-    print("Logged out: " + user)
     if user == '':
         user = request.GET.get("user") 
-        print("Logged out (by param): " + user)
-    storeDB(user)
+    if user is not None and user != '':
+        print("Logged out: " + user)
+        storeDB(user)
     logout(request)  # Log out the user
     request.session.flush()  # Clear the session data
     return redirect('/accounts/login')  # Redirect to the login page
