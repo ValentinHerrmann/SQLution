@@ -129,6 +129,8 @@ def convert_sqlite_master_to_html(db_path):
     return "<br>\n".join(html_lines)
 
 def storeDB(username:str):
+    if(username.endswith('_admin')):
+        username = username[:-6]
     dbname = get_db_name(username)
     if dbname is None:
         print("No database name provided.")
@@ -161,6 +163,8 @@ def loadDB(username:str):
         print("No database name provided.")
         return None
     try:
+        if(username.endswith('_admin')):
+            username = username[:-6]
         db_model = DatabaseModel.objects.get(user=username)
 
         if(db_model.db is None or db_model.db == b''):
