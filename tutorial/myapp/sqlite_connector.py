@@ -111,7 +111,7 @@ def generate_html_table(name, columns, pks, fks):
         if col in pks:
             text = f"<u>{text}</u>"
         if col in fks:
-            text = f"<span style='text-decoration: underline dotted'>{text}</span>"
+            text = f"<u class='dotted'>{text}</u>"
         col_strs.append(text)
     return f"{escape(name)}({', '.join(col_strs)})"
 
@@ -119,7 +119,7 @@ def convert_sqlite_master_to_html(db_path):
     cursor = runSql("SELECT name, sql FROM sqlite_master WHERE sql IS NOT NULL AND type='table' AND NOT name LIKE 'sqlite_%'",db_path)
     result = cursor.fetchall()
 
-    html_lines = []
+    html_lines = ["<style> u.dotted{border-bottom: 4px dotted;text-decoration: none;}</style>"]
     for name, sql in result:
         cols, pks, fks = parse_table_schema(sql)
         html_line = generate_html_table(name, cols, pks, fks)

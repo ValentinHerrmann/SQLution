@@ -40,6 +40,8 @@ def render_sql_form(request, sql, inputs, sqlfile, result, error, columns):
 
 
 def render_sql(request, form, result, error, columns, rowcount, tablescheme, file):
+    if file is None:
+        file = ''
     return render(request, 'sql.html', {
         'queryForm': form,
         'result': result,
