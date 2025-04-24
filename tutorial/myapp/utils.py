@@ -167,12 +167,13 @@ def zip_and_save_directory(directory_path:str, delete:bool=True):
 
     # Save to model
     zipped = ZippedFolder(name=directory_path)
-    zipped.zip_file.save(f"{directory_path}export_{datetime.now().isoformat()}.zip", ContentFile(memory_file.read()))
+    zipped.zip_file.save(f"{directory_path}export.zip", ContentFile(memory_file.read()))
     zipped.save()
 
     if delete:
         try:
-            shutil.rmtree(directory_path) 
+            if os.path.exists(directory_path):
+                shutil.rmtree(directory_path) 
         except Exception as e:
             print(f"Error removing directory: {e}")
     
