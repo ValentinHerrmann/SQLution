@@ -73,6 +73,8 @@ def sql_query_view(request):
 
         if queryForm.is_valid():
             query = queryForm.cleaned_data['query']
+            query = query.replace("“", "\"").replace("„", "\"").replace("‚", "'").replace("’", "'").replace("‘", "'")
+
             
             inputs = re.findall(r'{{(.*?)}}', query)
             if len(inputs) > 0:
