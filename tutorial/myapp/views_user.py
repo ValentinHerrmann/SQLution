@@ -18,11 +18,13 @@ from django.contrib.auth import logout
 import os
 import re
 
+def timestamp():
+    return datetime.now().strftime("[%Y-%m-%d %H:%M:%S]") + "\t"
 
 @login_required
 def logged_in(request):
     user = request.user.username
-    print("Logged in: " + user)
+    print(timestamp() + "Logged in: " + user)
     if user == 'admin':
         return redirect('/admin')  # Redirect to the admin page
     restore_zip_to_directory(get_user_directory(user))
@@ -34,7 +36,7 @@ def logged_out(request):
     if user == '':
         user = request.GET.get("user") 
     if user is not None and user != '':
-        print("Logged out: " + user)
+        print(timestamp() + "Logged out: " + user)
         zip_and_save_directory(get_user_directory(user))
     logout(request)  # Log out the user
     request.session.flush()  # Clear the session data
