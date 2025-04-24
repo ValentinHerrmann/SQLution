@@ -45,18 +45,37 @@ def extract_tables(data):
         if rel["type"] == "ClassUnidirectional":
             source = rel["source"]["element"]
             target = rel["target"]["element"]
-            role = rel["target"]["role"]
+            role = rel["target"]["role"] + rel["source"]["role"]
             foreign_keys_map.setdefault(source, []).append((role, target))
+
+        if rel["type"] == "ClassBidirectional":
+            source = rel["source"]["element"]
+            target = rel["target"]["element"]
+            role = rel["target"]["role"] + rel["source"]["role"]
+
+            class_elements[role+"_mn"] = {
+                "id": role+"_mn",
+                "name": role,
+                "type": "Class",
+                "attributes": []
+            }
+            
+            foreign_keys_map.setdefault(role+"_mn", []).append((class_elements[target]["name"].lower()+'_id', target))
+            foreign_keys_map.setdefault(role+"_mn", []).append((class_elements[source]["name"].lower()+'_id', source))
 
     # Identify each class's PK from its first attribute
     pk_map = {}
     for class_id, class_data in class_elements.items():
         attr_ids = class_data.get("attributes", [])
-        if not attr_ids:
-            continue
-        first_attr = attributes[attr_ids[0]]
-        pk_name, pk_type = parse_attribute(first_attr["name"])
-        pk_map[class_id] = (pk_name, pk_type)
+        if attr_ids:
+            first_attr = attributes[attr_ids[0]]
+            pk_name, pk_type = parse_attribute(first_attr["name"])
+            pk_map[class_id] = (pk_name, pk_type)
+        elif class_id.endswith("_mn"):
+            pk1 = foreign_keys_map[class_id][0][0]
+            pk2 = foreign_keys_map[class_id][1][0]
+            pk_name = pk1 + "," + pk2
+            pk_map[class_id] = (pk_name, "")
 
     # Build adjacency list for topological sort, so references come after the referenced tables
     # Edge: if A references B, then A depends on B
@@ -109,11 +128,17 @@ def extract_tables(data):
         lines = [f'CREATE TABLE "{class_name}" (']
         for col_name, col_type in attr_defs:
             lines.append(f'  "{col_name}" {col_type},')
-        pk_name, pk_type = pk_map.get(class_id, ("id", "INTEGER"))
+        
+            
+        pk_name, pk_type = pk_map.get(class_id, (None, None))
+        
         # Add foreign-key constraints
         for constraint in fk_constraints:
             lines.append(f'  {constraint},')
-        lines.append(f'  PRIMARY KEY("{pk_name}")')
+        if pk_name:
+            lines.append("  PRIMARY KEY(\"" + pk_name.replace(",", '","') + "\"),")
+        if lines[-1].endswith(','):
+            lines[-1] = lines[-1][:-1]
         lines.append(');')
         sql_statements.append('\n'.join(lines))
 
@@ -129,7 +154,8 @@ def format_sql(sql: str) -> str:
         r'\bSELECT\b', r'\bFROM\b', r'\bWHERE\b', r'\bGROUP BY\b', r'\bHAVING\b',
         r'\bORDER BY\b', r'\bLIMIT\b', r'\bOFFSET\b', r'\bJOIN\b', r'\bINNER JOIN\b',
         r'\bLEFT JOIN\b', r'\bRIGHT JOIN\b', r'\bFULL JOIN\b', r'\bOUTER JOIN\b',
-        r'\bON\b', r'\bUNION\b', r'\bVALUES\b', r'\bSET\b', r'\bAND\b', r'\bOR\b'
+        r'\bON\b', r'\bUNION\b', r'\bVALUES\b', r'\bSET\b', r'\bAND\b', r'\bOR\b',
+        r'\bCREATE\b',r'\bFOREIGN\b',r'\bPRIMARY\b'
     ]
 
     # Keywords that should be followed by a tab indentation

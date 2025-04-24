@@ -10,18 +10,19 @@
     ></iframe>
   </div>
   <div id="drop-zone" style="flex: 1; border: 2px dashed #ccc; height: 90vh; padding: 1rem;">
-    <h2>Modell laden und Datenbank erzeugen</h2>
-    <p>Achtung: Hierdurch wird deine bestehende Datenbank gelöscht!</p>
 
     <!-- Hidden upload form -->
-    <form id="uploadForm" method="post" action="{% url 'upload_json' %}" enctype="multipart/form-data" style="display: none;">
+    <form id="uploadForm" method="post" action="{% url 'upload_json' %}" enctype="multipart/form-data">
       {% csrf_token %}
       <input id="json_file" type="file" name="json_file" accept=".json" required>
+      <br> <br>
+      <h3>Modell laden und Datenbank erzeugen</h3>
+      <p>Achtung: Hierdurch wird deine bestehende Datenbank gelöscht!</p>
     </form>
 
-    <h3>Exportiere dein Datenbankmodell (Klassendiagramm) als JSON:</h3>
+    <h4>Exportiere dein Datenbankmodell (Klassendiagramm) als JSON:</h4>
     <img src="../static/export_json.png" alt="Export JSON" style="max-width: 100%; height: auto;"/><br><br>
-    <h3>Ziehe anschließend die Datei in den gestrichelten Kasten:</h3>
+    <h4>Ziehe anschließend die Datei in den gestrichelten Kasten:</h4>
     <img src="../static/open_json.png" alt="Export JSON" style="max-width: 100%; height: auto;"/><br><br>
   </div>
 </div>

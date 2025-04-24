@@ -1,1 +1,166 @@
-{"id":"8a82b1ab-b740-4deb-915c-e6325e5997bb","title":"UMLClassDiagram","model":{"version":"3.0.0","type":"ClassDiagram","size":{"width":660,"height":540},"interactive":{"elements":{},"relationships":{}},"elements":{"b8eeab89-a311-47ca-8d5e-4d01c27826ad":{"id":"b8eeab89-a311-47ca-8d5e-4d01c27826ad","name":"Person","type":"Class","owner":null,"bounds":{"x":-310,"y":-250,"width":160,"height":160},"attributes":["a4f25151-7517-4ea8-ae05-26e385a9a1e4","91f8ef01-4a98-49e4-9c56-b34236f34843","ecdf2f52-2b1d-4a28-8793-802a173078d0"],"methods":["df98de96-ec5d-4eef-b5df-c76fc83c4948"]},"a4f25151-7517-4ea8-ae05-26e385a9a1e4":{"id":"a4f25151-7517-4ea8-ae05-26e385a9a1e4","name":"int id","type":"ClassAttribute","owner":"b8eeab89-a311-47ca-8d5e-4d01c27826ad","bounds":{"x":-309.5,"y":-209.5,"width":159,"height":30}},"91f8ef01-4a98-49e4-9c56-b34236f34843":{"id":"91f8ef01-4a98-49e4-9c56-b34236f34843","name":"int alter","type":"ClassAttribute","owner":"b8eeab89-a311-47ca-8d5e-4d01c27826ad","bounds":{"x":-309.5,"y":-179.5,"width":159,"height":30}},"ecdf2f52-2b1d-4a28-8793-802a173078d0":{"id":"ecdf2f52-2b1d-4a28-8793-802a173078d0","name":"String name","type":"ClassAttribute","owner":"b8eeab89-a311-47ca-8d5e-4d01c27826ad","bounds":{"x":-309.5,"y":-149.5,"width":159,"height":30}},"df98de96-ec5d-4eef-b5df-c76fc83c4948":{"id":"df98de96-ec5d-4eef-b5df-c76fc83c4948","name":"methode()","type":"ClassMethod","owner":"b8eeab89-a311-47ca-8d5e-4d01c27826ad","bounds":{"x":-309.5,"y":-119.5,"width":159,"height":30}},"ae0d4d86-78e1-4039-ba6e-90fe349a923f":{"id":"ae0d4d86-78e1-4039-ba6e-90fe349a923f","name":"Wohnort","type":"Class","owner":null,"bounds":{"x":0,"y":-210,"width":160,"height":100},"attributes":["8f5ca94e-73c2-491d-96a4-310d6f0ee0a3","82106709-c326-4aa7-9101-f187413cb1ae"],"methods":[]},"8f5ca94e-73c2-491d-96a4-310d6f0ee0a3":{"id":"8f5ca94e-73c2-491d-96a4-310d6f0ee0a3","name":"int id","type":"ClassAttribute","owner":"ae0d4d86-78e1-4039-ba6e-90fe349a923f","bounds":{"x":0.5,"y":-169.5,"width":159,"height":30}},"82106709-c326-4aa7-9101-f187413cb1ae":{"id":"82106709-c326-4aa7-9101-f187413cb1ae","name":"String strasse","type":"ClassAttribute","owner":"ae0d4d86-78e1-4039-ba6e-90fe349a923f","bounds":{"x":0.5,"y":-139.5,"width":159,"height":30}}},"relationships":{"f96899ec-ae99-41ee-8437-e49a35d40e6d":{"id":"f96899ec-ae99-41ee-8437-e49a35d40e6d","name":"","type":"ClassUnidirectional","owner":null,"bounds":{"x":-150,"y":-170,"width":150,"height":48},"path":[{"x":150,"y":10},{"x":0,"y":10}],"source":{"direction":"Left","element":"ae0d4d86-78e1-4039-ba6e-90fe349a923f","multiplicity":"n","role":""},"target":{"direction":"Right","element":"b8eeab89-a311-47ca-8d5e-4d01c27826ad","multiplicity":"1","role":"bewohner"},"isManuallyLayouted":false}},"assessments":{}},"lastUpdate":"2025-04-14T16:05:07.663Z"}
+{
+    "id": "8a82b1ab-b740-4deb-915c-e6325e5997bb",
+    "title": "UMLClassDiagram",
+    "model": {
+        "version": "3.0.0",
+        "type": "ClassDiagram",
+        "size": {
+            "width": 660,
+            "height": 540
+        },
+        "interactive": {
+            "elements": {},
+            "relationships": {}
+        },
+        "elements": {
+            "b8eeab89-a311-47ca-8d5e-4d01c27826ad": {
+                "id": "b8eeab89-a311-47ca-8d5e-4d01c27826ad",
+                "name": "Person",
+                "type": "Class",
+                "owner": null,
+                "bounds": {
+                    "x": -310,
+                    "y": -250,
+                    "width": 160,
+                    "height": 160
+                },
+                "attributes": [
+                    "a4f25151-7517-4ea8-ae05-26e385a9a1e4",
+                    "91f8ef01-4a98-49e4-9c56-b34236f34843",
+                    "ecdf2f52-2b1d-4a28-8793-802a173078d0"
+                ],
+                "methods": [
+                    "df98de96-ec5d-4eef-b5df-c76fc83c4948"
+                ]
+            },
+            "a4f25151-7517-4ea8-ae05-26e385a9a1e4": {
+                "id": "a4f25151-7517-4ea8-ae05-26e385a9a1e4",
+                "name": "int id",
+                "type": "ClassAttribute",
+                "owner": "b8eeab89-a311-47ca-8d5e-4d01c27826ad",
+                "bounds": {
+                    "x": -309.5,
+                    "y": -209.5,
+                    "width": 159,
+                    "height": 30
+                }
+            },
+            "91f8ef01-4a98-49e4-9c56-b34236f34843": {
+                "id": "91f8ef01-4a98-49e4-9c56-b34236f34843",
+                "name": "int alter",
+                "type": "ClassAttribute",
+                "owner": "b8eeab89-a311-47ca-8d5e-4d01c27826ad",
+                "bounds": {
+                    "x": -309.5,
+                    "y": -179.5,
+                    "width": 159,
+                    "height": 30
+                }
+            },
+            "ecdf2f52-2b1d-4a28-8793-802a173078d0": {
+                "id": "ecdf2f52-2b1d-4a28-8793-802a173078d0",
+                "name": "String name",
+                "type": "ClassAttribute",
+                "owner": "b8eeab89-a311-47ca-8d5e-4d01c27826ad",
+                "bounds": {
+                    "x": -309.5,
+                    "y": -149.5,
+                    "width": 159,
+                    "height": 30
+                }
+            },
+            "df98de96-ec5d-4eef-b5df-c76fc83c4948": {
+                "id": "df98de96-ec5d-4eef-b5df-c76fc83c4948",
+                "name": "methode()",
+                "type": "ClassMethod",
+                "owner": "b8eeab89-a311-47ca-8d5e-4d01c27826ad",
+                "bounds": {
+                    "x": -309.5,
+                    "y": -119.5,
+                    "width": 159,
+                    "height": 30
+                }
+            },
+            "ae0d4d86-78e1-4039-ba6e-90fe349a923f": {
+                "id": "ae0d4d86-78e1-4039-ba6e-90fe349a923f",
+                "name": "Wohnort",
+                "type": "Class",
+                "owner": null,
+                "bounds": {
+                    "x": 0,
+                    "y": -210,
+                    "width": 160,
+                    "height": 100
+                },
+                "attributes": [
+                    "8f5ca94e-73c2-491d-96a4-310d6f0ee0a3",
+                    "82106709-c326-4aa7-9101-f187413cb1ae"
+                ],
+                "methods": []
+            },
+            "8f5ca94e-73c2-491d-96a4-310d6f0ee0a3": {
+                "id": "8f5ca94e-73c2-491d-96a4-310d6f0ee0a3",
+                "name": "int id",
+                "type": "ClassAttribute",
+                "owner": "ae0d4d86-78e1-4039-ba6e-90fe349a923f",
+                "bounds": {
+                    "x": 0.5,
+                    "y": -169.5,
+                    "width": 159,
+                    "height": 30
+                }
+            },
+            "82106709-c326-4aa7-9101-f187413cb1ae": {
+                "id": "82106709-c326-4aa7-9101-f187413cb1ae",
+                "name": "String strasse",
+                "type": "ClassAttribute",
+                "owner": "ae0d4d86-78e1-4039-ba6e-90fe349a923f",
+                "bounds": {
+                    "x": 0.5,
+                    "y": -139.5,
+                    "width": 159,
+                    "height": 30
+                }
+            }
+        },
+        "relationships": {
+            "f96899ec-ae99-41ee-8437-e49a35d40e6d": {
+                "id": "f96899ec-ae99-41ee-8437-e49a35d40e6d",
+                "name": "",
+                "type": "ClassUnidirectional",
+                "owner": null,
+                "bounds": {
+                    "x": -150,
+                    "y": -170,
+                    "width": 150,
+                    "height": 48
+                },
+                "path": [
+                    {
+                        "x": 150,
+                        "y": 10
+                    },
+                    {
+                        "x": 0,
+                        "y": 10
+                    }
+                ],
+                "source": {
+                    "direction": "Left",
+                    "element": "ae0d4d86-78e1-4039-ba6e-90fe349a923f",
+                    "multiplicity": "n",
+                    "role": ""
+                },
+                "target": {
+                    "direction": "Right",
+                    "element": "b8eeab89-a311-47ca-8d5e-4d01c27826ad",
+                    "multiplicity": "1",
+                    "role": "bewohner"
+                },
+                "isManuallyLayouted": false
+            }
+        },
+        "assessments": {}
+    },
+    "lastUpdate": "2025-04-14T16:05:07.663Z"
+}
