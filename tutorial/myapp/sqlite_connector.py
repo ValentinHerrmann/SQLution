@@ -1,9 +1,10 @@
 import sqlite3
 import os
-from .models import DatabaseModel
+from .utils import get_user_directory
 from datetime import datetime
 import re
 from html import escape
+
 
 def delete_db(username:str):
     dbname = get_db_name(username)
@@ -14,15 +15,12 @@ def delete_db(username:str):
         #print(f"Database {dbname} does not exist.")
 
 def get_db_name(username:str):
+
     if username is None or username == '':
-        username = 'anonymous'
         return None
-    if(username.endswith('_admin')):
-        username = username[:-6]
-    os.makedirs('user_databases', exist_ok=True)
-    os.makedirs('user_databases/'+username, exist_ok=True)
-    dbname = "user_databases/" + username + "/datenbank.db"
-    #print(dbname)
+    dir = get_user_directory(username)
+    os.makedirs(dir, exist_ok=True)
+    dbname = dir + "/datenbank.db"
     return dbname
 
 def create_db(sql:str, username:str):
@@ -129,36 +127,7 @@ def convert_sqlite_master_to_html(db_path):
 
     return "<br>\n".join(html_lines)
 
-def storeDB(username:str):
-    if(username.endswith('_admin')):
-        username = username[:-6]
-    dbname = get_db_name(username)
-    if dbname is None:
-        #print("No database name provided.")
-        return None
-    if(os.path.exists(dbname)):
-        with open(dbname, 'rb') as file:
-            binary_data = file.read()
 
-            cur = runSql(f"SELECT sql FROM sqlite_master WHERE type='table' AND NOT name LIKE 'sqlite_%'",username)
-            sqlCreationDump = ";".join(row[0] for row in cur.fetchall() if row[0])
-            
-            if DatabaseModel.objects.filter(user=username).exists():
-                db_model = DatabaseModel.objects.get(user=username)
-                db_model.updated_at = str(datetime.now())
-                #print(f"Database {dbname} updated in the database.")
-                db_model.sql = sqlCreationDump
-
-                db_model.save()
-            else:
-                db_model = DatabaseModel.objects.create(user=username, db=binary_data, sql=sqlCreationDump, updated_at=str(datetime.now()))
-                db_model.save()
-            db_model.save()
-            #print(f"Database {dbname} stored in the database.")
-        os.remove(dbname)
-        #print(f"Database file {dbname} deleted after storing in the database.")
-
-def loadDB(username:str):
     dbname = get_db_name(username)
     if dbname is None:
         #print("No database name provided.")

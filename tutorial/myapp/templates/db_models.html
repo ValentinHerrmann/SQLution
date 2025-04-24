@@ -21,6 +21,23 @@
     </div>
 </div>
 
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 20px; width: 100%;">
+    <div style="flex: 1; text-align: center;">
+        <h4> Projekt (.zip) hochladen: </h4>
+        <p> Achtung: Hierdurch wird das aktuelle Projekt gelöscht!</p>
+        <form id="uploadForm" method="post" action="{% url 'upload_zip' %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input id="zip_file" type="file" name="zip_file" accept=".zip" required class="btn btn-primary" style="margin-bottom: 20px; cursor: pointer;" onchange="this.form.submit();">
+        </form>
+    </div>
+    <div style="flex: 1; text-align: center;">
+        <h4> Projekt (.zip) herunterladen: </h4>
+        <p> Es werden alle SQL-Abfragen, Formulare, das Klassendiagramm und die Datenbank heruntergeladen!</p>
+        <a href="{% url 'download_zip' %}" class="btn btn-primary" style="margin-bottom: 20px; ">Projekt herunterladen</a>
+    </div>
+</div>
+
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
       const fileInput = document.getElementById('db_file');

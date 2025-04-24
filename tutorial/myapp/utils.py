@@ -1,6 +1,14 @@
+from datetime import datetime
+from io import BytesIO
 import json
+import os
 import re
 import collections
+import shutil
+import zipfile
+
+from .models import ZippedFolder
+from django.core.files.base import ContentFile
 
 # Unterstützte Datentypen in SQLite
 DATATYPE_MAP = {
@@ -136,3 +144,61 @@ def format_sql(sql: str) -> str:
         sql = re.sub(f'(?i)^({kw})', r'\t\1', sql, flags=re.MULTILINE)
 
     return sql.strip()
+
+
+
+def get_user_directory(username):
+    if username.endswith('_admin'):
+        username = username[:-6]
+    return f"user_databases/{username}/"
+
+
+
+def zip_and_save_directory(directory_path:str, delete:bool=True):
+    # Create a zip file in memory
+    memory_file = BytesIO()
+    with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for root, dirs, files in os.walk(directory_path):
+            for file in files:
+                abs_path = os.path.join(root, file)
+                relative_path = os.path.relpath(abs_path, start=directory_path)
+                zipf.write(abs_path, arcname=relative_path)
+    memory_file.seek(0)
+
+    # Save to model
+    zipped = ZippedFolder(name=directory_path)
+    zipped.zip_file.save(f"{directory_path}export_{datetime.now().isoformat()}.zip", ContentFile(memory_file.read()))
+    zipped.save()
+
+    if delete:
+        try:
+            shutil.rmtree(directory_path) 
+        except Exception as e:
+            print(f"Error removing directory: {e}")
+    
+    return zipped.zip_file
+
+def restore_zip_to_directory(target_directory):
+    try:
+        # Fetch the zip entry from the DB
+        zipped = ZippedFolder.objects.get(pk=target_directory)
+        zip_path = zipped.zip_file.path
+
+        if os.path.exists(target_directory):
+            shutil.rmtree(target_directory)  # Remove existing directory if it exists
+
+        # Ensure target directory exists
+        os.makedirs(target_directory, exist_ok=True)
+
+        # Extract zip contents
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            zip_ref.extractall(target_directory)
+        os.remove(zip_path)  # Remove the zip file after extraction
+
+        return True
+    except ZippedFolder.DoesNotExist:
+        print("Zip record not found in database.")
+        return False
+    except Exception as e:
+        print(f"Error during restoration: {e}")
+        return False

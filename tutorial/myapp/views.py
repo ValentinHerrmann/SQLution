@@ -6,7 +6,7 @@ from .models import *
 from .utils import *  # Assuming you have this function in utils.py
 from .views_helpers import *
 from .sqlite_connector import *  # Import sqlite3 for SQLite database connection
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import redirect
 import os
 import re
@@ -25,10 +25,8 @@ def sql_form(request):
     sqlfile = request.GET.get("file")
 
     if sqlfile is not None and sqlfile != '':
-        username = request.user.username
-        if username.endswith('_admin'):
-            username = username[:-6]
-        with open(f"user_databases/{username}/{sqlfile}.sql", "r") as f:
+        dir = get_user_directory(request.user.username)
+        with open(f"{dir}/{sqlfile}.sql", "r") as f:
             sql = f.read()
         inputs = re.findall(r'{{(.*?)}}', sql)
 
@@ -56,6 +54,7 @@ def sql_form(request):
 
 
 @login_required
+@user_passes_test(is_db_admin)
 def sql_query_view(request):
     result = None
     error = None
@@ -94,10 +93,8 @@ def sql_query_view(request):
                     print(str(e))
 
             if save=='on' and sqlfile and sqlfile != '':
-                username = request.user.username
-                if username.endswith('_admin'):
-                    username = username[:-6]
-                with open(f"user_databases/{username}/{sqlfile}.sql", "w") as f:
+                dir = get_user_directory(request.user.username)
+                with open(f"{dir}/{sqlfile}.sql", "w") as f:
                     f.write(query)
                 error = f"Die SQL-Abfrage wurde erfolgreich unter '{sqlfile}' gespeichert."
                 
@@ -110,6 +107,7 @@ def sql_query_view(request):
 
 
 @login_required
+@user_passes_test(is_db_admin)
 def db_models(request):
     tables = []
 

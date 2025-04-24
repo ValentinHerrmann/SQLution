@@ -13,15 +13,13 @@ urlpatterns = [
     path('logged_out/', views_user.logged_out, name='logged_out'),
     path('logged_in/', views_user.logged_in, name='logged_in'),
 
-
     path('upload_db/', views_files.upload_db, name='upload_db'),
     path('download_db/', views_files.download_db, name='download_db'),
     path('upload_json/', views_files.upload_json, name='upload_json'),
+    path('download_zip/', views_files.download_zip, name='download_zip'),
+    path('upload_zip/', views_files.upload_zip, name='upload_zip'),
     
-
     path('sql/', views.sql_query_view, name='sql'),
     path('db_models/', views.db_models, name='db_models'),
-    path('sql_form/', views.sql_form, name='sql_form'),
-    #path('logout/', auth_views.LogoutView.as_view(next_page=settings.LOGOUT_REDIRECT_URL), name='logout'),
-    #path('redirect/', views.redirect_user, name='redirect_user'),
+    path('sql_form/', views.sql_form, name='sql_form'),\
 ]

@@ -5,6 +5,7 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.db import connection, DatabaseError
 from django.apps import apps
 import form_designer
+
 from .forms import SQLQueryForm,UploadFileForm
 from .models import *
 from .utils import *  # Assuming you have this function in utils.py
@@ -20,10 +21,11 @@ import re
 
 @login_required
 def logged_in(request):
-    print("Logged in: " + request.user.username)
-    if request.user.username == 'admin':
+    user = request.user.username
+    print("Logged in: " + user)
+    if user == 'admin':
         return redirect('/admin')  # Redirect to the admin page
-    loadDB(request.user.username)
+    restore_zip_to_directory(get_user_directory(user))
     return redirect('home')  # Redirect to the home page after login
 
 
@@ -33,7 +35,7 @@ def logged_out(request):
         user = request.GET.get("user") 
     if user is not None and user != '':
         print("Logged out: " + user)
-        storeDB(user)
+        zip_and_save_directory(get_user_directory(user))
     logout(request)  # Log out the user
     request.session.flush()  # Clear the session data
     return redirect('/accounts/login')  # Redirect to the login page

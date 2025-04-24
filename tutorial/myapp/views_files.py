@@ -1,23 +1,19 @@
 
-import pprint
-from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import get_object_or_404, render, redirect
-from django.db import connection, DatabaseError
-from django.apps import apps
-import form_designer
-from .forms import SQLQueryForm,UploadFileForm
+from django.http import HttpResponse
+from django.shortcuts import redirect
 from .models import *
 from .utils import *  # Assuming you have this function in utils.py
 from .sqlite_connector import *  # Import sqlite3 for SQLite database connection
 import json
 from datetime import datetime
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import redirect
-from django.contrib.auth import logout
+from .views_helpers import is_db_admin
+import zipfile
 import os
-import re
 
 
+@user_passes_test(is_db_admin)
 @login_required
 def download_db(request):
     try:
@@ -25,11 +21,11 @@ def download_db(request):
         response = HttpResponse(db_file, content_type='application/octet-stream')
         response['Content-Disposition'] = f'attachment; filename="datenbank_{datetime.now().strftime("%Y-%m-%d_%H-%M")}.db"'
         return response
-    except DatabaseModel.DoesNotExist:
+    except Exception as e:
         return redirect('db_models')  # Redirect if no database exists for the user
-    return redirect('db_models')
 
 @login_required
+@user_passes_test(is_db_admin)
 def upload_db(request):
     #print("Upload DB")
     if request.method == "POST" and request.FILES.get('db_file'):
@@ -40,25 +36,20 @@ def upload_db(request):
     return redirect('db_models')
 
 @login_required
+@user_passes_test(is_db_admin)
 def upload_json(request):
     if request.method == 'POST' and request.FILES.get('json_file'):
         json_file = request.FILES['json_file']
         try:
             data = json.loads(json_file.read().decode('utf-8'))
-
-            # Call your existing extract_tables function to get SQL
             sql_output = format_sql(extract_tables(data))
-            binaryDB = create_db(sql_output, request.user.username)  # Call the function to execute SQL statements
 
-            if DatabaseModel.objects.filter(user=request.user.username).exists():
-                db_model = DatabaseModel.objects.get(user=request.user.username)
-                db_model.json = data
-                db_model.sql = sql_output
-                db_model.db = binaryDB
-                db_model.save()  # Update the existing entry with the new data
-            else:
-                DatabaseModel.objects.create(user=request.user.username,json=data, sql=sql_output, db=binaryDB, updated_at=str(datetime.now()))  # Create a new entry with the binary data
-            DatabaseModel.save_base()
+            with open(get_user_directory(request.user.username)+'/CreateDB.sql', "w") as f:
+                f.write(sql_output)
+            with open(get_user_directory(request.user.username)+'/Model.json', "w") as f:
+                f.write(data)
+            
+            create_db(sql_output, request.user.username)  # Call the function to execute SQL statements
 
             #DatabaseModel.objects.filter(user=request.user.username).delete()  # Delete old entries for the user
             #DatabaseModel.objects.create(user=request.user.username,json=data, sql=sql_output, db=binaryDB)  # Create a new entry with the binary data
@@ -66,3 +57,28 @@ def upload_json(request):
             return redirect('apollon')  # Redirect to home if error occurs
     return redirect('db_models')  # Redirect to home after processing
     #return render(request, 'upload_json.html', {'sqlquery': sql_output})
+
+
+@login_required
+@user_passes_test(is_db_admin)
+def download_zip(request):
+    try:
+        zip_file = zip_and_save_directory(get_user_directory(request.user.username), False)
+        response = HttpResponse(zip_file, content_type='application/zip')
+        response['Content-Disposition'] = f'attachment; filename="datenbank_{request.user.username[:-6]}{datetime.now().strftime("%Y-%m-%d")}.zip"'
+        return response
+    except Exception as e:
+        return redirect('db_models')
+    
+
+@login_required
+@user_passes_test(is_db_admin)
+def upload_zip(request):
+    #print("Upload DB")
+    if request.method == "POST" and request.FILES.get('zip_file'):
+        zip_file = request.FILES['zip_file']
+        dir = get_user_directory(request.user.username)
+
+        with zipfile.ZipFile(zip_file, 'r') as zip_ref:
+            zip_ref.extractall(dir)
+    return redirect('db_models')

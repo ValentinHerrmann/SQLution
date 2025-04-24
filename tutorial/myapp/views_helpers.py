@@ -1,8 +1,19 @@
 from django.shortcuts import render
 
+
 from .forms import SQLQueryForm
 from .sqlite_connector import runSql
+from .models import *
+from .utils import *
+import os
+import zipfile
+from io import BytesIO
 
+
+
+
+def is_db_admin(user):
+    return user.is_authenticated and user.username.endswith('_admin')
 
 def execute_sql_query(query, username):
     try:
@@ -46,10 +57,10 @@ def load_sql_queryfile(request):
     if sqlfile is None: 
         sqlfile = ''
     if sqlfile and sqlfile != '':
-        username = request.user.username
-        if username.endswith('_admin'):
-            username = username[:-6]
-        with open(f"user_databases/{username}/{sqlfile}.sql", "r") as f:
+        dir = get_user_directory(request.user.username)
+        with open(f"{dir}/{sqlfile}.sql", "r") as f:
             sql = f.read()
         form = SQLQueryForm(initial={'query': sql})
     return form
+
+

@@ -11,31 +11,33 @@ from .utils import *  # Assuming you have this function in utils.py
 from .sqlite_connector import *  # Import sqlite3 for SQLite database connection
 import json
 from datetime import datetime
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import redirect
 from django.contrib.auth import logout
 import os
 import re
+from .views_helpers import is_db_admin
 
 
+
+@login_required
 def home(request):
-    if request.user.username.endswith('_admin'):
+    if is_db_admin(request.user):
         return redirect('db_models')  
     else:
         return redirect('user_functions')  
     
+
 @login_required
+@user_passes_test(is_db_admin)
 def apollon(request):
     return render(request, 'apollon.html')
     
 @login_required
 def user_functions(request):
-    username = request.user.username
-    if username.endswith('_admin'):
-        username = username[:-6]
-    directory = f"user_databases/{username}/"
+    dir = get_user_directory(request.user.username)
     sql_files = []
-    if os.path.exists(directory):
-        sql_files = [file[:-4] for file in os.listdir(directory) if file.endswith('.sql')]
+    if os.path.exists(dir):
+        sql_files = [file[:-4] for file in os.listdir(dir) if file.endswith('.sql')]
     context = {'sqlfiles': sql_files}
     return render(request, 'user_functions.html', context)
