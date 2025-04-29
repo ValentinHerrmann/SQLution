@@ -1,7 +1,7 @@
 import os
 from django.db import models
 
-from tutorial.tutorial.settings import BASE_DIR
+from tutorial.settings import BASE_DIR
 
 class ZippedFolder(models.Model):
     name = models.CharField(max_length=255, primary_key=True)
