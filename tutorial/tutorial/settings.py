@@ -139,10 +139,10 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 
-STATIC_ROOT=os.path.join(BASE_DIR, 'myapp/staticfiles')
+STATIC_ROOT=os.path.join(BASE_DIR, 'myapp/static')
 
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'myapp/static/'),
+    os.path.join(BASE_DIR, 'myapp/staticfiles/'),
 ]
 
 LOGIN_REDIRECT_URL = '/logged_in/'
