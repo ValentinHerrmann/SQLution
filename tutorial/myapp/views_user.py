@@ -8,6 +8,7 @@ import form_designer
 import shutil
 import psutil
 
+
 from .views_helpers import is_global_admin
 
 from .forms import SQLQueryForm,UploadFileForm
@@ -51,35 +52,9 @@ def logged_out(request):
 @login_required
 @user_passes_test(is_global_admin)
 def admin_overview(request):  
-
-    user_databases_path = os.path.join(os.getcwd(), 'user_databases')
-    user_data = get_directory_tree_with_sizes(user_databases_path)
-
-    # Get system drive usage
-    total, used, free = shutil.disk_usage("/")
-    fullness_percentage = (used / total) * 100
-
-    # Convert absolute values to GB for readability
-    total_gb = round(total / (1000 ** 3), 2)
-    used_gb = round(used / (1000 ** 3), 2)
-    free_gb = round(free / (1000 ** 3), 2)
-
-# Convert absolute values to GB for readability
-    total_gb = round(total / (1000 ** 3), 2)
-    used_gb = round(used / (1000 ** 3), 2)
-    free_gb = round(free / (1000 ** 3), 2)
-
-    # Get RAM usage
-    ram = psutil.virtual_memory()
-    ram_total = round(ram.total / (1000 ** 3), 2)
-    ram_used = round(ram.used / (1000 ** 3), 2)
-    ram_free = round(ram.available / (1000 ** 3), 2)
-    ram_percentage = ram.percent
-
-    # Get CPU usage
-    cpu_percentage = psutil.cpu_percent(interval=1)
-
+    rate = os.getenv('RESOURCES_REFRESH', default=5000)
     return render(request, 'admin_overview.html', {
+        'refresh_rate': rate,
         #'users': user_data,
         #"fullness_percentage": int(round(fullness_percentage, 0)),
         #"total_gb": total_gb,
@@ -117,7 +92,8 @@ def get_system_data(request):
     ram_percentage = ram.percent
 
     # Get CPU usage
-    cpu_percentage = psutil.cpu_percent(interval=0.5)
+    #val = os.getenv('RESOURCES_REFRESH', default=5000)/1000
+    cpu_percentage = psutil.cpu_percent(0.5)
 
     # Return data as JSON
     return JsonResponse({

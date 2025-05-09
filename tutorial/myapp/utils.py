@@ -254,7 +254,7 @@ def get_directory_tree_with_sizes(directory):
             size_kb = round(size / 1000, 2)
             tree.append({'type': 'directory', 'name': name, 'size': size_kb, 'last_modified': last_edited})
     
-    tree.insert(0,{'type': 'directory', 'name': '- Summe -', 'size': round(sum_size / 1000, 2), 'last_modified': last})
+    tree.insert(0,{'type': 'directory', 'name': 'SUMME', 'size': round(sum_size / 1000, 2), 'last_modified': last})
     #tree.sort()
         #for name in files:
         #    file_path = os.path.join(root, name)
