@@ -174,3 +174,4 @@ cython_debug/
 .pypirc
 tutorial/myapp/static/
 user_databases/
+tutorial/static/

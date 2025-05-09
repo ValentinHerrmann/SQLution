@@ -1,0 +1,41 @@
+<!-- filepath: /home/vale/github/django-tutorial/tutorial/myapp/templates/admin_overview.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2>Admin Overview</h2>
+  <p>Below is the list of directories with their sizes:</p>
+
+  <!-- System Drive Fullness Bar -->
+  <div class="mb-4">
+    <h5>System Drive Usage</h5>
+    <div class="progress" style="height: 25px;">
+      <div 
+        class="progress-bar" 
+        role="progressbar" 
+        style="width: {{ fullness_percentage }}%;" 
+        aria-valuenow="{{ fullness_percentage }}" 
+        aria-valuemin="0" 
+        aria-valuemax="100">
+        {{ fullness_percentage }}%
+      </div>
+    </div>
+    <p>Total: {{ total_gb }} GB ~~~~ Used: {{ used_gb }} GB ~~~~ Free: {{ free_gb }} GB</p>
+    <p></p>
+    <p></p>
+  </div>
+
+  <!-- Directory List -->
+  <ul class="file-tree">
+    {% for item in users %}
+      <li>
+        {% if item.type == "directory" %}
+          <strong>{{ item.name }}</strong> ({{ item.size }} kB)
+        {% else %}
+          {{ item.name }} ({{ item.size }} kB)
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

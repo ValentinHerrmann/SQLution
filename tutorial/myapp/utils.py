@@ -180,7 +180,7 @@ def get_user_directory(username):
 
 
 
-def zip_and_save_directory(directory_path:str, delete:bool=True):
+def zip_and_save_directory(directory_path:str, delete:bool=True, storeToDB:bool=False):
     # Create a zip file in memory
     memory_file = BytesIO()
     with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
@@ -192,9 +192,10 @@ def zip_and_save_directory(directory_path:str, delete:bool=True):
     memory_file.seek(0)
 
     # Save to model
-    zipped = ZippedFolder(name=directory_path)
-    zipped.zip_file.save(f"{directory_path}export.zip", ContentFile(memory_file.read()))
-    zipped.save()
+    if(storeToDB):
+        zipped = ZippedFolder(name=directory_path)
+        zipped.zip_file.save(f"{directory_path}export.zip", ContentFile(memory_file.read()))
+        zipped.save()
 
     if delete:
         try:
@@ -203,7 +204,7 @@ def zip_and_save_directory(directory_path:str, delete:bool=True):
         except Exception as e:
             print(f"Error removing directory: {e}")
     
-    return zipped.zip_file
+    return ContentFile(memory_file.read())
 
 def restore_zip_to_directory(target_directory):
     try:

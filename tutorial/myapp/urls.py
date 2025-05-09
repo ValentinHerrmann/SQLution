@@ -21,5 +21,7 @@ urlpatterns = [
     
     path('sql/', views.sql_query_view, name='sql'),
     path('db_models/', views.db_models, name='db_models'),
-    path('sql_form/', views.sql_form, name='sql_form'),\
+    path('sql_form/', views.sql_form, name='sql_form'),
+    
+    path('admin_overview/', views_user.admin_overview, name='admin_overview'),
 ]

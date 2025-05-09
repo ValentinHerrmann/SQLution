@@ -16,13 +16,15 @@ from django.shortcuts import redirect
 from django.contrib.auth import logout
 import os
 import re
-from .views_helpers import is_db_admin
+from .views_helpers import is_db_admin, is_global_admin
 
 
 
 @login_required
 def home(request):
-    if is_db_admin(request.user):
+    if is_global_admin(request.user):
+        return redirect('admin_overview')
+    elif is_db_admin(request.user):
         return redirect('db_models')  
     else:
         return redirect('user_functions')  
