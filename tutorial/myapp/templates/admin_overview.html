@@ -64,7 +64,7 @@
     <ul id="directory-list" class="file-tree">
       {% for item in users %}
         <li>
-          <strong>{{ item.name }}:</strong> {{ item.size }} kB, last modified: {{ item.last_modified }}
+          <strong>{{ item.name }}:</strong> {{ item.size }}, last modified: {{ item.last_modified }}
         </li>
       {% endfor %}
     </ul>
@@ -99,7 +99,7 @@
         <thead>
           <tr>
             <th>Name</th>
-            <th>Size (kB)</th>
+            <th>Size</th>
             <th>Last Modified</th>
           </tr>
         </thead>
