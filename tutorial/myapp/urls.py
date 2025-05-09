@@ -24,4 +24,5 @@ urlpatterns = [
     path('sql_form/', views.sql_form, name='sql_form'),
     
     path('admin_overview/', views_user.admin_overview, name='admin_overview'),
+    path('api/system-data/', views_user.get_system_data, name='get_system_data'),
 ]

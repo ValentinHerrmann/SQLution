@@ -230,3 +230,36 @@ def restore_zip_to_directory(target_directory):
     except Exception as e:
         print(f"Error during restoration: {e}")
         return False
+    
+
+def get_directory_tree_with_sizes(directory):
+    tree = []
+
+    sum_size = 0
+    last = ''
+
+    for root, dirs, files in os.walk(directory):
+        #dirs.append(directory)
+        for name in dirs:
+            dir_path = os.path.join(root, name)
+            size = sum(
+                os.path.getsize(os.path.join(dirpath, filename))
+                for dirpath, _, filenames in os.walk(dir_path)
+                for filename in filenames
+            )
+            sum_size += size
+            last_edited = datetime.fromtimestamp(os.path.getmtime(dir_path)).strftime('%Y-%m-%d %H:%M')
+            if last_edited > last:
+                last = last_edited
+            size_kb = round(size / 1000, 2)
+            tree.append({'type': 'directory', 'name': name, 'size': size_kb, 'last_modified': last_edited})
+    
+    tree.insert(0,{'type': 'directory', 'name': '- Summe -', 'size': round(sum_size / 1000, 2), 'last_modified': last})
+    #tree.sort()
+        #for name in files:
+        #    file_path = os.path.join(root, name)
+        #    size = os.path.getsize(file_path)
+        #    last_edited = datetime.fromtimestamp(os.path.getmtime(file_path)).strftime('%Y-%m-%d %H:%M:%S')
+        #    size_kb = round(size / 1024, 2)
+        #    tree.append({'type': 'file', 'name': name, 'size': size_kb, 'last_modified': last_edited})
+    return tree

@@ -1,11 +1,12 @@
 
 import pprint
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render, redirect
 from django.db import connection, DatabaseError
 from django.apps import apps
 import form_designer
 import shutil
+import psutil
 
 from .views_helpers import is_global_admin
 
@@ -46,32 +47,13 @@ def logged_out(request):
     request.session.flush()  # Clear the session data
     return redirect('/accounts/login')  # Redirect to the login page+
     
+
 @login_required
 @user_passes_test(is_global_admin)
-def admin_overview(request):
-    
-    def get_directory_tree_with_sizes(directory):
-        tree = []
-        for root, dirs, files in os.walk(directory):
-            for name in dirs:
-                dir_path = os.path.join(root, name)
-                size = sum(
-                    os.path.getsize(os.path.join(dirpath, filename))
-                    for dirpath, _, filenames in os.walk(dir_path)
-                    for filename in filenames
-                )
-                sizeK = round(size / 1000, 2)
-                sizeM = round(size / (1000*1000), 3)
-                tree.append({'type': 'directory', 'name': name, 'size':  sizeK})
-            #for name in files:
-            #    file_path = os.path.join(root, name)
-            #    size = os.path.getsize(file_path)
-            #    tree.append({'type': 'file', 'name': file_path, 'size': size})
-        return tree
+def admin_overview(request):  
 
     user_databases_path = os.path.join(os.getcwd(), 'user_databases')
     user_data = get_directory_tree_with_sizes(user_databases_path)
-
 
     # Get system drive usage
     total, used, free = shutil.disk_usage("/")
@@ -82,10 +64,71 @@ def admin_overview(request):
     used_gb = round(used / (1000 ** 3), 2)
     free_gb = round(free / (1000 ** 3), 2)
 
+# Convert absolute values to GB for readability
+    total_gb = round(total / (1000 ** 3), 2)
+    used_gb = round(used / (1000 ** 3), 2)
+    free_gb = round(free / (1000 ** 3), 2)
+
+    # Get RAM usage
+    ram = psutil.virtual_memory()
+    ram_total = round(ram.total / (1000 ** 3), 2)
+    ram_used = round(ram.used / (1000 ** 3), 2)
+    ram_free = round(ram.available / (1000 ** 3), 2)
+    ram_percentage = ram.percent
+
+    # Get CPU usage
+    cpu_percentage = psutil.cpu_percent(interval=1)
+
     return render(request, 'admin_overview.html', {
-        'users': user_data,
-        "fullness_percentage": round(fullness_percentage, 2),  # Round to 2 decimal places
+        #'users': user_data,
+        #"fullness_percentage": int(round(fullness_percentage, 0)),
+        #"total_gb": total_gb,
+        #"used_gb": used_gb,
+        #"free_gb": free_gb,
+        #"ram_total": ram_total,
+        #"ram_used": ram_used,
+        #"ram_free": ram_free,
+        #"ram_percentage": int(round(ram_percentage, 0)),
+        #"cpu_percentage": int(round(cpu_percentage, 0)),
+    })
+
+
+@login_required
+@user_passes_test(is_global_admin)
+def get_system_data(request):
+
+    user_databases_path = os.path.join(os.getcwd(), 'user_databases')
+    user_data = get_directory_tree_with_sizes(user_databases_path)
+
+    # Get system drive usage
+    total, used, free = shutil.disk_usage("/")
+    fullness_percentage = (used / total) * 100
+
+    # Convert absolute values to GB for readability
+    total_gb = round(total / (1000 ** 3), 2)
+    used_gb = round(used / (1000 ** 3), 2)
+    free_gb = round(free / (1000 ** 3), 2)
+
+    # Get RAM usage
+    ram = psutil.virtual_memory()
+    ram_total = round(ram.total / (1000 ** 3), 2)
+    ram_used = round(ram.used / (1000 ** 3), 2)
+    ram_free = round(ram.available / (1000 ** 3), 2)
+    ram_percentage = ram.percent
+
+    # Get CPU usage
+    cpu_percentage = psutil.cpu_percent(interval=0.5)
+
+    # Return data as JSON
+    return JsonResponse({
+        'directories': user_data,
+        "fullness_percentage": int(round(fullness_percentage, 0)),
         "total_gb": total_gb,
         "used_gb": used_gb,
         "free_gb": free_gb,
+        "ram_total": ram_total,
+        "ram_used": ram_used,
+        "ram_free": ram_free,
+        "ram_percentage": int(round(ram_percentage, 0)),
+        "cpu_percentage": int(round(cpu_percentage, 0)),
     })
