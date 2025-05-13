@@ -28,8 +28,22 @@ def sql_form(request):
         dir = get_user_directory(request.user.username)
         with open(f"{dir}/{sqlfile}.sql", "r") as f:
             sql = f.read()
-        inputs = re.findall(r'{{(.*?)}}', sql)
+            sql += ';'
+        inputs = re.findall(r'{([^}]+)}\w?[^\[]', sql)
 
+        
+        dropdownSQLs = re.findall(r'({[^}]+}\[[^\]]+\])', sql)
+        dropdowns = []
+        for drop in dropdownSQLs:
+            name = re.findall(r'{(.*?)}', drop)[0]
+            dSql = re.findall(r'\[(.*?)\]', drop)[0]
+            cur = runSql(dSql, request.user.username)
+            vals = cur.fetchall()
+            v = [str(row).replace("(", "").replace(")", "") for row in vals]
+            dropdowns.append({
+                'name': name,
+                'options': v
+            })
 
         if request.method == 'POST':
             try:
@@ -37,9 +51,21 @@ def sql_form(request):
                 inpVals = {}
                 for inp in inputs:
                     inpVals[inp] = request.POST.get(f'input_{inp}')
-                
+                for drop in dropdowns:
+                    n = drop['name']
+                    v = request.POST.get(f'dropdown_{n}')
+                    # v = v.replace("(", "").replace(")", "")
+                    v = v.split(",")
+                    if len(v) > 1:
+                        inpVals[n] = v[0]
+                    else:
+                        raise Exception("Fehler bei der Dropdown-Auswahl. Kein Primärschlüssel gefunden.")
+            
+                sql = re.sub(r'\[[^\]]+\]', '',sql)
+                #sql = re.replace(r'\[[^\]]+\]', '', sql)
                 for key, value in inpVals.items():
-                    sql = sql.replace('{{' + key + '}}', value)
+                    sql = sql.replace('{' + key + '}', value)
+                
                 
                 cursor = runSql(sql, request.user.username)
 
@@ -48,9 +74,10 @@ def sql_form(request):
                     result = cursor.fetchall()
             except Exception as e:
                 error = str(e)
-        return render_sql_form(request, sql, inputs, sqlfile, result, error, columns)
+        sql = sql.replace("\n", "<br>")
+        return render_sql_form(request, sql, inputs, sqlfile, result, error, columns, dropdowns)
     
-    return render_sql_form(request, '', [], '', [], 'Keine SQL Datei gefunden.', [],)
+    return render_sql_form(request, '', [], '', [], 'Keine SQL Datei gefunden.', [], [])
 
 
 @login_required
@@ -70,15 +97,19 @@ def sql_query_view(request):
         sqlfile = request.POST.get('input_filename')
         save = request.POST.get('save_query')
 
+            
+
+
+
 
         if queryForm.is_valid():
             query = queryForm.cleaned_data['query']
             query = query.replace("“", "\"").replace("„", "\"").replace("‚", "'").replace("’", "'").replace("‘", "'")
 
             
-            inputs = re.findall(r'{{(.*?)}}', query)
+            inputs = re.findall(r'{(.*?)}', query)
             if len(inputs) > 0:
-                error = "Die SQL-Abfrage enthält {{Platzhalter}}. Ersetze die Platzhalter mit Werten, um sie auszuführen oder benutze die Nutzerfunktionen."
+                error = "Die SQL-Abfrage enthält {Platzhalter}. Ersetze die Platzhalter mit Werten, um sie auszuführen oder benutze die Nutzerfunktionen."
             else:
                 cursor, columns, result, error = execute_sql_query(query, request.user.username)
                 if not error and cursor and cursor.description: # read query
@@ -104,6 +135,13 @@ def sql_query_view(request):
     else:
         queryForm = load_sql_queryfile(request)
         sqlfile = request.GET.get("file")
+        delete = request.GET.get('delete')
+        if delete:
+            error = f"Die SQL-Abfrage '{sqlfile}' in den Editor geladen und anschließend gelöscht."
+            dir = get_user_directory(request.user.username)
+            if os.path.exists(f"{dir}/{sqlfile}.sql"):
+                os.remove(f"{dir}/{sqlfile}.sql")
+
 
     return render_sql(request, queryForm, result, error, columns, rowcount, table_scheme_html, sqlfile)
 
@@ -139,3 +177,10 @@ def db_models(request):
         'models': tables
     })
 
+
+
+
+@login_required
+@user_passes_test(is_db_admin)
+def online_ide(request):
+    return render(request, 'online_ide.html', {})

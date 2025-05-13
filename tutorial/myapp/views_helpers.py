@@ -29,9 +29,10 @@ def execute_sql_query(query, username):
         return None, [], {}, str(e)
     
 
-def render_sql_form(request, sql, inputs, sqlfile, result, error, columns):
+def render_sql_form(request, sql, inputs, sqlfile, result, error, columns, dropdowns):
     return render(request, 'sql_form.html', {
         'inputs': inputs,
+        'dropdowns': dropdowns,
         'query': sql,
         'title': sqlfile,
         'result': result,
