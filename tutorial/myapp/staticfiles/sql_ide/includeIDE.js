@@ -1,4 +1,5 @@
-let base = "static/sql_ide/";
+let base = "http://localhost:8000/static/sql_ide/";
+
 
 let scripts = [
     base + 'sql-ide-embedded.css',
