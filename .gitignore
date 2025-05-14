@@ -174,3 +174,4 @@ cython_debug/
 tutorial/myapp/static/
 user_databases/
 tutorial/static/
+last_launched.txt
