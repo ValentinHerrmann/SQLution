@@ -59,9 +59,15 @@ def admin_overview(request):
         os.system("cd .. && ./update_and_launch.sh")
 
     rate = os.getenv('RESOURCES_REFRESH', default=5000)
+
+    last_launched = ""
+    with(open('../last_launched.txt', 'r')) as f:
+        last_launched = f.read().strip()
+
     return render(request, 'admin_overview.html', {
         'refresh_rate': rate,
         'commit': os.popen('git log -1 --pretty=%B').read().strip(),
+        'last_launched': last_launched,
         'wdir': os.getcwd(),
         #'users': user_data,
         #"fullness_percentage": int(round(fullness_percentage, 0)),

@@ -8,3 +8,4 @@ python3 manage.py migrate
 python3 manage.py collectstatic --noinput
 nohup gunicorn --bind 0.0.0.0:8000 tutorial.wsgi &
 
+date '+%Y-%m-%d %H:%M:%S' > /home/vale/github/django-tutorial/last_launched.txt
