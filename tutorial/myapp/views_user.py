@@ -61,7 +61,7 @@ def admin_overview(request):
     rate = os.getenv('RESOURCES_REFRESH', default=5000)
 
     last_launched = ""
-    with(open('../last_launched.txt', 'r')) as f:
+    with(open('last_launched.txt', 'r')) as f:
         last_launched = f.read().strip()
 
     return render(request, 'admin_overview.html', {
