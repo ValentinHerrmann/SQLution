@@ -56,7 +56,7 @@ def admin_overview(request):
     if restart == 'true':
         logout(request)
         request.session.flush()
-        os.system("./update_and_launch.sh")
+        os.system("cd .. && ./update_and_launch.sh")
 
     rate = os.getenv('RESOURCES_REFRESH', default=5000)
     return render(request, 'admin_overview.html', {
