@@ -59,11 +59,11 @@ def admin_overview(request):
         logout(request)
         request.session.flush()
         os.system("./update_and_launch.sh")
-        return
 
     rate = os.getenv('RESOURCES_REFRESH', default=5000)
     return render(request, 'admin_overview.html', {
         'refresh_rate': rate,
+        'commit': os.popen('git log -1 --pretty=%B').read().strip()
         #'users': user_data,
         #"fullness_percentage": int(round(fullness_percentage, 0)),
         #"total_gb": total_gb,
