@@ -58,7 +58,7 @@ def admin_overview(request):
         print(os.getcwd())
         logout(request)
         request.session.flush()
-        os.system("update_and_launch.sh")
+        os.system("./update_and_launch.sh")
         return
 
     rate = os.getenv('RESOURCES_REFRESH', default=5000)
