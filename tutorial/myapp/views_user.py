@@ -52,6 +52,15 @@ def logged_out(request):
 @login_required
 @user_passes_test(is_global_admin)
 def admin_overview(request):  
+    restart = request.GET.get("restart")
+    if restart == 'true':
+        print(timestamp() + "Restarting server...")
+        print(os.getcwd())
+        logout(request)
+        request.session.flush()
+        os.system("update_and_launch.sh")
+        return
+
     rate = os.getenv('RESOURCES_REFRESH', default=5000)
     return render(request, 'admin_overview.html', {
         'refresh_rate': rate,
