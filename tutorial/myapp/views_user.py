@@ -61,8 +61,14 @@ def admin_overview(request):
     rate = os.getenv('RESOURCES_REFRESH', default=5000)
 
     last_launched = ""
-    with(open('last_launched.txt', 'r')) as f:
-        last_launched = f.read().strip()
+    try:
+        with open('last_launched.txt', 'r') as f:
+            last_launched = f.read().strip()
+    except FileNotFoundError:
+        # If the file doesn't exist, create it with the current timestamp
+        with open('last_launched.txt', 'w') as f:
+            last_launched = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            f.write(last_launched)
 
     return render(request, 'admin_overview.html', {
         'refresh_rate': rate,
