@@ -1,4 +1,4 @@
-let base = "http://localhost:8000/static/sql_ide/";
+let base = "https://embed.learn-sql.de/include/";
 
 
 let scripts = [
