@@ -171,7 +171,6 @@ def db_models(request):
                 'rows': c10_result + ([['. . .' for _ in cursor10.description]] if len(cursor11.fetchall()) > len(c10_result) else [])
             }
         )
-        #print(tables)
 
     return render(request, 'db_models.html', {
         'models': tables
@@ -191,4 +190,7 @@ def sql_ide(request):
 @login_required
 @user_passes_test(is_db_admin)
 def sql_ide_iframe(request):
-    return render(request, 'sql_ide_iframe.html', {})
+    return render(request, 'sql_ide_iframe.html', {
+        'database': f'/user_databases.sqlite',
+        'sql': ''
+    })
