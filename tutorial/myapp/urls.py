@@ -28,4 +28,7 @@ urlpatterns = [
     
     path('admin_overview/', views_user.admin_overview, name='admin_overview'),
     path('api/system-data/', views_user.get_system_data, name='get_system_data'),
+
+    path('user_databases.sqlite', views_files.read_file),
+    path('user_databases/Dachau.sql', views_files.read_file_sql),
 ]
