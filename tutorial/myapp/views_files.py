@@ -84,6 +84,7 @@ def upload_zip(request):
 @user_passes_test(is_db_admin)
 def read_file(request):
     dir = get_user_directory(request.user.username)
+    print(request.user.username + " - " + dir)
     f = open(f'{dir}/datenbank.db', 'rb')
     file_content = f.read()
     f.close()
