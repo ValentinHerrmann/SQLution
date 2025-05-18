@@ -13,6 +13,22 @@
  
     <script>window.javaOnlineDir = "";</script>
 
+    <link rel="preload" href="/static/sql-ide/lib/monaco-editor/dev/vs/editor/editor.main.js" as="script">
+    <link rel="preload" href="/static/sql-ide/lib/monaco-editor/dev/vs/editor/editor.main.nls.de.js" as="script">
+ 
+    <link rel='stylesheet' type='text/css' media='screen' href='/static/sql-ide/assets/fonts/fonts.css'>
+    <script src="/static/sql-ide/lib/jquery/jquery-3.3.1.js"></script>
+    <script src="/static/sql-ide/lib/pako/pako.js"></script>
+    <script src="/static/sql-ide/lib/zip.js/zip.min.js"></script>
+    <script src="/static/sql-ide/lib/markdownit/markdownit.min.js"></script>
+    <script src="/static/sql-ide/lib/monaco-editor/dev/vs/loader.js"></script>
+ 
+    <!-- Falls sich die Programmdateien relativ zur Html-Datei in einem Unterverzeichnis befinden: -->
+    <script>window.javaOnlineDir = "/static/sql-ide/";</script>
+ 
+  <script type="module" crossorigin src="/static/sql-ide/sql-ide-embedded.js"></script>
+  <link rel="stylesheet" href="/static/sql-ide/sql-ide-embedded.css">
+
 
    </head>
   <body>

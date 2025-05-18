@@ -1,4 +1,4 @@
-let base = "https://embed.learn-sql.de/include/";
+let base = "/static/sql-ide/";
 
 
 let scripts = [
@@ -58,7 +58,7 @@ function initScripts(jo_doc){
     bodyElement.style.height = "100%";
     bodyElement.style.margin = "0";
     window.javaOnlineDir = base;
-    includeJs(base + "sql-ide-embedded.js", null, 'module');
+    includeJs(base + "sql-ide-embedded.js", dummyCallback, 'module');
 
 }
 
@@ -105,4 +105,9 @@ function includeJsAndCss(urlList, callback){
         callback();
     }
 
+}
+
+function dummyCallback() {
+    console.log("Dummy callback function");
+    // Dummy callback function
 }

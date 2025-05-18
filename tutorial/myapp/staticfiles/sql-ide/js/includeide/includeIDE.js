@@ -58,7 +58,8 @@ function initScripts(jo_doc){
     bodyElement.style.height = "100%";
     bodyElement.style.margin = "0";
     window.javaOnlineDir = base;
-    includeJs(base + "sql-ide-embedded.js", null, 'module');
+    includeJs(base + "sql-ide-embedded.js", dummyCallback, 'module');
+    //includeJs(base + "sql-ide-embedded.js", null, 'module');
 
 }
 
@@ -105,4 +106,10 @@ function includeJsAndCss(urlList, callback){
         callback();
     }
 
+}
+
+
+function dummyCallback() {
+    console.log("Dummy callback function");
+    // Dummy callback function
 }

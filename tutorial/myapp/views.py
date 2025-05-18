@@ -183,7 +183,10 @@ def db_models(request):
 @login_required
 @user_passes_test(is_db_admin)
 def sql_ide(request):
-    return render(request, 'sql_ide.html', {})
+    return render(request, 'sql_ide.html', {
+        'database': f'/user_databases.sqlite',
+        'sql': 'SELECT * FROM {Tabelle};'
+    })
 
 @login_required
 @user_passes_test(is_db_admin)
