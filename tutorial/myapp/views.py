@@ -182,5 +182,10 @@ def db_models(request):
 
 @login_required
 @user_passes_test(is_db_admin)
-def online_ide(request):
-    return render(request, 'online_ide.html', {})
+def sql_ide(request):
+    return render(request, 'sql_ide.html', {})
+
+@login_required
+@user_passes_test(is_db_admin)
+def sql_ide_iframe(request):
+    return render(request, 'sql_ide_iframe.html', {})

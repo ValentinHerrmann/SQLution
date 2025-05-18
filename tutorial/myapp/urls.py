@@ -24,7 +24,8 @@ urlpatterns = [
     path('sql_form/', views.sql_form, name='sql_form'),
 
     
-    path('online_ide/', views.online_ide, name='online_ide'),
+    path('sql_ide_iframe/', views.sql_ide_iframe, name='sql_ide_iframe'),
+    path('sql_ide/', views.sql_ide, name='sql_ide'),
     
     path('admin_overview/', views_user.admin_overview, name='admin_overview'),
     path('api/system-data/', views_user.get_system_data, name='get_system_data'),
