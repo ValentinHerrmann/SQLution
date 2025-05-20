@@ -10,6 +10,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import redirect
 from .views_helpers import is_db_admin
 import zipfile
+from django.contrib.auth import logout
 import os
 
 
@@ -83,6 +84,11 @@ def upload_zip(request):
 @login_required
 @user_passes_test(is_db_admin)
 def read_file(request):
+    #parUser = request.GET.get("parUser")
+    #if(parUser != request.user.username):
+    #    logout(request)
+    #    request.session.flush()
+    #    redirect('/accounts/login')
     dir = get_user_directory(request.user.username)
     print(request.user.username + " - " + dir)
     f = open(f'{dir}/datenbank.db', 'rb')

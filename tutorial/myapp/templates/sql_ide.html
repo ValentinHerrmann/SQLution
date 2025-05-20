@@ -1,18 +1,51 @@
 {% extends "base.html" %} {% block content %}
-
+<!--
     <h1>Erstes Beispiel</h1>
  
     <div class="sql-online" style="width: calc(100% - 10px); height: 500px; margin-left: 5px" data-sql-online="{
         'id': 'abcd',
-        'databaseURL': '{{ database }}'
+        'databaseURL': '{{ database }}',
+        'enableFileAccess': true
     }">
         <script type="text/plain" title="Test1.sql" data-type="sql">
             {{ sql }}
         </script>
-    </div> 
+    </div>  -->
+
+
+    <button id="test-file-access-btn">Test File Access</button>
+
+
+         <div class="sql-online" style="width: calc(100% - 10px); height: 600px; margin-left: 5px" data-sql-online="{
+        'id': 'abcd',
+        'databaseURL': '/static/sql-ide/assets/databases/world1.sqLite',
+        'enableFileAccess': true
+    }">
+        <script type="text/plain" title="Test1.sql" data-type="sql">
+select * from test;
+                    </script>
+    </div>
+
 
     <script>
-        console.log( '{{ database }}')
+        document.getElementById('test-file-access-btn').addEventListener('click', function() {
+            fileAccessTester();
+        });
     </script>
+
+<script>
+    function fileAccessTester() {
+        console.log('Embedded-Test');
+        let ide = window.sql_ide_access.getIDE('abcd');
+        console.log('IDE: ' + ide);
+        let files = ide.getFiles();
+        console.log('Files: ' + files.length);
+        for(let i = 0; i < files.length; i++){
+        let file = files[i];
+        console.log('Name: ' + file.getName());
+        console.log('Quelltext:' + file.getText());
+        }
+    }
+</script>
  
 {% endblock %}
