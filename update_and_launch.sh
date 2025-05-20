@@ -1,6 +1,7 @@
 pkill gunicorn
 source ../../bin/activate
 git pull
+git submodule update --recursive --remote
 pip install -r requirements.txt
 cd tutorial
 python3 manage.py makemigrations
