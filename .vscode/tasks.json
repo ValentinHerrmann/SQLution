@@ -1,0 +1,32 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "makemigrations",
+            "type": "shell",
+            "command": "${command:python.interpreterPath} ${workspaceFolder}/tutorial/manage.py makemigrations"
+        },
+        {
+            "label": "migrate",
+            "type": "shell",
+            "command": "${command:python.interpreterPath} ${workspaceFolder}/tutorial/manage.py migrate",
+            "dependsOn": [
+                "makemigrations"
+            ]
+        },
+        {
+            "label": "collectstatic",
+            "type": "shell",
+            "command": "${command:python.interpreterPath} ${workspaceFolder}/tutorial/manage.py collectstatic --noinput",
+            "dependsOn": [
+                "migrate"
+            ]
+        },    
+        {
+            "label": "PreLaunchRoutine",
+            "dependsOn": [
+                "collectstatic"
+            ]
+        }
+    ]
+}
