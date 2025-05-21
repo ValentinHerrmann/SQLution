@@ -22,16 +22,11 @@ urlpatterns = [
     path('sql/', views.sql_query_view, name='sql'),
     path('db_models/', views.db_models, name='db_models'),
     path('sql_form/', views.sql_form, name='sql_form'),
-
-    
-    path('sql_ide_iframe/', views.sql_ide_iframe, name='sql_ide_iframe'),
-    path('sql_ide/', views.sql_ide, name='sql_ide'),
     
     path('admin_overview/', views_user.admin_overview, name='admin_overview'),
     path('api/system-data/', views_user.get_system_data, name='get_system_data'),
 
+    path('sql_ide/', views.sql_ide, name='sql_ide'),
     path('user_databases.sqlite', views_files.read_file),
     path('user_databases/<str:username>.sqlite', views_files.read_file),
-
-    path('user_databases/Dachau.sql', views_files.read_file_sql),
 ]
