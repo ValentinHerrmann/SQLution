@@ -41,16 +41,16 @@
 
 <script>
     function fileAccessTester() {
-        console.log('Embedded-Test');
+        //console.log('Embedded-Test');
         let ide = window.sql_ide_access.getIDE('{{ user_name }}');
-        console.log('IDE: ' + ide);
+        //console.log('IDE: ' + ide);
         
         let files = ide.getFiles();
-        console.log('Files: ' + files.length);
+        //console.log('Files: ' + files.length);
         for(let i = 0; i < files.length; i++){
         let file = files[i];
-        console.log('Name: ' + file.getName());
-        console.log('Quelltext:' + file.getText());
+        //console.log('Name: ' + file.getName());
+        //console.log('Quelltext:' + file.getText());
         }
     }
 </script>
