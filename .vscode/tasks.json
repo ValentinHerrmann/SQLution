@@ -2,9 +2,17 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "pull",
+            "type": "shell",
+            "command": "cd ${workspaceFolder}/tutorial/myapp/staticfiles/sql-ide ; git pull"
+        },
+        {
             "label": "makemigrations",
             "type": "shell",
-            "command": "${command:python.interpreterPath} ${workspaceFolder}/tutorial/manage.py makemigrations"
+            "command": "${command:python.interpreterPath} ${workspaceFolder}/tutorial/manage.py makemigrations",
+            "dependsOn": [
+                "pull"
+            ]
         },
         {
             "label": "migrate",
