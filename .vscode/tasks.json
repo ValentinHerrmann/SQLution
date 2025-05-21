@@ -4,7 +4,10 @@
         {
             "label": "pull",
             "type": "shell",
-            "command": "cd ${workspaceFolder}/tutorial/myapp/staticfiles/sql-ide ; git pull"
+            "command": "cd ${workspaceFolder}/tutorial/myapp/staticfiles/sql-ide ; git pull ; cd .. ; git add sql-ide ; git commit -m 'update sql-ide' ; git push",
+            "dependsOn": [
+                "commit dist"
+            ]
         },
         {
             "label": "makemigrations",
