@@ -83,9 +83,9 @@ def upload_zip(request):
 
 @login_required
 @user_passes_test(is_db_admin)
-def read_file(request):
-    #parUser = request.GET.get("parUser")
-    #if(parUser != request.user.username):
+def read_file(request, username):
+    if(username != request.user.username):
+        print("passt net...")
     #    logout(request)
     #    request.session.flush()
     #    redirect('/accounts/login')

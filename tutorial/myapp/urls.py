@@ -31,5 +31,7 @@ urlpatterns = [
     path('api/system-data/', views_user.get_system_data, name='get_system_data'),
 
     path('user_databases.sqlite', views_files.read_file),
+    path('user_databases/<str:username>.sqlite', views_files.read_file),
+
     path('user_databases/Dachau.sql', views_files.read_file_sql),
 ]

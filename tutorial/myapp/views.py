@@ -182,10 +182,12 @@ def db_models(request):
 @login_required
 @user_passes_test(is_db_admin)
 def sql_ide(request):
-    return render(request, 'sql_ide.html', {
-        'database': f'/user_databases.sqlite',
+    pars = {
+        'user_url': f'/user_databases/{request.user.username}.sqlite',
+        'user_name': request.user.username,
         'sql': ''
-    })
+    }
+    return render(request, 'sql_ide.html', pars)
 
 @login_required
 @user_passes_test(is_db_admin)

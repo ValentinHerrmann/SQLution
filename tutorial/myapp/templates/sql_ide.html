@@ -16,13 +16,13 @@
     <button id="test-file-access-btn">Test File Access</button>
 
 
-         <div class="sql-online" style="width: calc(100% - 10px); height: 600px; margin-left: 5px" data-sql-online="{
-        'id': 'abcd',
-        'databaseURL': '/static/sql-ide/assets/databases/world1.sqLite',
+         <div class="sql-online" style="width: calc(100% - 10px); height: 200px; margin-left: 5px" data-sql-online="{
+        'id': '{{ user_name }}',
+        'databaseURL': '{{ user_url }}',
         'enableFileAccess': true
     }">
         <script type="text/plain" title="Test1.sql" data-type="sql">
-select * from test;
+select * from schueler;
                     </script>
     </div>
 
@@ -36,8 +36,9 @@ select * from test;
 <script>
     function fileAccessTester() {
         console.log('Embedded-Test');
-        let ide = window.sql_ide_access.getIDE('abcd');
+        let ide = window.sql_ide_access.getIDE('{{ user_name }}');
         console.log('IDE: ' + ide);
+        
         let files = ide.getFiles();
         console.log('Files: ' + files.length);
         for(let i = 0; i < files.length; i++){
