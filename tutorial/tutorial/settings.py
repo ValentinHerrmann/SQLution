@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'myapp',
+    'rest_framework',  # Add Django Rest Framework
     'form_designer',
     'admin_ordering',
     'session_security',

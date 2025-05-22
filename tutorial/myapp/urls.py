@@ -29,4 +29,7 @@ urlpatterns = [
     path('sql_ide/', views.sql_ide, name='sql_ide'),
     path('user_databases.sqlite', views_files.read_file),
     path('user_databases/<str:username>.sqlite', views_files.read_file),
+
+    path('api/sql/<str:filename>.sql', views_files.api_sql, name='api_sql'),
+    path('api/sql/all', views_files.api_sql_all, name='api_sql_all'),
 ]

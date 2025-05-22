@@ -1,5 +1,6 @@
 
 
+from django.http import HttpResponse
 from django.shortcuts import render
 from .forms import SQLFileForm, SQLQueryForm
 from .models import *
@@ -196,9 +197,12 @@ def sql_ide(request):
                 'content': f.read(),
             })
 
+    tablescheme = convert_sqlite_master_to_html(request.user.username)
     pars = {
         'user_url': f'/user_databases/{request.user.username}.sqlite',
         'user_name': request.user.username,
+        'tablescheme': tablescheme,
         'sql_files': sql
     }
     return render(request, 'sql_ide.html', pars)
+

@@ -12,6 +12,7 @@ from .views_helpers import is_db_admin
 import zipfile
 from django.contrib.auth import logout
 import os
+import time
 
 
 @user_passes_test(is_db_admin)
@@ -103,3 +104,98 @@ def read_file_sql(request):
     file_content = f.read()
     f.close()
     return HttpResponse(file_content)
+
+
+@login_required
+@user_passes_test(is_db_admin)
+def api_sql(request, filename):
+    try:
+        filename = filename.replace('.sql.sql', '.sql')
+
+        if(not filename.endswith('.sql')):
+            filename += '.sql'
+
+        dir = get_user_directory(request.user.username)
+
+
+        if(request.method == "POST"):
+
+            body_unicode = request.body.decode('utf-8')
+            body = json.loads(body_unicode)
+            sql = body['sql']
+
+            with open(f'{dir}/{filename}', 'w') as f:
+                f.write(sql)
+            sqllock_release(dir)
+            return HttpResponse("File saved successfully", status=200)
+
+        if(request.method == "GET"):
+            with open(f'{dir}/{filename}', 'r') as f:
+                file_content = f.read()
+                sqllock_release(dir)
+                return HttpResponse(file_content, content_type="text/sql")
+        
+        if(request.method == "DELETE"):
+            if os.path.exists(f'{dir}/{filename}'):
+                os.remove(f'{dir}/{filename}')
+                sqllock_release(dir)
+                return HttpResponse("File deleted successfully", status=200)
+    except Exception as e:
+        print(f"Error: {e}")
+    finally:
+        sqllock_release(dir)
+        return HttpResponse("Unknown request", status=500)
+
+
+@login_required
+@user_passes_test(is_db_admin)
+def api_sql_all(request):
+    try:
+        dir = get_user_directory(request.user.username)
+        sqllock_get(dir)
+
+        if(request.method == "POST"):
+
+            # delete all files in folder dir
+            for file in os.listdir(dir):
+                if file.endswith('.sql'):
+                    os.remove(os.path.join(dir, file))
+
+            body_unicode = request.body.decode('utf-8')
+            body = json.loads(body_unicode)
+            files = body['files']
+
+
+            for file in files:
+                filename = file['filename']
+                sql = file['sql']
+
+                filename = filename.replace('.sql.sql', '.sql')
+                if(not filename.endswith('.sql')):
+                    filename += '.sql'
+                dir = get_user_directory(request.user.username)
+
+                with open(f'{dir}/{filename}', 'w') as f:
+                    f.write(sql)
+
+            sqllock_release(dir)
+            return HttpResponse("Files saved successfully", status=200)
+
+        if(request.method == "GET"):
+            with open(f'{dir}/{filename}', 'r') as f:
+                file_content = f.read()
+                sqllock_release(dir)
+                return HttpResponse(file_content, content_type="text/sql")
+        
+        if(request.method == "DELETE"):
+            if os.path.exists(f'{dir}/{filename}'):
+                os.remove(f'{dir}/{filename}')
+                sqllock_release(dir)
+                return HttpResponse("File deleted successfully", status=200)
+        
+        return HttpResponse("Unknown request", status=404)
+    except Exception as e:
+        print(f"Error: {e}")
+        return HttpResponse(e, status=500)
+    finally:
+        sqllock_release(dir)
