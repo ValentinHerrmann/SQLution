@@ -28,7 +28,7 @@
         <input type="text" id="input_filename" name="input_filename" value="{{ file }}" style="margin: 0;">
         <label for="input_filename">(unter diesem Namen wird die SQL-Abfrage dem Nutzer angezeigt)</label>
         </div>
-        <b>Variablen:</b> In gespeicherten SQL-Abfragen kannst du mit doppelten geschweiften Klammern <i>{% templatetag openvariable %}Variablen{% templatetag closevariable %}</i> verwenden. 
+        <b>Variablen:</b> In gespeicherten SQL-Abfragen kannst du mit doppelten geschweiften Klammern <i>{Variablen}</i> verwenden. 
         Führt der Nutzer die Abfrage aus, muss er für jede Variable einen Wert eingeben und diese werden dann 1:1 eingesetzt. <br/>
         <b>Beispiel:</b> <i>SELECT * FROM Schueler WHERE vorname="{% templatetag openvariable %}Name{% templatetag closevariable %}"</i> 
         ➔ Nutzer gibt Max ein ➔ <i>SELECT * FROM Schueler WHERE vorname="Max"</i>

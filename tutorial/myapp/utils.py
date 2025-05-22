@@ -6,6 +6,7 @@ import re
 import collections
 import shutil
 import zipfile
+import time
 
 from .models import ZippedFolder
 from django.core.files.base import ContentFile
@@ -263,3 +264,16 @@ def get_directory_tree_with_sizes(directory):
         #    size_kb = round(size / 1024, 2)
         #    tree.append({'type': 'file', 'name': name, 'size': size_kb, 'last_modified': last_edited})
     return tree
+
+
+def sqllock_get(dir):
+    lockfile_name = f'{dir}/lockfile'
+    while os.path.exists(lockfile_name):
+        time.sleep(0.1)
+    lockFile = open(f'{dir}/lockfile', 'w')
+    lockFile.close()
+
+def sqllock_release(dir):
+    lockfile_name = f'{dir}/lockfile'
+    if os.path.exists(lockfile_name):
+        os.remove(lockfile_name)
