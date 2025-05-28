@@ -9,11 +9,10 @@
             "type": "debugpy",
             "request": "launch",
             "args": [
-
                 "runserver"
             ],
             "django": true,
-            "autoStartBrowser": false,
+            "autoStartBrowser": true,
             "program": "${workspaceFolder}/tutorial/manage.py",
             "console": "internalConsole",
             "preLaunchTask": "PreLaunchRoutine" 
