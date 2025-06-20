@@ -120,8 +120,9 @@
 
             </details>
         </div>
-        <div style="display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; height: 100%;  margin: 10px;">
-            <button id="test-file-access-btn" class="btn btn-primary" style="margin-bottom: 1rem; width: 110px;">Änderungen speichern</button>
+        <div style="display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; height: 100%;  margin: 5px;">
+            <button id="save-sql-btn" class="btn btn-primary" style="margin-bottom: 5px; width: 130px;">SQL-Abfragen speichern</button>
+            <button id="save-db-btn" class="btn btn-primary" style="margin-bottom: 5px; width: 130px;">Datenbank speichern</button>
         </div>
     </div>
     <div class="sql-flex-grow">
@@ -148,7 +149,7 @@
     let lastSave = Date.now();
 
     document.addEventListener('DOMContentLoaded', function() {
-        document.getElementById('test-file-access-btn').addEventListener('click', function() {
+        document.getElementById('save-sql-btn').addEventListener('click', function() {
             lastSave = Date.now();
         });
 
@@ -164,12 +165,15 @@
     });
 </script>
 <script>
-    document.getElementById('test-file-access-btn').addEventListener('click', function() {
-        fileAccessTester();
+    document.getElementById('save-sql-btn').addEventListener('click', function() {
+        saveSQLFiles();
+    });
+    document.getElementById('save-db-btn').addEventListener('click', function() {
+        saveDB();
     });
 </script>
 <script>
-function fileAccessTester() {
+function saveSQLFiles() {
     if (!window.confirm("Das Speichern überschreibt alle Daten auf dem Server. Das kann nicht rückgängig gemacht werden!")) {
         return;
     }
@@ -180,6 +184,7 @@ function fileAccessTester() {
     for(let i = 0; i < files.length; i++){
         let file = files[i];
         let filename = file.getName();
+        console.log(filename);
         let content = file.getText();
         sql_files.push({ 'filename': filename, 'sql': content });
     }
@@ -193,6 +198,31 @@ function fileAccessTester() {
         else { console.log("Fehler beim Speichern der Dateien."); }
     });
 }
+
+function saveDB() {
+    if (!window.confirm("Das Speichern überschreibt alle Daten auf dem Server. Das kann nicht rückgängig gemacht werden!")) {
+        return;
+    }
+    let ide = window.sql_ide_access.getIDE('{{ user_name }}');
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    ide.getDatabase().then((blob) => {        
+        return fetch("/api/upload_db/", {
+            method: "POST",
+            headers: { "Content-Type": "application/octet-stream",  "X-CSRFToken": csrftoken },
+            body: blob
+        });
+    })
+    .then((response) => {
+        if (!response.ok) {
+            console.error(response)
+            
+        }
+    })
+    .catch((error) => {
+        console.error("Error:", error.message);
+    });
+    
+    }
 </script>
 
 <script>

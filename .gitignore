@@ -175,3 +175,5 @@ tutorial/myapp/static/
 user_databases/
 tutorial/static/
 last_launched.txt
+
+tutorial/myapp/staticfiles/_sql-ide/
