@@ -58,11 +58,6 @@
           </li>
           <li class="nav-item">
             {% if user.is_authenticated and user.username|endswith:'_admin' %}
-              <a class="nav-link" href="{% url 'sql' %}">SQL-Abfragen</a>
-            {% endif %}
-          </li>
-          <li class="nav-item">
-            {% if user.is_authenticated and user.username|endswith:'_admin' %}
               <a class="nav-link" href="{% url 'apollon' %}">Schema erstellen</a>
             {% endif %}
           </li>
