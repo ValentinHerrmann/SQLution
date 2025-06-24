@@ -2,10 +2,7 @@ pkill gunicorn
 source ../../bin/activate
 git pull
 pip install -r requirements.txt
-cd tutorial/myapp/staticfiles/sql-ide
-git checkout main
-git pull
-cd ../../..
+cd tutorial
 python3 manage.py makemigrations
 python3 manage.py migrate
 python3 manage.py collectstatic --noinput
