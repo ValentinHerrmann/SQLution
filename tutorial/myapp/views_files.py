@@ -177,18 +177,6 @@ def api_sql_all(request):
 
             sqllock_release(dir)
             return HttpResponse("Files saved successfully", status=200)
-
-        if(request.method == "GET"):
-            with open(f'{dir}/{filename}', 'r') as f:
-                file_content = f.read()
-                sqllock_release(dir)
-                return HttpResponse(file_content, content_type="text/sql")
-        
-        if(request.method == "DELETE"):
-            if os.path.exists(f'{dir}/{filename}'):
-                os.remove(f'{dir}/{filename}')
-                sqllock_release(dir)
-                return HttpResponse("File deleted successfully", status=200)
         
         return HttpResponse("Unknown request", status=404)
     except Exception as e:
@@ -208,4 +196,4 @@ def api_upload_db(request):
             return HttpResponse("File saved successfully", status=201)
     except Exception as e:
         print(f"Error: {e}")
-        return HttpResponse("Internal Error", status=400)
+    return HttpResponse("Internal Error", status=400)
