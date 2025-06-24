@@ -10,9 +10,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import redirect
 from .views_helpers import is_db_admin
 import zipfile
-from django.contrib.auth import logout
 import os
-import time
 
 
 @user_passes_test(is_db_admin)
@@ -29,7 +27,6 @@ def download_db(request):
 @login_required
 @user_passes_test(is_db_admin)
 def upload_db(request):
-    #print("Upload DB")
     if request.method == "POST" and request.FILES.get('db_file'):
         db_file = request.FILES['db_file']
         with open(get_db_name(request.user.username), "wb+") as destination:
@@ -180,18 +177,6 @@ def api_sql_all(request):
 
             sqllock_release(dir)
             return HttpResponse("Files saved successfully", status=200)
-
-        if(request.method == "GET"):
-            with open(f'{dir}/{filename}', 'r') as f:
-                file_content = f.read()
-                sqllock_release(dir)
-                return HttpResponse(file_content, content_type="text/sql")
-        
-        if(request.method == "DELETE"):
-            if os.path.exists(f'{dir}/{filename}'):
-                os.remove(f'{dir}/{filename}')
-                sqllock_release(dir)
-                return HttpResponse("File deleted successfully", status=200)
         
         return HttpResponse("Unknown request", status=404)
     except Exception as e:
@@ -199,3 +184,16 @@ def api_sql_all(request):
         return HttpResponse(e, status=500)
     finally:
         sqllock_release(dir)
+
+def api_upload_db(request):
+    try:
+        dir = get_user_directory(request.user.username)
+        file_path = os.path.join(dir, "datenbank.db")
+
+        if(request.method == "POST"):                
+            with open(file_path, 'wb+') as destination:
+                destination.write(request.body)
+            return HttpResponse("File saved successfully", status=201)
+    except Exception as e:
+        print(f"Error: {e}")
+    return HttpResponse("Internal Error", status=400)

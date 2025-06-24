@@ -17,7 +17,7 @@ def delete_db(username:str):
 def get_db_name(username:str):
 
     if username is None or username == '':
-        return None
+        return ""
     dir = get_user_directory(username)
     os.makedirs(dir, exist_ok=True)
     dbname = dir + "/datenbank.db"

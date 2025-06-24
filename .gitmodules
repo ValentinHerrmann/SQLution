@@ -1,3 +1,0 @@
-[submodule "tutorial/myapp/staticfiles/sql-ide"]
-	path = tutorial/myapp/staticfiles/sql-ide
-	url = https://github.com/ValentinHerrmann/DataSpark_SQL-IDE_dist.git
