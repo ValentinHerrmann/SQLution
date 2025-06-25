@@ -1,39 +1,41 @@
-{% extends "base.html" %} {% block content %}
+{% extends "base.html" %} 
+{% block title %}
+DataSpark - Übersicht
+{% endblock %}
+{% block content %}
 
-<div style="text-align: center;">
-    <h2> Datenbank verwalten (download/upload): </h2>
-</div>
-<br/>
+
+<h4 style="text-align: center;"> Datenbank verwalten</h4>
 
 <div style="display: flex; justify-content: space-between; align-items: center; gap: 20px; width: 100%;">
     <div style="flex: 1; text-align: center;">
-        <h4> SQLite Datenbank (.db) hochladen: </h4>
-        <p> Achtung: Hierdurch wird die aktuelle Datenbank gelöscht!</p>
+        <b> SQLite Datenbank (.db) hochladen: </b>
+        <p style="font-size: 0.8em;"> Achtung: Hierdurch wird die aktuelle Datenbank gelöscht!</p>
         <form id="uploadForm" method="post" action="{% url 'upload_db' %}" enctype="multipart/form-data">
             {% csrf_token %}
-            <input id="db_file" type="file" name="db_file" accept=".db" required class="btn btn-primary" style="margin-bottom: 20px; cursor: pointer;" onchange="this.form.submit();">
+            <input id="db_file" type="file" name="db_file" accept=".db" required class="btn btn-primary" style="margin-bottom: 10px; cursor: pointer;" onchange="this.form.submit();">
         </form>
     </div>
     <div style="flex: 1; text-align: center;">
-        <h4> SQLite Datenbank (.db) herunterladen: </h4>
-        <p> Es werden keine SQL-Abfragen, Formulare oder das Klassendiagramm heruntergeladen!</p>
-        <a href="{% url 'download_db' %}" class="btn btn-primary" style="margin-bottom: 20px; ">Datenbank herunterladen (SQLite)</a>
+        <b> SQLite Datenbank (.db) herunterladen: </b>
+        <p style="font-size: 0.8em;"> Es werden keine SQL-Abfragen, Formulare oder das Klassendiagramm heruntergeladen!</p>
+        <a href="{% url 'download_db' %}" class="btn btn-primary" style="margin-bottom: 10px; ">Datenbank herunterladen (SQLite)</a>
     </div>
 </div>
 
 <div style="display: flex; justify-content: space-between; align-items: center; gap: 20px; width: 100%;">
     <div style="flex: 1; text-align: center;">
-        <h4> Projekt (.zip) hochladen: </h4>
-        <p> Achtung: Hierdurch wird das aktuelle Projekt gelöscht!</p>
+        <b> Projekt (.zip) hochladen: </b>
+        <p style="font-size: 0.8em;"> Achtung: Hierdurch wird das aktuelle Projekt gelöscht!</p>
         <form id="uploadForm" method="post" action="{% url 'upload_zip' %}" enctype="multipart/form-data">
             {% csrf_token %}
-            <input id="zip_file" type="file" name="zip_file" accept=".zip" required class="btn btn-primary" style="margin-bottom: 20px; cursor: pointer;" onchange="this.form.submit();">
+            <input id="zip_file" type="file" name="zip_file" accept=".zip" required class="btn btn-primary" style="margin-bottom: 10px; cursor: pointer;" onchange="this.form.submit();">
         </form>
     </div>
     <div style="flex: 1; text-align: center;">
-        <h4> Projekt (.zip) herunterladen: </h4>
-        <p> Es werden alle SQL-Abfragen, Formulare, das Klassendiagramm und die Datenbank heruntergeladen!</p>
-        <a href="{% url 'download_zip' %}" class="btn btn-primary" style="margin-bottom: 20px; ">Projekt herunterladen</a>
+        <b> Projekt (.zip) herunterladen: </b>
+        <p style="font-size: 0.8em;"> Es werden alle SQL-Abfragen, Formulare, das Klassendiagramm und die Datenbank heruntergeladen!</p>
+        <a href="{% url 'download_zip' %}" class="btn btn-primary" style="margin-bottom: 10px; ">Projekt herunterladen</a>
     </div>
 </div>
 
@@ -62,10 +64,23 @@
 <br/>
 <br/>
 
-<h2>Datenbank anzeigen (max. 10 Zeilen pro Tabelle):</h2>
+<h4 style="text-align: center;">Nutzerfunktionen / gespeicherte SQL-Abfragen</h4>
+
+<table border="1" style="width: 100%;">
+    {% for fkt in functions %}
+        <tr>
+            <th>{{fkt.name}}</th>
+            <td style="font-size: 0.8em;">{{fkt.sql|safe}}</td>
+        </tr>
+    {% endfor %}
+</table>
+
+<br>
+
+<h4 style="text-align: center;">Tabellen (max. 10 Zeilen pro Tabelle)</h4>
 <table border="1">
     {% for mod in models %}
-        <h4>{{ mod.name }}</h4>
+        <b>{{ mod.name }}</b>
         <table border="1" style="width: 100%;">
             <tr>
                 {% for col in mod.columns %}
