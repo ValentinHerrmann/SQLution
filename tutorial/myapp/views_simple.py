@@ -25,7 +25,7 @@ def home(request):
     if is_global_admin(request.user):
         return redirect('admin_overview')
     elif is_db_admin(request.user):
-        return redirect('db_models')  
+        return redirect('overview')  
     else:
         return redirect('user_functions')  
     

@@ -149,13 +149,14 @@ def sql_query_view(request):
 
 @login_required
 @user_passes_test(is_db_admin)
-def db_models(request):
+def overview(request):
     tables = []
 
     cursor = runSql("SELECT name FROM sqlite_master WHERE type='table' AND NOT name LIKE 'sqlite_%';", request.user.username)
     if(cursor is None):
-        return render(request, 'db_models.html', {
-            'models': None
+        return render(request, 'overview.html', {
+            'models': None,
+            'functions': None
         })
     
     tablenames = [row[0] for row in cursor.fetchall()]
@@ -173,8 +174,26 @@ def db_models(request):
             }
         )
 
-    return render(request, 'db_models.html', {
-        'models': tables
+    
+    
+    sql = []
+    dir = get_user_directory(request.user.username)
+    sql_files = []
+    if os.path.exists(dir):
+        sql_files = [file for file in os.listdir(dir) if file.endswith('.sql')]
+        
+    for file in sql_files:
+        with open(f"{dir}/{file}", "r") as f:
+            sql.append({
+                'name': file.removesuffix('.sql'),
+                'sql': f.read().replace(';',';<br>\n'),
+            })
+
+
+
+    return render(request, 'overview.html', {
+        'models': tables,
+        'functions': sql
     })
 
 

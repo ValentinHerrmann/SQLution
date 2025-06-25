@@ -22,7 +22,7 @@ def download_db(request):
         response['Content-Disposition'] = f'attachment; filename="datenbank_{datetime.now().strftime("%Y-%m-%d_%H-%M")}.db"'
         return response
     except Exception as e:
-        return redirect('db_models')  # Redirect if no database exists for the user
+        return redirect('overview')  # Redirect if no database exists for the user
 
 @login_required
 @user_passes_test(is_db_admin)
@@ -32,7 +32,7 @@ def upload_db(request):
         with open(get_db_name(request.user.username), "wb+") as destination:
             for chunk in db_file.chunks():
                 destination.write(chunk)
-    return redirect('db_models')
+    return redirect('overview')
 
 @login_required
 @user_passes_test(is_db_admin)
@@ -53,7 +53,7 @@ def upload_json(request):
         except Exception as e:
             print(f"Error: {e}")
             return redirect('apollon')  # Redirect to home if error occurs
-    return redirect('db_models')  # Redirect to home after processing
+    return redirect('overview')  # Redirect to home after processing
 
 @login_required
 @user_passes_test(is_db_admin)
@@ -64,7 +64,7 @@ def download_zip(request):
         response['Content-Disposition'] = f'attachment; filename="datenbank_{request.user.username[:-6]}{datetime.now().strftime("%Y-%m-%d")}.zip"'
         return response
     except Exception as e:
-        return redirect('db_models')
+        return redirect('overview')
     
 
 @login_required
@@ -77,7 +77,7 @@ def upload_zip(request):
 
         with zipfile.ZipFile(zip_file, 'r') as zip_ref:
             zip_ref.extractall(dir)
-    return redirect('db_models')
+    return redirect('overview')
 
 @login_required
 @user_passes_test(is_db_admin)
