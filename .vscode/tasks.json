@@ -2,16 +2,6 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "list workspace dir",
-            "type": "shell",
-            "command": "cd ${workspaceFolder}/.. ; dir",
-        },
-        {
-            "label": "pull",
-            "type": "shell",
-            "command": "cd ${workspaceFolder}/tutorial/myapp/staticfiles/sql-ide ; git checkout main ; git pull ; cd .. ; git add sql-ide ; git commit -m 'update sql-ide' ; git push",
-        },
-        {
             "label": "build sql ide",
             "type": "shell",
             "command": "cd ${workspaceFolder}/../DataSpark_SQL-IDE ; npm run build",
@@ -25,11 +15,25 @@
             ]
         },
         {
+            "label": "build apollon",
+            "type": "shell",
+            "command": "cd ${workspaceFolder}/../DataSpark_Apollon ; npm run-script custom_build",
+        },
+        {
+            "label": "copy apollon",
+            "type": "shell",
+            "command": "cd ${workspaceFolder}/../DataSpark_Apollon/dist ; copy-Item * -Destination '${workspaceFolder}/tutorial/myapp/staticfiles/apollon' -Recurse -force",
+            "dependsOn": [
+                "build apollon"
+            ]
+        },
+        {
             "label": "makemigrations",
             "type": "shell",
             "command": "${command:python.interpreterPath} ${workspaceFolder}/tutorial/manage.py makemigrations",
             "dependsOn": [
-                "copy sql ide"
+                "copy sql ide",
+                "copy apollon"
             ]
         },
         {

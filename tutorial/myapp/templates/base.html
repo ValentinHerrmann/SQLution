@@ -2,7 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0"
+    />
     <title>
       {% block title %}
         Data Spark
@@ -17,11 +20,14 @@
     <link rel="preload" href="/static/sql-ide/lib/monaco-editor/dev/vs/editor/editor.main.nls.de.js" as="script">
  
     <link rel='stylesheet' type='text/css' media='screen' href='/static/sql-ide/assets/fonts/fonts.css'>
+
     <script src="/static/sql-ide/lib/jquery/jquery-3.3.1.js"></script>
     <script src="/static/sql-ide/lib/pako/pako.js"></script>
     <script src="/static/sql-ide/lib/zip.js/zip.min.js"></script>
     <script src="/static/sql-ide/lib/markdownit/markdownit.min.js"></script>
-    <script src="/static/sql-ide/lib/monaco-editor/dev/vs/loader.js"></script>
+    
+    <script defer="defer" src="/static/apollon/vendors.a949173d4e3bd70f426e.js"></script>
+    <script defer="defer" src="/static/apollon/main.bdda3d4bb9f7766e080e.js"></script>
  
     <!-- Falls sich die Programmdateien relativ zur Html-Datei in einem Unterverzeichnis befinden: -->
     <script>window.javaOnlineDir = "/static/sql-ide/";</script>
