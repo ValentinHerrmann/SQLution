@@ -159,13 +159,6 @@ DataSpark - SQL IDE
         });
 
         window.addEventListener('beforeunload', function (e) {
-            console.log('beforeunload');
-            console.log(lastSave);
-            console.log(Date.now());
-            if (lastSave < Date.now() - 1000) {
-                //e.returnValue = 'Es gibt ungespeicherte Änderungen. Möchten Sie die Seite wirklich verlassen?';
-            //    e.preventDefault(); // Stop default submission
-            }
         });
     });
 </script>

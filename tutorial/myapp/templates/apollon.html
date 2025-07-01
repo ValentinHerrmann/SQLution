@@ -1,11 +1,69 @@
 {% extends "base.html" %} 
-
-<head>
-</head>
-
-{% block content %}
-<div class="container">
-  <div class="apollon-container"><main id="apollon"></main></div>
-</div>
-  
+{% block title %}
+DataSpark - Schema erstellen
 {% endblock %}
+
+
+{% block content %} 
+
+<div style="display: flex; gap: 1rem;">
+  <div style="flex: 2;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <button id="use-uml-btn" class="btn btn-primary">Klassendiagramm als Datenbank laden</button>
+      <button id="use-uml-btn" class="btn btn-primary">Klassendiagramm herunterladen</button>
+      <div id="drop-zone" style="flex: 1; border: 2px dashed #ccc; padding: 1rem; display: flex; align-items: center; gap: 10px;">
+
+      <!-- Hidden upload form -->
+      <button id="upload-uml-btn" class="btn btn-primary" onclick="triggerUpload()">Klassendiagramm (*.json) hochladen</button>
+      <form id="uploadForm" method="post" action="{% url 'upload_json' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+      <input id="json_file" type="file" name="json_file" accept=".json" required>
+    </form>
+  </div>
+    </div>
+  <div class="apollon-container" style="min-height: 85vh;"><main id="apollon"></main></div>
+</div>
+
+</div>
+
+<script>
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('json_file');
+    const uploadForm = document.getElementById('uploadForm');
+
+    // Prevent navigating away on dragover
+    dropZone.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+    });
+
+    // Handle the dropped file
+    dropZone.addEventListener('drop', function(e) {
+      e.preventDefault();
+      fileInput.files = e.dataTransfer.files;
+      
+      if (!window.confirm("Achtung, hierdurch wird deine aktuelle Datenbank gelöscht! Das kann nicht rückgängig gemacht werden!")) {
+          return;
+      }
+      uploadForm.submit();
+    });
+  });
+  
+  function triggerUpload() {
+      if (!window.confirm("Achtung, hierdurch wird deine aktuelle Datenbank gelöscht! Das kann nicht rückgängig gemacht werden!")) {
+          return;
+      }
+    uploadForm.submit();
+  }
+
+  function loadToDB() {
+
+  }
+
+  function downloadImage() {
+    
+  }
+</script>
+{% endblock %} 
