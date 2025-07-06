@@ -10,6 +10,7 @@ urlpatterns = [
     path('user_functions', views_simple.user_functions, name='user_functions'),
     
     path('accounts/', include('django.contrib.auth.urls')),
+    path('accounts/login/', views_user.CustomLoginView.as_view(), name='login'),
     path('logged_out/', views_user.logged_out, name='logged_out'),
     path('logged_in/', views_user.logged_in, name='logged_in'),
 

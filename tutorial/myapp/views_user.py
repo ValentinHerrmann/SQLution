@@ -128,3 +128,14 @@ def get_system_data(request):
         "ram_percentage": int(round(ram_percentage, 0)),
         "cpu_percentage": int(round(cpu_percentage, 0)),
     })
+
+# views.py
+from django.contrib.auth.views import LoginView
+
+class CustomLoginView(LoginView):
+    def get_initial(self):
+        initial = super().get_initial()
+        username = self.request.GET.get('username')
+        if username:
+            initial['username'] = username
+        return initial
