@@ -32,6 +32,7 @@ def sql_form(request):
             sql += ';'
         inputs = re.findall(r'{([^}]+)}\w?[^\[]', sql)
 
+        inputs = list(dict.fromkeys(inputs))
         
         dropdownSQLs = re.findall(r'({[^}]+}\[[^\]]+\])', sql)
         dropdowns = []
@@ -46,7 +47,13 @@ def sql_form(request):
                 'options': v
             })
 
-        if request.method == 'POST':
+        # Remove entries from inputs that are also present as names in dropdowns
+        dropdown_names = {drop['name'] for drop in dropdowns}
+        inputs = [inp for inp in inputs if inp not in dropdown_names]
+
+        
+
+        if request.method == 'POST' or len(inputs)+len(dropdowns) == 0:
             try:
                 print(request.POST.keys())
                 inpVals = {}
