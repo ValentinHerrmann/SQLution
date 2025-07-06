@@ -30,7 +30,7 @@ def create_db(sql:str, username:str):
         return None
     delete_db(username)  # Delete the old database if it exists
 
-    with sqlite3.connect(dbname) as con:
+    with sqlite3.connect(dbname,autocommit=True) as con:
         cur = con.cursor()
         for s in sql.split(';'):
             if s.strip() == '':
@@ -39,7 +39,6 @@ def create_db(sql:str, username:str):
                 cur.execute(s)
             except sqlite3.Error as e:
                 print(f"SQL error: {e}")
-        con.commit()
     with open(dbname, 'rb') as file:
         binary_data = file.read()
         return binary_data
@@ -50,13 +49,12 @@ def runSql(sql:str, username:str):
     if dbname is None:
         #print("No database name provided.")
         return None
-    with sqlite3.connect(dbname) as con:
+    with sqlite3.connect(dbname,autocommit=True) as con:
         cur = con.cursor()
         for s in sql.split(';'):
             if s.strip() == '':
                 continue
             cur.execute(s)
-        con.commit()
     return cur
 
 

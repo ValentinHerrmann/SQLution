@@ -44,7 +44,7 @@ def upload_json(request):
             data = json.loads(json_string)
             sql_output = format_sql(extract_tables(data))
 
-            with open(get_user_directory(request.user.username)+'/CreateDB.sql', "w") as f:
+            with open(get_user_directory(request.user.username)+'/_CreateDB.sql_', "w") as f:
                 f.write(sql_output)
             with open(get_user_directory(request.user.username)+'/Model.json', "w") as f:
                 f.write(json_string)
