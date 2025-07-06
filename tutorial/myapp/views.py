@@ -65,7 +65,11 @@ def sql_form(request):
                     # v = v.replace("(", "").replace(")", "")
                     v = v.split(",")
                     if len(v) > 1:
-                        inpVals[n] = v[0]
+                        # Remove leading and trailing single quotes if both exist
+                        if v[0].startswith("'") and v[0].endswith("'"):
+                            inpVals[n] = v[0][1:-1]
+                        else:
+                            inpVals[n] = v[0]
                     else:
                         raise Exception("Fehler bei der Dropdown-Auswahl. Kein Primärschlüssel gefunden.")
             
