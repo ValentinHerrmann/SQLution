@@ -41,5 +41,6 @@ def user_functions(request):
     sql_files = []
     if os.path.exists(dir):
         sql_files = [file[:-4] for file in os.listdir(dir) if file.endswith('.sql')]
+    sql_files.sort()
     context = {'sqlfiles': sql_files}
     return render(request, 'user_functions.html', context)
