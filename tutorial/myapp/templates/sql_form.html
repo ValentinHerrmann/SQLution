@@ -10,15 +10,15 @@
 
 <form method="post">
     {% csrf_token %}
-        <div style="display: flex; gap: 10px; justify-content: center; align-items: center;">
+        <div class="form-flex-container">
             {% for inp in inputs %}
-            <div style="display: flex; flex-direction: column; align-items: center;">
+            <div class="form-flex-item">
                 <label for="input_{{ inp }}">{{ inp }}</label>
                 <input type="text" id="input_{{ inp }}" name="input_{{ inp }}" value="">
             </div>
             {% endfor %}
             {% for inp in dropdowns %}
-            <div style="display: flex; flex-direction: column; align-items: center;">
+            <div class="form-flex-item">
                 <label for="dropdown_{{ inp.name }}">{{ inp.name }}</label>
                 <select id="dropdown_{{ inp.name }}" name="dropdown_{{ inp.name }}">
                     {% for option in inp.options %}
@@ -28,6 +28,32 @@
             </div>
             {% endfor %}
         </div>
+        <style>
+        .form-flex-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        .form-flex-item {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            min-width: 140px;
+            margin-bottom: 10px;
+        }
+        @media (max-width: 600px) {
+            .form-flex-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .form-flex-item {
+                min-width: unset;
+                align-items: center;
+            }
+        }
+        </style>
     <button type="submit" class="btn btn-primary" style="margin-bottom: 20px; margin-top: 20px;">Ausführen</button>
 </form>
 
