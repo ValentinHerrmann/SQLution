@@ -4,7 +4,6 @@ from django.http import HttpResponse
 from django.shortcuts import render
 from .forms import SQLFileForm, SQLQueryForm
 from .models import *
-from .utils import *  # Assuming you have this function in utils.py
 from .views_helpers import *
 from .sqlite_connector import *  # Import sqlite3 for SQLite database connection
 from django.contrib.auth.decorators import login_required, user_passes_test

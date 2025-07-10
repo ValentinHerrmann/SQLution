@@ -5,6 +5,7 @@ DataSpark - SQL IDE
 {% block content %}
 {% load static %}
 
+  <script type="module" crossorigin src="/static/sql-ide/sql-ide-embedded.js"></script>
 <script src="/static/sql-ide/lib/monaco-editor/dev/vs/loader.js"></script>
 <style>
     html, body, .main-flex-container {
@@ -35,7 +36,6 @@ DataSpark - SQL IDE
         height: 100%;
         margin-left: 5px;
         width: calc(100% - 10px);
-        overflow: hidden;
     }
 </style>
 <div class="main-flex-container">
@@ -147,7 +147,14 @@ DataSpark - SQL IDE
             {% endfor %}
         </div>
     </div>
+    
+  <div style="text-align: right; color: #888; font-size: 0.8em; margin-top: 2px;">
+    <a href="https://github.com/martin-pabst/SQL-IDE/" target="_blank" style="color: #888; text-decoration: underline;">
+      Powered by Martin Pabst's SQL-IDE
+    </a>
+  </div>
 </div>
+
 <script>
     let isDirty = true;
 
