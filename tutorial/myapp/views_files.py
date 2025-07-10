@@ -57,7 +57,7 @@ def upload_json(request):
     if request.method == 'POST' and request.FILES.get('json_file'):
         json_file = request.FILES['json_file']
         load_json(json_file, request.user.username)
-    return redirect('overview')  # Redirect to home after processing
+    return redirect('apollon')
 
 @login_required
 @user_passes_test(is_db_admin)
