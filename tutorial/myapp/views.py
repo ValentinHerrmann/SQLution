@@ -4,7 +4,6 @@ from django.http import HttpResponse
 from django.shortcuts import render
 from .forms import SQLFileForm, SQLQueryForm
 from .models import *
-from .utils import *  # Assuming you have this function in utils.py
 from .views_helpers import *
 from .sqlite_connector import *  # Import sqlite3 for SQLite database connection
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -65,7 +64,11 @@ def sql_form(request):
                     # v = v.replace("(", "").replace(")", "")
                     v = v.split(",")
                     if len(v) > 1:
-                        inpVals[n] = v[0]
+                        # Remove leading and trailing single quotes if both exist
+                        if v[0].startswith("'") and v[0].endswith("'"):
+                            inpVals[n] = v[0][1:-1]
+                        else:
+                            inpVals[n] = v[0]
                     else:
                         raise Exception("Fehler bei der Dropdown-Auswahl. Kein Primärschlüssel gefunden.")
             

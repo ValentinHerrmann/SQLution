@@ -55,6 +55,7 @@ def runSql(sql:str, username:str):
             if s.strip() == '':
                 continue
             cur.execute(s)
+        #con.commit()
     return cur
 
 

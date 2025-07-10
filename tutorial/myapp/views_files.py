@@ -34,26 +34,30 @@ def upload_db(request):
                 destination.write(chunk)
     return redirect('overview')
 
+def load_json(json_bytes, username):
+    try:
+        json_string = json_bytes.decode('utf-8')
+        data = json.loads(json_string)
+        
+        sql_output = format_sql(extract_tables(data))
+
+        with open(get_user_directory(username)+'/_CreateDB.sql_', "w") as f:
+            f.write(sql_output)
+        with open(get_user_directory(username)+'/model.json', "wb+") as f:
+            f.write(json_bytes)
+        create_db(sql_output, username)  # Call the function to execute SQL statements
+
+    except Exception as e:
+        print(f"Error: {e}")
+
+
 @login_required
 @user_passes_test(is_db_admin)
 def upload_json(request):
     if request.method == 'POST' and request.FILES.get('json_file'):
         json_file = request.FILES['json_file']
-        try:
-            json_string = json_file.read().decode('utf-8')
-            data = json.loads(json_string)
-            sql_output = format_sql(extract_tables(data))
-
-            with open(get_user_directory(request.user.username)+'/_CreateDB.sql_', "w") as f:
-                f.write(sql_output)
-            with open(get_user_directory(request.user.username)+'/Model.json', "w") as f:
-                f.write(json_string)
-            create_db(sql_output, request.user.username)  # Call the function to execute SQL statements
-
-        except Exception as e:
-            print(f"Error: {e}")
-            return redirect('apollon')  # Redirect to home if error occurs
-    return redirect('overview')  # Redirect to home after processing
+        load_json(json_file, request.user.username)
+    return redirect('apollon')
 
 @login_required
 @user_passes_test(is_db_admin)
@@ -105,7 +109,7 @@ def read_file_sql(request):
 
 @login_required
 @user_passes_test(is_db_admin)
-def api_sql(request, filename):
+def api_sql(request, filename:str):
     try:
         filename = filename.replace('.sql.sql', '.sql')
 
@@ -196,4 +200,26 @@ def api_upload_db(request):
             return HttpResponse("File saved successfully", status=201)
     except Exception as e:
         print(f"Error: {e}")
-    return HttpResponse("Internal Error", status=400)
+    return HttpResponse("Internal Error", status=500)
+
+def api_diagram_json(request):
+    dir = get_user_directory(request.user.username)
+    try:
+        sqllock_get(dir)
+        print(request.method)
+        if(request.method == "GET"):
+            with open(f'{dir}/model.json', 'rb') as f:
+                file_content = f.read()
+            return HttpResponse(file_content, content_type="application/json")
+        elif(request.method == "POST"):
+            load_json(request.body,request.user.username)
+            return HttpResponse("", status=200)
+        else:
+            return HttpResponse("", status=405)
+
+            
+    except Exception as e:
+        print(f"Error: {e}")
+        return HttpResponse("Internal Error", status=500)
+    finally:
+        sqllock_release(dir)

@@ -2,13 +2,17 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0"
+    />
     <title>
       {% block title %}
         Data Spark
       {% endblock %}
     </title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"  rel="stylesheet" />
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css" integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
    
  
     <script>window.javaOnlineDir = "";</script>
@@ -17,17 +21,21 @@
     <link rel="preload" href="/static/sql-ide/lib/monaco-editor/dev/vs/editor/editor.main.nls.de.js" as="script">
  
     <link rel='stylesheet' type='text/css' media='screen' href='/static/sql-ide/assets/fonts/fonts.css'>
+
     <script src="/static/sql-ide/lib/jquery/jquery-3.3.1.js"></script>
     <script src="/static/sql-ide/lib/pako/pako.js"></script>
     <script src="/static/sql-ide/lib/zip.js/zip.min.js"></script>
     <script src="/static/sql-ide/lib/markdownit/markdownit.min.js"></script>
-    <script src="/static/sql-ide/lib/monaco-editor/dev/vs/loader.js"></script>
+    
+    <script defer="defer" src="/static/apollon/vendors.js"></script>
+    <script defer="defer" src="/static/apollon/main.js"></script>
  
     <!-- Falls sich die Programmdateien relativ zur Html-Datei in einem Unterverzeichnis befinden: -->
     <script>window.javaOnlineDir = "/static/sql-ide/";</script>
  
-  <script type="module" crossorigin src="/static/sql-ide/sql-ide-embedded.js"></script>
   <link rel="stylesheet" href="/static/sql-ide/sql-ide-embedded.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
 
 
    </head>
@@ -46,7 +54,7 @@
           <div class="d-flex align-items-center h-100" style="height: 100%;">
             <b style="color: #082951; font-size: 1.1em; margin-top: 6px;">DataSpark</b>
           </div>
-          <span style="color: #bbbbbb; font-size: 0.5em; margin-top: -8px;">0.1.2</span> <!-- SOFTWARE VERSION -->
+          <span style="color: #bbbbbb; font-size: 0.5em; margin-top: -8px;">0.1.3</span> <!-- SOFTWARE VERSION -->
         </div>
       </a>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
@@ -64,7 +72,7 @@
           </li>
           <li class="nav-item">
             {% if user.is_authenticated and user.username|endswith:'_admin' %}
-              <a class="nav-link" href="{% url 'apollon' %}">Schema erstellen</a>
+              <a class="nav-link" href="{% url 'apollon' %}">Klassendiagramm</a>
             {% endif %}
           </li>
           <li class="nav-item">
@@ -101,6 +109,12 @@
     <div class="container-fluid">
       {% block content %} 
       {% endblock %} 
+      
+  <div style="position: fixed; bottom: 7px; left: 7px; color: #888; font-size: 0.8em; z-index: 9999;">
+    <a href="https://valentin-herrmann.com" target="_blank" style="color: #888; text-decoration: underline;">
+      © Valentin Herrmann {% now "Y" %}
+    </a>
+  </div>
     </div>
     <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
     {% include 'session_security/all.html' %}
