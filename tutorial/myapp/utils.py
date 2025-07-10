@@ -11,6 +11,7 @@ import time
 from .models import ZippedFolder
 from django.core.files.base import ContentFile
 
+
 # Unterstützte Datentypen in SQLite
 DATATYPE_MAP = {
     'int': 'INTEGER',
@@ -33,8 +34,13 @@ def parse_attribute(attr_str):
 
 
 def extract_tables(data):
-    elements = data["model"]["elements"]
-    relationships = data["model"]["relationships"]
+
+    if "model" in data: 
+        data = data["model"]
+
+
+    elements = data["elements"]
+    relationships = data["relationships"]
 
     # Filter for Class (tables) and ClassAttribute
     class_elements = {k: v for k, v in elements.items() if v["type"] == "Class"}
