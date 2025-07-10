@@ -33,5 +33,6 @@ urlpatterns = [
 
     path('api/sql/<str:filename>.sql', views_files.api_sql, name='api_sql'),
     path('api/sql/all', views_files.api_sql_all, name='api_sql_all'),
-    path('api/upload_db/', views_files.api_upload_db, name='api_upload_db')
+    path('api/upload_db/', views_files.api_upload_db, name='api_upload_db'),
+    path('api/diagram.json', views_files.api_diagram_json, name='api_diagram_json'),
 ]
