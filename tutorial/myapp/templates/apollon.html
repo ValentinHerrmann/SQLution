@@ -1,32 +1,161 @@
 {% extends "base.html" %} 
 {% block title %}
-DataSpark - Schema erstellen
+DataSpark - Klassendiagramm
 {% endblock %}
 
 
 {% block content %} 
 
-<div style="display: flex; gap: 1rem;">
-  <div style="flex: 2;">
-    <div style="display: flex; align-items: center; gap: 10px;">
-      <button id="use-uml-btn" class="btn btn-primary">Klassendiagramm als Datenbank laden</button>
-      <button id="use-uml-btn" class="btn btn-primary">Klassendiagramm herunterladen</button>
-      <div id="drop-zone" style="flex: 1; border: 2px dashed #ccc; padding: 1rem; display: flex; align-items: center; gap: 10px;">
 
-      <!-- Hidden upload form -->
-      <button id="upload-uml-btn" class="btn btn-primary" onclick="triggerUpload()">Klassendiagramm (*.json) hochladen</button>
-      <form id="uploadForm" method="post" action="{% url 'upload_json' %}" enctype="multipart/form-data">
-        {% csrf_token %}
-      <input id="json_file" type="file" name="json_file" accept=".json" required>
-    </form>
-  </div>
+<div id="div-full-page" class="flex-col" style="height:90vh">
+
+  <div id="div-top-section" class="flex-row" style="justify-content: space-evenly;">
+
+    <div id="div-db-diagram"  class="form-flex-container" style="justify-content: center;">
+      
+      <div class="flex-col" style="text-align: center;">
+        <h4 class="fas fa-database"> Datenbank</h4>
+
+        <div class="flex-row">
+          <button id="btn-model-to-db" class="btn btn-primary" onclick="loadToDB()" title="Datenbank erstellen">
+            <a class="fas fa-arrow-up"></a>
+          </button>
+          <button id="btn-db-to-model" class="btn btn-primary" onclick="loadJsonFromServer()"> <i class="fas fa-arrow-down"></i> </button>
+        </div>
+        <h4 class="fas fa-project-diagram"> Diagramm-Editor</h4>
+
+      </div>
+
     </div>
-  <div class="apollon-container" style="min-height: 85vh;"><main id="apollon"></main></div>
-</div>
 
+    <div class="flex-row">
+      <div class="flex-col">
+        <button id="btn-download-json" class="btn btn-primary" onclick="downloadJson()" title="Datenbank erstellen"> <a class="fas fa-download"> *.json</a> </button>
+        <button id="btn-download-svg" class="btn btn-primary" onclick="downloadSvg()" title="Datenbank erstellen"> <a class="fas fa-download"> *.svg</a> </button>
+        <button id="btn-download-png" class="btn btn-secondary" onclick="downloadPng()" title="Datenbank erstellen"> <a class="fas fa-download"> *.png</a> </button>
+      </div>
+
+      <div id="drop-zone" class="flex-col" style="border: 2px dashed #ccc; padding: 5px; ">
+        <!-- Hidden upload form -->
+
+        <div id="div-file-upload" class="flex-col" >
+          <button id="upload-uml-btn" class="btn btn-primary" onclick="triggerUpload()"><a class="fas fa-upload"> *.json</a></button>
+          <form id="uploadForm" method="post" action="{% url 'upload_json' %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input id="json_file" type="file" name="json_file" accept=".json" required>
+          </form>
+        </div>
+      </div>
+      </div>
+  </div>
+
+  <div class="apollon-container" style="flex: 1 1 auto; min-height: 0;">
+    <main id="apollon" style="height: 100%;"></main>
+  </div>
+  <div style="text-align: right; color: #888; font-size: 0.9em; margin-top: 2px;">
+    <a href="https://github.com/ls1intum/Apollon" target="_blank" style="color: #888; text-decoration: underline;">
+      Powered by TUM's Apollon Editor
+    </a>
+  </div>
 </div>
 
 <script>
+
+  // Custom confirmation dialog with icon
+  function showConfirmDialog(message, iconClass = 'fas fa-exclamation-triangle') {
+    return new Promise((resolve) => {
+      // Create modal HTML
+      const modalHtml = `
+        <div id="customConfirmModal" class="modal-overlay" style="
+          position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+          background: rgba(0,0,0,0.5); z-index: 9999; 
+          display: flex; justify-content: center; align-items: center;">
+          <div class="modal-content" style="
+            background: white; padding: 20px; border-radius: 8px; 
+            max-width: 400px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <div style="margin-bottom: 15px;">
+              <i class="${iconClass}" style="font-size: 48px; color: #f39c12;"></i>
+            </div>
+            <p style="margin-bottom: 20px; font-size: 16px;">${message}</p>
+            <div>
+              <button id="confirmYes" class="btn btn-danger" style="margin-right: 10px;">Ja</button>
+              <button id="confirmNo" class="btn btn-secondary">Abbrechen</button>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      // Add modal to body
+      document.body.insertAdjacentHTML('beforeend', modalHtml);
+      
+      const modal = document.getElementById('customConfirmModal');
+      const yesBtn = document.getElementById('confirmYes');
+      const noBtn = document.getElementById('confirmNo');
+      
+      // Handle button clicks
+      yesBtn.onclick = () => {
+        modal.remove();
+        resolve(true);
+      };
+      
+      noBtn.onclick = () => {
+        modal.remove();
+        resolve(false);
+      };
+      
+      // Handle clicking outside modal
+      modal.onclick = (e) => {
+        if (e.target === modal) {
+          modal.remove();
+          resolve(false);
+        }
+      };
+    });
+  }
+
+  function showAlertDialog(message, iconClass = 'fas fa-exclamation-triangle') {
+    return new Promise((resolve) => {
+      // Create modal HTML
+      const modalHtml = `
+        <div id="customConfirmModal" class="modal-overlay" style="
+          position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+          background: rgba(0,0,0,0.5); z-index: 9999; 
+          display: flex; justify-content: center; align-items: center;">
+          <div class="modal-content" style="
+            background: white; padding: 20px; border-radius: 8px; 
+            max-width: 400px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <div style="margin-bottom: 15px;">
+              <i class="${iconClass}" style="font-size: 48px; color: #f39c12;"></i>
+            </div>
+            <p style="margin-bottom: 20px; font-size: 16px;">${message}</p>
+            <div>
+              <button id="confirmYes" class="btn btn-secondary" style="margin-right: 10px;">Ok</button>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      // Add modal to body
+      document.body.insertAdjacentHTML('beforeend', modalHtml);
+      
+      const modal = document.getElementById('customConfirmModal');
+      const yesBtn = document.getElementById('confirmYes');
+      
+      // Handle button clicks
+      yesBtn.onclick = () => {
+        modal.remove();
+        resolve(true);
+      };
+      
+      // Handle clicking outside modal
+      modal.onclick = (e) => {
+        if (e.target === modal) {
+          modal.remove();
+          resolve(false);
+        }
+      };
+    });
+  }
 
   document.addEventListener('DOMContentLoaded', function() {
     const dropZone = document.getElementById('drop-zone');
@@ -40,30 +169,199 @@ DataSpark - Schema erstellen
     });
 
     // Handle the dropped file
-    dropZone.addEventListener('drop', function(e) {
+    dropZone.addEventListener('drop', async function(e) {
       e.preventDefault();
       fileInput.files = e.dataTransfer.files;
       
-      if (!window.confirm("Achtung, hierdurch wird deine aktuelle Datenbank gelöscht! Das kann nicht rückgängig gemacht werden!")) {
+      const confirmed = await showConfirmDialog(
+        "Achtung, hierdurch wird das aktuelle Klassendiagramm gelöscht! Die Datenbank wird nicht verändert.",
+        "fas fa-project-diagram"
+      );
+      
+      if (!confirmed) {
           return;
       }
-      uploadForm.submit();
+
+      if(fileInput.files.length > 0)
+      {
+        let f = fileInput.files[0];
+       //console.log(f);
+
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          try {
+           //console.log("event.target.result");
+           //console.log(event.target.result);
+            const json =event.target.result;
+           //console.log("json");
+           //console.log(json);
+            window.apollon.loadModel(json);
+          } catch (err) {
+            showAlertDialog("Fehler beim Laden der JSON-Datei: " + err.message);
+          }
+        };
+        reader.readAsText(f);
+      }
     });
   });
   
-  function triggerUpload() {
-      if (!window.confirm("Achtung, hierdurch wird deine aktuelle Datenbank gelöscht! Das kann nicht rückgängig gemacht werden!")) {
+  async function triggerUpload() {  
+    
+    const fileInput = document.getElementById('json_file');
+    if (fileInput.files.length < 1) {
+      showAlertDialog("Keine Datei zum Upload ausgewählt. Wähle mit 'Browse...' eine Datei zum Upload aus oder ziehe sie per Drag'n'Drop in den gestrichelten Kasten.");
+      return;
+    }
+
+      const confirmed = await showConfirmDialog(
+        "Achtung, hierdurch wird das aktuelle Klassendiagramm gelöscht! Die Datenbank wird nicht verändert.",
+        "fas fa-project-diagram"
+      );
+      
+      if (!confirmed) {
           return;
       }
+
+      
     uploadForm.submit();
   }
 
-  function loadToDB() {
+  async function loadToDB() {
+    let json = window.apollon.model();
 
-  }
+    const blob = new Blob([JSON.stringify(json)], { type: "application/json" });
+    const file = new File([blob], "diagram.json", { type: "application/json" });    
 
-  function downloadImage() {
+    if(! await showConfirmDialog(
+      "Achtung, hierdurch wird deine aktuelle Datenbank gelöscht! Das kann nicht rückgängig gemacht werden!",
+      "fas fa-database"
+    )) { return; }
     
+    
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    fetch("/api/diagram.json", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRFToken": csrftoken },
+        body: file
+    })
+    .then(response => {
+        if (response.ok) {//console.log("Model saved successfully"); 
+        } 
+        else {//console.log("Fehler beim Speichern der Dateien."); 
+        }
+    });
+    loadJsonFromServer();
   }
+
+  function downloadJson() {
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    fetch('/api/diagram.json', {
+        method: "GET",
+        headers: { "Content-Type": "application/json", "X-CSRFToken": csrftoken }
+      })
+      .then(response => response.json())
+      .then(data => {
+       //console.log(data);
+       //console.log(JSON.stringify(data));
+        const jsonStr = JSON.stringify(data, null, 2);
+        const blob = new Blob([jsonStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = "diagram.json";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      })
+      .catch(error => {
+        console.error('Error fetching JSON:', error);
+      });
+  }
+  async function downloadSvg() {
+   //console.log("x");
+    let blob = await window.apollon.getSvg();    
+   //console.log("y");
+    const url = URL.createObjectURL(blob);
+   //console.log(url);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = "diagram.svg";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+  function downloadPng() {
+    showAlertDialog("Diese Funktion steht noch nicht zur Verfügung. Du kannst das Diagramm stattdessen als *.svg (Vektografik) herunterladen und direkt nutzen oder zu einem *.png konvertieren.")
+  }
+
+  function loadJsonFromServer() {
+   //console.log("Loading class diagram from server")
+
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    fetch('/api/diagram.json', {
+        method: "GET",
+        headers: { "Content-Type": "application/json", "X-CSRFToken": csrftoken }
+      })
+      .then(response => response.json())
+      .then(data => {
+       //console.log('Fetched JSON from API:');
+       //console.log(data);
+       //console.log(JSON.stringify(data));
+        window.apollon.loadModel(data);
+      })
+      .catch(error => {
+        console.error('Error fetching JSON:', error);
+      });
+
+  }
+
+  loadJsonFromServer();
 </script>
+
+<style>
+  .form-flex-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      align-items: flex-start;
+  }
+  .form-flex-item {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      min-width: 140px;
+      margin-bottom: 10px;
+  }
+  @media (max-width: 600px) {
+      .form-flex-container {
+          flex-direction: column;
+          align-items: stretch;
+      }
+      .form-flex-item {
+          min-width: unset;
+          align-items: center;
+      }
+  }
+
+  .flex-col {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: stretch;
+    gap: 5px;
+    margin: 5px;
+  }
+  .flex-row {
+    display: flex;
+    flex-direction: row; /* Force horizontal layout */
+    justify-content: center;
+    align-items: stretch;
+    gap: 5px;
+    margin: 5px;
+  }
+  </style>
+
 {% endblock %} 
