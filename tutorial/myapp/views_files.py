@@ -2,8 +2,8 @@
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from .models import *
-from .utils import *  # Assuming you have this function in utils.py
-from .sqlite_connector import *  # Import sqlite3 for SQLite database connection
+from .utils import *  
+from .sqlite_connector import * 
 import json
 from datetime import datetime
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -125,20 +125,20 @@ def api_sql(request, filename:str):
             body = json.loads(body_unicode)
             sql = body['sql']
 
-            with open(f'{dir}/{filename}', 'w') as f:
+            with open(fullpath(dir,f"{filename}"), 'w') as f:
                 f.write(sql)
             sqllock_release(dir)
             return HttpResponse("File saved successfully", status=200)
 
         if(request.method == "GET"):
-            with open(f'{dir}/{filename}', 'r') as f:
+            with open(fullpath(dir,f"{filename}"), 'r') as f:
                 file_content = f.read()
                 sqllock_release(dir)
                 return HttpResponse(file_content, content_type="text/sql")
         
         if(request.method == "DELETE"):
-            if os.path.exists(f'{dir}/{filename}'):
-                os.remove(f'{dir}/{filename}')
+            if os.path.exists(fullpath(dir,f"{filename}")):
+                os.remove(fullpath(dir,f"{filename}"))
                 sqllock_release(dir)
                 return HttpResponse("File deleted successfully", status=200)
     except Exception as e:
@@ -176,7 +176,7 @@ def api_sql_all(request):
                     filename += '.sql'
                 dir = get_user_directory(request.user.username)
 
-                with open(f'{dir}/{filename}', 'w') as f:
+                with open(fullpath(dir,f"{filename}"), 'w') as f:
                     f.write(sql)
 
             sqllock_release(dir)
@@ -185,7 +185,7 @@ def api_sql_all(request):
         return HttpResponse("Unknown request", status=404)
     except Exception as e:
         print(f"Error: {e}")
-        return HttpResponse(e, status=500)
+        return HttpResponse("Internal Error", status=500)
     finally:
         sqllock_release(dir)
 
