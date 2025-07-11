@@ -283,3 +283,9 @@ def sqllock_release(dir):
     lockfile_name = f'{dir}/lockfile'
     if os.path.exists(lockfile_name):
         os.remove(lockfile_name)
+
+def fullpath(dir:str,file:str):
+    fullpath = os.path.normpath(os.path.join(dir, file))
+    if not fullpath.startswith(dir):
+        raise Exception("Invalid file path. Access denied.")
+    return fullpath

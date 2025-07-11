@@ -62,7 +62,7 @@ def load_sql_queryfile(request):
         sqlfile = ''
     if sqlfile and sqlfile != '':
         dir = get_user_directory(request.user.username)
-        with open(f"{dir}/{sqlfile}.sql", "r") as f:
+        with open(fullpath(dir,f"{sqlfile}.sql"), "r") as f:
             sql = f.read()
         form = SQLQueryForm(initial={'query': sql})
     return form

@@ -26,7 +26,10 @@ def sql_form(request):
 
     if sqlfile is not None and sqlfile != '':
         dir = get_user_directory(request.user.username)
-        with open(f"{dir}/{sqlfile}.sql", "r") as f:
+
+
+        
+        with open(fullpath(dir,f"{sqlfile}.sql"), "r") as f:
             sql = f.read()
             sql += ';'
         inputs = re.findall(r'{([^}]+)}\w?[^\[]', sql)
@@ -138,7 +141,7 @@ def sql_query_view(request):
 
             if save=='on' and sqlfile and sqlfile != '':
                 dir = get_user_directory(request.user.username)
-                with open(f"{dir}/{sqlfile}.sql", "w") as f:
+                with open(fullpath(dir,f"{sqlfile}.sql"), "w") as f:
                     f.write(query)
                 error = f"Die SQL-Abfrage wurde erfolgreich unter '{sqlfile}' gespeichert."
                 
@@ -150,8 +153,8 @@ def sql_query_view(request):
         if delete:
             error = f"Die SQL-Abfrage '{sqlfile}' in den Editor geladen und anschließend gelöscht."
             dir = get_user_directory(request.user.username)
-            if os.path.exists(f"{dir}/{sqlfile}.sql"):
-                os.remove(f"{dir}/{sqlfile}.sql")
+            if os.path.exists(fullpath(dir,f"{sqlfile}.sql")):
+                os.remove(fullpath(dir,f"{sqlfile}.sql"))
 
 
     return render_sql(request, queryForm, result, error, columns, rowcount, table_scheme_html, sqlfile)
