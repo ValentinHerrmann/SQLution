@@ -2,8 +2,8 @@
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from .models import *
-from .utils import *  # Assuming you have this function in utils.py
-from .sqlite_connector import *  # Import sqlite3 for SQLite database connection
+from .utils import *  
+from .sqlite_connector import * 
 import json
 from datetime import datetime
 from django.contrib.auth.decorators import login_required, user_passes_test
