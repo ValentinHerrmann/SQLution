@@ -16,3 +16,77 @@ class SQLFileForm(forms.Form):
 class UploadFileForm(forms.Form):
     title = forms.CharField(max_length=50)
     file = forms.FileField()
+
+class QRGeneratorForm(forms.Form):
+    LOGO_CHOICES = [
+        ('dataspark', 'DataSpark Logo (Standard)'),
+        ('custom', 'Eigenes Logo hochladen'),
+        ('none', 'Kein Logo'),
+    ]
+    
+    SHAPE_CHOICES = [
+        ('square', 'Quadratisch (Standard)'),
+        ('rounded', 'Abgerundet'),
+    ]
+    
+    BACKGROUND_CHOICES = [
+        ('transparent', 'Transparent'),
+        ('white', 'Weiß'),
+    ]
+    
+    FRAME_CHOICES = [
+        ('none', 'Kein Rahmen'),
+        ('simple', 'Einfacher Rahmen'),
+        ('rounded', 'Abgerundeter Rahmen'),
+    ]
+    
+    content = forms.CharField(
+        widget=forms.TextInput(attrs={"placeholder": "Text oder URL eingeben..."}),
+        label="QR Code Inhalt"
+    )
+    
+    logo_option = forms.ChoiceField(
+        choices=LOGO_CHOICES,
+        initial='dataspark',
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        label="Logo Option"
+    )
+    
+    custom_logo = forms.ImageField(
+        required=False,
+        label="Eigenes Logo",
+        help_text="PNG, JPG oder SVG Datei hochladen (nur bei 'Eigenes Logo' Option)."
+    )
+    
+    qr_color = forms.CharField(
+        initial='#0066cc',
+        widget=forms.TextInput(attrs={'type': 'color', 'style': 'width: 80px; height: 40px;'}),
+        label="QR Code Farbe"
+    )
+    
+    background_type = forms.ChoiceField(
+        choices=BACKGROUND_CHOICES,
+        initial='transparent',
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        label="Hintergrund"
+    )
+    
+    shape_type = forms.ChoiceField(
+        choices=SHAPE_CHOICES,
+        initial='square',
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        label="QR Code Form"
+    )
+    
+    frame_type = forms.ChoiceField(
+        choices=FRAME_CHOICES,
+        initial='none',
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        label="Rahmen"
+    )
+    
+    frame_color = forms.CharField(
+        initial='#000000',
+        widget=forms.TextInput(attrs={'type': 'color', 'style': 'width: 80px; height: 40px;'}),
+        label="Rahmen Farbe"
+    )

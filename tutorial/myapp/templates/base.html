@@ -90,6 +90,11 @@
               <a class="nav-link" href="/admin_overview/">Server Management</a>
             {% endif %}
           </li>
+          <li class="nav-item">
+            {% if user.is_authenticated and user.username == 'admin' %}
+              <a class="nav-link" href="/qr_generator/">QR Code Generator</a>
+            {% endif %}
+          </li>
         </ul>
         <ul class="navbar-nav ml-auto">
           {% if user.is_authenticated %}

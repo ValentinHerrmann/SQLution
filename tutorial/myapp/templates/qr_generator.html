@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+.qr-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.qr-svg-container {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    max-width: 400px;
+}
+
+.download-section {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.btn-download {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-download:hover {
+    background-color: #218838;
+    color: white;
+    text-decoration: none;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-group input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+.form-group input[type="file"] {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.form-row {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.form-row .form-group {
+    flex: 1;
+    margin-bottom: 0;
+    min-width: 200px;
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column;
+    }
+    
+    .form-row .form-group {
+        min-width: auto;
+    }
+}
+
+.color-input-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.help-text {
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-top: 20px;
+}
+</style>
+
+<h2>QR Code Generator</h2>
+
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    
+    <div class="form-group">
+        <label for="{{ form.content.id_for_label }}">{{ form.content.label }}</label>
+        {{ form.content }}
+        {% if form.content.help_text %}
+            <div class="help-text">{{ form.content.help_text }}</div>
+        {% endif %}
+    </div>
+    
+    <div class="form-row">
+        <div class="form-group">
+            <label for="{{ form.qr_color.id_for_label }}">{{ form.qr_color.label }}</label>
+            <div class="color-input-group">
+                {{ form.qr_color }}
+                <span>QR Code Farbe</span>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="{{ form.background_type.id_for_label }}">{{ form.background_type.label }}</label>
+            {{ form.background_type }}
+            {% if form.background_type.help_text %}
+                <div class="help-text">{{ form.background_type.help_text }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label for="{{ form.shape_type.id_for_label }}">{{ form.shape_type.label }}</label>
+            {{ form.shape_type }}
+        </div>
+    </div>
+    
+    <div class="form-row">
+        <div class="form-group">
+            <label for="{{ form.frame_type.id_for_label }}">{{ form.frame_type.label }}</label>
+            {{ form.frame_type }}
+        </div>
+        
+        <div class="form-group" id="frame-color-group">
+            <label for="{{ form.frame_color.id_for_label }}">{{ form.frame_color.label }}</label>
+            <div class="color-input-group">
+                {{ form.frame_color }}
+                <span>Rahmen Farbe</span>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="{{ form.logo_option.id_for_label }}">{{ form.logo_option.label }}</label>
+            {{ form.logo_option }}
+        </div>
+    </div>
+    
+    <div class="form-group" id="custom-logo-group" style="display: none;">
+        <label for="{{ form.custom_logo.id_for_label }}">{{ form.custom_logo.label }}</label>
+        {{ form.custom_logo }}
+        {% if form.custom_logo.help_text %}
+            <div class="help-text">{{ form.custom_logo.help_text }}</div>
+        {% endif %}
+    </div>
+    
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">QR Code erstellen</button>
+    </div>
+</form>
+
+<script>
+    // Show/hide custom logo upload based on selection
+    document.addEventListener('DOMContentLoaded', function() {
+        const logoSelect = document.querySelector('select[name="logo_option"]');
+        const customLogoGroup = document.getElementById('custom-logo-group');
+        const frameSelect = document.querySelector('select[name="frame_type"]');
+        const frameColorGroup = document.getElementById('frame-color-group');
+        const shapeSelect = document.querySelector('select[name="shape_type"]');
+        const logoGroup = logoSelect.closest('.form-group');
+        
+        function toggleCustomLogo() {
+            const selectedValue = logoSelect.value;
+            if (selectedValue === 'custom') {
+                customLogoGroup.style.display = 'block';
+            } else {
+                customLogoGroup.style.display = 'none';
+            }
+        }
+        
+        function toggleFrameColor() {
+            const selectedValue = frameSelect.value;
+            if (selectedValue === 'none') {
+                frameColorGroup.style.opacity = '0.5';
+                frameColorGroup.style.pointerEvents = 'none';
+            } else {
+                frameColorGroup.style.opacity = '1';
+                frameColorGroup.style.pointerEvents = 'auto';
+            }
+        }
+        
+        function toggleLogoOptions() {
+            const selectedShape = shapeSelect.value;
+            if (selectedShape === 'rounded') {
+                // Disable logo options for rounded QR codes
+                logoSelect.value = 'none';
+                logoSelect.disabled = true;
+                logoGroup.style.opacity = '0.5';
+                customLogoGroup.style.display = 'none';
+            } else {
+                // Enable logo options for square QR codes
+                logoSelect.disabled = false;
+                logoGroup.style.opacity = '1';
+                toggleCustomLogo(); // Update custom logo visibility
+            }
+        }
+        
+        logoSelect.addEventListener('change', toggleCustomLogo);
+        frameSelect.addEventListener('change', toggleFrameColor);
+        shapeSelect.addEventListener('change', toggleLogoOptions);
+        
+        // Initial checks
+        toggleCustomLogo();
+        toggleFrameColor();
+        toggleLogoOptions();
+    });
+</script>
+
+{% if svg_content %}
+    <div class="qr-container">
+        <div class="qr-svg-container">
+            {{ svg_content|safe }}
+        </div>
+        
+        {% if download_ready %}
+            <div class="download-section">
+                <form method="post" style="margin: 0;">
+                    {% csrf_token %}
+                    <input type="hidden" name="qr_content" value="{{ qr_content }}">
+                    <input type="hidden" name="logo_option" value="{{ logo_option }}">
+                    <input type="hidden" name="qr_color" value="{{ qr_color }}">
+                    <input type="hidden" name="background_type" value="{{ background_type }}">
+                    <input type="hidden" name="shape_type" value="{{ shape_type }}">
+                    <input type="hidden" name="frame_type" value="{{ frame_type }}">
+                    <input type="hidden" name="frame_color" value="{{ frame_color }}">
+                    <input type="hidden" name="download" value="true">
+                    <button type="submit" class="btn-download">
+                        📥 SVG herunterladen
+                    </button>
+                </form>
+                <small class="text-muted">Angepasste Farben • Gewählte Form • SVG Format</small>
+            </div>
+        {% endif %}
+    </div>
+{% endif %}
+
+{% endblock %}
