@@ -36,6 +36,7 @@ class QRGeneratorForm(forms.Form):
     ]
     
     content = forms.CharField(
+        initial='https://db.valentin-herrmann.com',
         widget=forms.TextInput(attrs={"placeholder": "Text oder URL eingeben..."}),
         label="QR Code Inhalt"
     )
@@ -54,7 +55,7 @@ class QRGeneratorForm(forms.Form):
     )
     
     qr_color = forms.CharField(
-        initial='#0066cc',
+        initial='#000000',
         widget=forms.TextInput(attrs={'type': 'color', 'style': 'width: 80px; height: 40px;'}),
         label="QR Code Farbe"
     )
@@ -68,7 +69,7 @@ class QRGeneratorForm(forms.Form):
     
     frame_type = forms.ChoiceField(
         choices=FRAME_CHOICES,
-        initial='none',
+        initial='rounded',
         widget=forms.Select(attrs={'class': 'form-control'}),
         label="Rahmen"
     )

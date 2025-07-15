@@ -311,11 +311,12 @@ def qr_generator(request):
             # Handle download request - recreate QR code from hidden fields
             content = request.POST.get('qr_content')
             logo_option = request.POST.get('logo_option', 'dataspark')
-            qr_color = request.POST.get('qr_color', '#0066cc')
+            qr_color = request.POST.get('qr_color', '#000000')
             background_type = request.POST.get('background_type', 'transparent')
             shape_type = 'square'  # Fixed to square since shape option is removed
-            frame_type = request.POST.get('frame_type', 'none')
+            frame_type = request.POST.get('frame_type', 'rounded')
             frame_color = request.POST.get('frame_color', '#000000')
+            download_format = request.POST.get('download_format', 'svg')
             
             # Convert background_type to background_color
             background_color = '#ffffff' if background_type == 'white' else '#ffffff'

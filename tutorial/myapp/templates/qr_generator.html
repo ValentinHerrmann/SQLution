@@ -23,6 +23,7 @@
     display: flex;
     gap: 10px;
     align-items: center;
+    flex-wrap: wrap;
 }
 
 .btn-download {
@@ -33,6 +34,9 @@
     border-radius: 4px;
     text-decoration: none;
     display: inline-block;
+    border: none;
+    cursor: pointer;
+    margin-right: 10px;
 }
 
 .btn-download:hover {
@@ -229,7 +233,7 @@
         
         {% if download_ready %}
             <div class="download-section">
-                <form method="post" style="margin: 0;">
+                <form method="post" style="margin: 0; display: inline-block;">
                     {% csrf_token %}
                     <input type="hidden" name="qr_content" value="{{ qr_content }}">
                     <input type="hidden" name="logo_option" value="{{ logo_option }}">
@@ -237,12 +241,12 @@
                     <input type="hidden" name="background_type" value="{{ background_type }}">
                     <input type="hidden" name="frame_type" value="{{ frame_type }}">
                     <input type="hidden" name="frame_color" value="{{ frame_color }}">
+                    <input type="hidden" name="download_format" value="svg">
                     <input type="hidden" name="download" value="true">
                     <button type="submit" class="btn-download">
                         📥 SVG herunterladen
                     </button>
                 </form>
-                <small class="text-muted">Angepasste Farben • Gewählte Form • SVG Format</small>
             </div>
         {% endif %}
     </div>
