@@ -114,23 +114,22 @@
 <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
     
-    <div class="form-group">
-        <label for="{{ form.content.id_for_label }}">{{ form.content.label }}</label>
-        {{ form.content }}
-        {% if form.content.help_text %}
-            <div class="help-text">{{ form.content.help_text }}</div>
-        {% endif %}
+    <div class="form-row">
+        <div class="form-group">
+            <label for="{{ form.content.id_for_label }}">{{ form.content.label }}</label>
+            {{ form.content }}
+            {% if form.content.help_text %}
+                <div class="help-text">{{ form.content.help_text }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label for="{{ form.logo_option.id_for_label }}">{{ form.logo_option.label }}</label>
+            {{ form.logo_option }}
+        </div>
     </div>
     
     <div class="form-row">
-        <div class="form-group">
-            <label for="{{ form.qr_color.id_for_label }}">{{ form.qr_color.label }}</label>
-            <div class="color-input-group">
-                {{ form.qr_color }}
-                <span>QR Code Farbe</span>
-            </div>
-        </div>
-        
         <div class="form-group">
             <label for="{{ form.background_type.id_for_label }}">{{ form.background_type.label }}</label>
             {{ form.background_type }}
@@ -140,8 +139,11 @@
         </div>
         
         <div class="form-group">
-            <label for="{{ form.shape_type.id_for_label }}">{{ form.shape_type.label }}</label>
-            {{ form.shape_type }}
+            <label for="{{ form.qr_color.id_for_label }}">{{ form.qr_color.label }}</label>
+            <div class="color-input-group">
+                {{ form.qr_color }}
+                <span>QR Code Farbe</span>
+            </div>
         </div>
     </div>
     
@@ -157,11 +159,6 @@
                 {{ form.frame_color }}
                 <span>Rahmen Farbe</span>
             </div>
-        </div>
-        
-        <div class="form-group">
-            <label for="{{ form.logo_option.id_for_label }}">{{ form.logo_option.label }}</label>
-            {{ form.logo_option }}
         </div>
     </div>
     
@@ -185,7 +182,6 @@
         const customLogoGroup = document.getElementById('custom-logo-group');
         const frameSelect = document.querySelector('select[name="frame_type"]');
         const frameColorGroup = document.getElementById('frame-color-group');
-        const shapeSelect = document.querySelector('select[name="shape_type"]');
         const logoGroup = logoSelect.closest('.form-group');
         
         function toggleCustomLogo() {
@@ -209,24 +205,14 @@
         }
         
         function toggleLogoOptions() {
-            const selectedShape = shapeSelect.value;
-            if (selectedShape === 'rounded') {
-                // Disable logo options for rounded QR codes
-                logoSelect.value = 'none';
-                logoSelect.disabled = true;
-                logoGroup.style.opacity = '0.5';
-                customLogoGroup.style.display = 'none';
-            } else {
-                // Enable logo options for square QR codes
-                logoSelect.disabled = false;
-                logoGroup.style.opacity = '1';
-                toggleCustomLogo(); // Update custom logo visibility
-            }
+            // Logo options are always enabled for square QR codes
+            logoSelect.disabled = false;
+            logoGroup.style.opacity = '1';
+            toggleCustomLogo(); // Update custom logo visibility
         }
         
         logoSelect.addEventListener('change', toggleCustomLogo);
         frameSelect.addEventListener('change', toggleFrameColor);
-        shapeSelect.addEventListener('change', toggleLogoOptions);
         
         // Initial checks
         toggleCustomLogo();
@@ -249,7 +235,6 @@
                     <input type="hidden" name="logo_option" value="{{ logo_option }}">
                     <input type="hidden" name="qr_color" value="{{ qr_color }}">
                     <input type="hidden" name="background_type" value="{{ background_type }}">
-                    <input type="hidden" name="shape_type" value="{{ shape_type }}">
                     <input type="hidden" name="frame_type" value="{{ frame_type }}">
                     <input type="hidden" name="frame_color" value="{{ frame_color }}">
                     <input type="hidden" name="download" value="true">

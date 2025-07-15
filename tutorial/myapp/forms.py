@@ -24,11 +24,6 @@ class QRGeneratorForm(forms.Form):
         ('none', 'Kein Logo'),
     ]
     
-    SHAPE_CHOICES = [
-        ('square', 'Quadratisch (Standard)'),
-        ('rounded', 'Abgerundet'),
-    ]
-    
     BACKGROUND_CHOICES = [
         ('transparent', 'Transparent'),
         ('white', 'Weiß'),
@@ -69,13 +64,6 @@ class QRGeneratorForm(forms.Form):
         initial='transparent',
         widget=forms.Select(attrs={'class': 'form-control'}),
         label="Hintergrund"
-    )
-    
-    shape_type = forms.ChoiceField(
-        choices=SHAPE_CHOICES,
-        initial='square',
-        widget=forms.Select(attrs={'class': 'form-control'}),
-        label="QR Code Form"
     )
     
     frame_type = forms.ChoiceField(

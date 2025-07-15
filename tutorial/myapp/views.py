@@ -16,7 +16,6 @@ import qrcode.image.svg
 import qrcode.constants
 try:
     from qrcode.image.styledpil import StyledPilImage
-    from qrcode.image.styles.moduledrawers import RoundedModuleDrawer
     STYLED_PIL_AVAILABLE = True
 except ImportError:
     STYLED_PIL_AVAILABLE = False
@@ -70,7 +69,6 @@ def sql_form(request):
 
         if request.method == 'POST' or len(inputs)+len(dropdowns) == 0:
             try:
-                print(request.POST.keys())
                 inpVals = {}
                 for inp in inputs:
                     inpVals[inp] = request.POST.get(f'input_{inp}')
@@ -150,7 +148,7 @@ def sql_query_view(request):
                         select_query = f"SELECT * FROM {table_name}"
                         cursor, columns, result, error = execute_sql_query(select_query, request.user.username)
                 except Exception as e:
-                    print(str(e))
+                    pass
 
             if save=='on' and sqlfile and sqlfile != '':
                 dir = get_user_directory(request.user.username)
@@ -271,12 +269,10 @@ def process_logo_for_qr(logo_file=None):
             image = None
             for path in possible_paths:
                 if os.path.exists(path):
-                    print(f"Found DataSpark icon at: {path}")
                     image = Image.open(path)
                     break
             
             if image is None:
-                print("DataSpark icon not found in any expected location, using fallback")
                 return None
         
         # Convert to RGBA if not already
@@ -292,15 +288,12 @@ def process_logo_for_qr(logo_file=None):
         image.save(buffer, format='PNG')
         img_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
         
-        print(f"Successfully processed logo - size: {image.width}x{image.height}")
-        
         return {
             'data': img_base64,
             'width': image.width,
             'height': image.height
         }
     except Exception as e:
-        print(f"Error processing logo: {e}")
         return None
 
 
@@ -320,13 +313,9 @@ def qr_generator(request):
             logo_option = request.POST.get('logo_option', 'dataspark')
             qr_color = request.POST.get('qr_color', '#0066cc')
             background_type = request.POST.get('background_type', 'transparent')
-            shape_type = request.POST.get('shape_type', 'square')
+            shape_type = 'square'  # Fixed to square since shape option is removed
             frame_type = request.POST.get('frame_type', 'none')
             frame_color = request.POST.get('frame_color', '#000000')
-            
-            # Force logo to 'none' for rounded QR codes
-            if shape_type == 'rounded':
-                logo_option = 'none'
             
             # Convert background_type to background_color
             background_color = '#ffffff' if background_type == 'white' else '#ffffff'
@@ -336,15 +325,14 @@ def qr_generator(request):
                 # Process logo based on selection for download - ensure download always works
                 logo_info = None
                 try:
-                    if logo_option == 'dataspark' and shape_type != 'rounded':
+                    if logo_option == 'dataspark':
                         logo_info = process_logo_for_qr()
                         # If logo processing fails, continue without logo
                         if logo_info is None:
-                            print("Warning: DataSpark logo processing failed for download, continuing without logo")
+                            pass  # Continue without logo
                     # For custom uploads, we can't recreate them on download, so skip them
-                    # For 'none' or rounded shape, logo_info remains None
+                    # For 'none' logo option, logo_info remains None
                 except Exception as e:
-                    print(f"Warning: Logo processing failed for download: {e}, continuing without logo")
                     logo_info = None
                 
                 # Ensure content is not empty
@@ -358,12 +346,10 @@ def qr_generator(request):
                         # Fallback generation
                         svg_content = generate_qr_svg(content, None, '#000000', '#ffffff', 'square', True, 'none', '#000000')
                 except Exception as e:
-                    print(f"Error in QR generation for download: {e}")
                     # Fallback generation
                     try:
                         svg_content = generate_qr_svg(content, None, '#000000', '#ffffff', 'square', True, 'none', '#000000')
                     except Exception as e2:
-                        print(f"Fallback QR generation for download also failed: {e2}")
                         svg_content = None
                 
                 svg_content = generate_qr_svg(content, logo_info, qr_color, background_color, shape_type, use_white_bg, frame_type, frame_color)
@@ -381,14 +367,9 @@ def qr_generator(request):
                 custom_logo = form.cleaned_data.get('custom_logo')
                 qr_color = form.cleaned_data['qr_color']
                 background_type = form.cleaned_data['background_type']
-                shape_type = form.cleaned_data['shape_type']
+                shape_type = 'square'  # Fixed to square since shape option is removed
                 frame_type = form.cleaned_data['frame_type']
                 frame_color = form.cleaned_data['frame_color']
-                
-                # Force logo to 'none' for rounded QR codes
-                if shape_type == 'rounded':
-                    logo_option = 'none'
-                    custom_logo = None
                 
                 # Convert background_type to background_color for processing
                 background_color = '#ffffff' if background_type == 'white' else '#ffffff'
@@ -397,19 +378,18 @@ def qr_generator(request):
                 # Process logo based on selection - ensure QR generation always works
                 logo_info = None
                 try:
-                    if logo_option == 'dataspark' and shape_type != 'rounded':
+                    if logo_option == 'dataspark':
                         logo_info = process_logo_for_qr()
                         # If logo processing fails, continue without logo
                         if logo_info is None:
-                            print("Warning: DataSpark logo processing failed, continuing without logo")
-                    elif logo_option == 'custom' and custom_logo and shape_type != 'rounded':
+                            pass  # Continue without logo
+                    elif logo_option == 'custom' and custom_logo:
                         logo_info = process_logo_for_qr(custom_logo)
                         # If custom logo processing fails, continue without logo
                         if logo_info is None:
-                            print("Warning: Custom logo processing failed, continuing without logo")
-                    # If 'none' is selected or rounded shape, logo_info remains None
+                            pass  # Continue without logo
+                    # If 'none' is selected, logo_info remains None
                 except Exception as e:
-                    print(f"Warning: Logo processing failed with error: {e}, continuing without logo")
                     logo_info = None
                 
                 # Ensure content is not empty
@@ -421,26 +401,15 @@ def qr_generator(request):
                     svg_content = generate_qr_svg(content, logo_info, qr_color, background_color, shape_type, use_white_bg, frame_type, frame_color)
                     if not svg_content:
                         # Fallback: try generating with minimal options
-                        print("Warning: QR generation failed, trying fallback")
                         svg_content = generate_qr_svg(content, None, '#000000', '#ffffff', 'square', True, 'none', '#000000')
                 except Exception as e:
-                    print(f"Error in QR generation: {e}")
                     # Fallback: try generating with minimal options
                     try:
                         svg_content = generate_qr_svg(content, None, '#000000', '#ffffff', 'square', True, 'none', '#000000')
                     except Exception as e2:
-                        print(f"Fallback QR generation also failed: {e2}")
                         svg_content = None
                 
                 download_ready = bool(svg_content)
-                
-                # Update form data to reflect forced changes for rounded QR codes
-                if shape_type == 'rounded':
-                    # Create a copy of form data with forced logo_option
-                    form_data = form.cleaned_data.copy()
-                    form_data['logo_option'] = 'none'
-                    # Don't modify the actual form object, just our working variables
-                    logo_option = 'none'
 
     return render(request, 'qr_generator.html', context={
         'form': form,
@@ -450,7 +419,7 @@ def qr_generator(request):
         'logo_option': logo_option if form.is_valid() else 'dataspark',
         'qr_color': form.cleaned_data.get('qr_color', '#0066cc') if form.is_valid() else '#0066cc',
         'background_type': form.cleaned_data.get('background_type', 'transparent') if form.is_valid() else 'transparent',
-        'shape_type': form.cleaned_data.get('shape_type', 'square') if form.is_valid() else 'square',
+        'shape_type': 'square',  # Fixed to square since shape option is removed
         'frame_type': form.cleaned_data.get('frame_type', 'none') if form.is_valid() else 'none',
         'frame_color': form.cleaned_data.get('frame_color', '#000000') if form.is_valid() else '#000000',
         'logo_info': logo_info
@@ -483,108 +452,103 @@ def generate_qr_svg(content, logo_info=None, qr_color='#0066cc', background_colo
         # Determine if background should be transparent
         use_transparent_bg = not use_white_bg
         
-        # Create QR code with appropriate factory based on shape
-        if shape_type == 'rounded' and STYLED_PIL_AVAILABLE:
-            # For rounded shapes, create our own SVG with rounded rectangles
-            # Note: Logos are not supported for rounded QR codes
-            qr = qrcode.QRCode(
-                version=1,
-                error_correction=qrcode.constants.ERROR_CORRECT_M,  # Use standard error correction for rounded
-                box_size=10,
-                border=4,
-            )
-            qr.add_data(content)
-            qr.make(fit=True)
+        # Create QR code with SVG factory for square shapes
+        factory = qrcode.image.svg.SvgPathImage
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_H if logo_info else qrcode.constants.ERROR_CORRECT_M,
+            box_size=10,
+            border=4,
+            image_factory=factory
+        )
+        
+        qr.add_data(content)
+        qr.make(fit=True)
+        
+        # Generate SVG
+        svg_img = qr.make_image(fill_color=qr_color)
+        
+        # Get SVG content as string
+        svg_buffer = io.BytesIO()
+        svg_img.save(svg_buffer)
+        svg_content = svg_buffer.getvalue().decode('utf-8')
+        
+        # Parse SVG to customize and add logo
+        root = ET.fromstring(svg_content)
+        
+        # Handle background color
+        if use_transparent_bg:
+            # Remove any background rectangles to make it transparent
+            for rect in root.findall('.//{http://www.w3.org/2000/svg}rect'):
+                if rect.get('fill') == 'white' or rect.get('fill') == '#ffffff':
+                    root.remove(rect)
             
-            # Generate SVG directly with rounded modules (logo_info will be ignored)
-            return generate_rounded_qr_svg(qr, qr_color, use_white_bg, frame_type, frame_color, logo_info)
-            
+            # Also handle path-based backgrounds but preserve QR code color
+            for path in root.findall('.//{http://www.w3.org/2000/svg}path'):
+                if path.get('fill') == 'white' or path.get('fill') == '#ffffff':
+                    path.set('fill', 'none')
+                # Ensure QR code paths keep the correct color
+                elif path.get('fill') != qr_color and path.get('fill') not in ['none', 'transparent']:
+                    path.set('fill', qr_color)
         else:
-            # Use SVG factory for square shapes
-            factory = qrcode.image.svg.SvgPathImage
-            qr = qrcode.QRCode(
-                version=1,
-                error_correction=qrcode.constants.ERROR_CORRECT_H if logo_info else qrcode.constants.ERROR_CORRECT_M,
-                box_size=10,
-                border=4,
-                image_factory=factory
-            )
+            # Set white background color
+            svg_ns = 'http://www.w3.org/2000/svg'
+            ET.register_namespace('', svg_ns)
             
-            qr.add_data(content)
-            qr.make(fit=True)
-            
-            # Generate SVG
-            svg_img = qr.make_image(fill_color=qr_color)
-            print(f"QR Code generated with color: {qr_color}")
-            
-            # Get SVG content as string
-            svg_buffer = io.BytesIO()
-            svg_img.save(svg_buffer)
-            svg_content = svg_buffer.getvalue().decode('utf-8')
-            
-            # Parse SVG to customize and add logo
-            root = ET.fromstring(svg_content)
-            
-            # Handle background color
-            if use_transparent_bg:
-                # Remove any background rectangles to make it transparent
-                for rect in root.findall('.//{http://www.w3.org/2000/svg}rect'):
-                    if rect.get('fill') == 'white' or rect.get('fill') == '#ffffff':
-                        root.remove(rect)
-                
-                # Also handle path-based backgrounds but preserve QR code color
-                for path in root.findall('.//{http://www.w3.org/2000/svg}path'):
-                    if path.get('fill') == 'white' or path.get('fill') == '#ffffff':
-                        path.set('fill', 'none')
-                    # Ensure QR code paths keep the correct color
-                    elif path.get('fill') != qr_color and path.get('fill') not in ['none', 'transparent']:
-                        path.set('fill', qr_color)
-            else:
-                # Set white background color
-                svg_ns = 'http://www.w3.org/2000/svg'
-                ET.register_namespace('', svg_ns)
-                
-                # Get SVG dimensions
-                viewbox = root.get('viewBox')
-                if viewbox:
-                    vb_parts = viewbox.split()
-                    if len(vb_parts) >= 4:
-                        vb_x, vb_y, width, height = map(float, vb_parts)
-                    else:
-                        vb_x, vb_y, width, height = 0, 0, 100, 100
+            # Get SVG dimensions
+            viewbox = root.get('viewBox')
+            if viewbox:
+                vb_parts = viewbox.split()
+                if len(vb_parts) >= 4:
+                    vb_x, vb_y, width, height = map(float, vb_parts)
                 else:
                     vb_x, vb_y, width, height = 0, 0, 100, 100
-                
-                # Add white background rectangle
-                bg_rect = ET.Element(f'{{{svg_ns}}}rect')
-                bg_rect.set('x', str(vb_x))
-                bg_rect.set('y', str(vb_y))
-                bg_rect.set('width', str(width))
-                bg_rect.set('height', str(height))
-                bg_rect.set('fill', '#ffffff')
-                root.insert(0, bg_rect)  # Insert at beginning
-                
-                # Ensure QR code paths have the correct color
-                for path in root.findall('.//{http://www.w3.org/2000/svg}path'):
-                    if path.get('fill') and path.get('fill') not in ['white', '#ffffff', 'none', 'transparent']:
-                        path.set('fill', qr_color)
+            else:
+                vb_x, vb_y, width, height = 0, 0, 100, 100
             
-            # Add frame if requested
-            if frame_type != 'none':
-                add_frame_to_svg(root, frame_type, frame_color)
+            # Add white background rectangle
+            bg_rect = ET.Element(f'{{{svg_ns}}}rect')
+            bg_rect.set('x', str(vb_x))
+            bg_rect.set('y', str(vb_y))
+            bg_rect.set('width', str(width))
+            bg_rect.set('height', str(height))
+            bg_rect.set('fill', '#ffffff')
+            root.insert(0, bg_rect)  # Insert at beginning
             
-            # Add logo if provided
-            if logo_info:
-                add_logo_to_svg(root, logo_info)
-            
-            # Convert back to string with proper SVG declaration
-            svg_content = '<?xml version="1.0" encoding="UTF-8"?>\n'
-            svg_content += ET.tostring(root, encoding='unicode', method='xml')
-            
-            return svg_content
+            # Ensure QR code paths have the correct color
+            for path in root.findall('.//{http://www.w3.org/2000/svg}path'):
+                if path.get('fill') and path.get('fill') not in ['white', '#ffffff', 'none', 'transparent']:
+                    path.set('fill', qr_color)
+        
+        # Add frame if requested
+        if frame_type != 'none':
+            add_frame_to_svg(root, frame_type, frame_color)
+        
+        # Add logo if provided
+        if logo_info:
+            add_logo_to_svg(root, logo_info)
+        
+        # Convert back to string with proper SVG declaration
+        svg_content = '<?xml version="1.0" encoding="UTF-8"?>\n'
+        svg_content += ET.tostring(root, encoding='unicode', method='xml')
+        
+        # Fix SVG namespace issues that can cause rendering problems
+        svg_content = svg_content.replace('svg:svg', 'svg')
+        svg_content = svg_content.replace('svg:path', 'path')
+        svg_content = svg_content.replace('svg:rect', 'rect')
+        svg_content = svg_content.replace('svg:image', 'image')
+        svg_content = svg_content.replace('xmlns:svg="http://www.w3.org/2000/svg"', 'xmlns="http://www.w3.org/2000/svg"')
+        
+        # Enhanced namespace cleanup to handle both svg: and ns0: prefixes
+        svg_content = svg_content.replace('ns0:svg', 'svg')
+        svg_content = svg_content.replace('ns0:path', 'path')
+        svg_content = svg_content.replace('ns0:rect', 'rect')
+        svg_content = svg_content.replace('ns0:image', 'image')
+        svg_content = svg_content.replace('xmlns:ns0="http://www.w3.org/2000/svg"', 'xmlns="http://www.w3.org/2000/svg"')
+        
+        return svg_content
         
     except Exception as e:
-        print(f"Error generating QR SVG: {e}")
         # Create a minimal fallback QR code
         try:
             # Ensure content exists
@@ -609,10 +573,24 @@ def generate_qr_svg(content, logo_info=None, qr_color='#0066cc', background_colo
             
             # Add proper SVG declaration
             fallback_svg = '<?xml version="1.0" encoding="UTF-8"?>\n' + fallback_content
+            
+            # Fix SVG namespace issues that can cause rendering problems
+            fallback_svg = fallback_svg.replace('svg:svg', 'svg')
+            fallback_svg = fallback_svg.replace('svg:path', 'path')
+            fallback_svg = fallback_svg.replace('svg:rect', 'rect')
+            fallback_svg = fallback_svg.replace('svg:image', 'image')
+            fallback_svg = fallback_svg.replace('xmlns:svg="http://www.w3.org/2000/svg"', 'xmlns="http://www.w3.org/2000/svg"')
+            
+            # Enhanced namespace cleanup to handle both svg: and ns0: prefixes
+            fallback_svg = fallback_svg.replace('ns0:svg', 'svg')
+            fallback_svg = fallback_svg.replace('ns0:path', 'path')
+            fallback_svg = fallback_svg.replace('ns0:rect', 'rect')
+            fallback_svg = fallback_svg.replace('ns0:image', 'image')
+            fallback_svg = fallback_svg.replace('xmlns:ns0="http://www.w3.org/2000/svg"', 'xmlns="http://www.w3.org/2000/svg"')
+            
             return fallback_svg
             
         except Exception as e2:
-            print(f"Fallback QR generation also failed: {e2}")
             return None
 
 
@@ -713,10 +691,22 @@ def generate_rounded_qr_svg(qr, qr_color, use_white_bg, frame_type, frame_color,
         svg_content = '<?xml version="1.0" encoding="UTF-8"?>\n'
         svg_content += ET.tostring(svg_root, encoding='unicode', method='xml')
         
+        # Fix SVG namespace issues that can cause rendering problems
+        # Handle both svg: and ns0: prefixes
+        svg_content = svg_content.replace('svg:svg', 'svg')
+        svg_content = svg_content.replace('svg:path', 'path')
+        svg_content = svg_content.replace('svg:rect', 'rect')
+        svg_content = svg_content.replace('svg:image', 'image')
+        svg_content = svg_content.replace('ns0:svg', 'svg')
+        svg_content = svg_content.replace('ns0:path', 'path')
+        svg_content = svg_content.replace('ns0:rect', 'rect')
+        svg_content = svg_content.replace('ns0:image', 'image')
+        svg_content = svg_content.replace('xmlns:svg="http://www.w3.org/2000/svg"', 'xmlns="http://www.w3.org/2000/svg"')
+        svg_content = svg_content.replace('xmlns:ns0="http://www.w3.org/2000/svg"', '')
+        
         return svg_content
         
     except Exception as e:
-        print(f"Error generating rounded QR SVG: {e}")
         return None
 
 
@@ -726,7 +716,6 @@ def convert_pil_to_svg(pil_img, logo_info, qr_color, background_color, shape_typ
     """
     This function is kept for compatibility but should not be used for rounded QR codes
     """
-    print("Warning: convert_pil_to_svg called - this should not happen for rounded QR codes")
     return convert_pil_to_svg_fallback(pil_img, logo_info, qr_color, background_color, shape_type, frame_type, frame_color)
 
 
@@ -774,7 +763,6 @@ def convert_pil_to_svg_fallback(pil_img, logo_info, qr_color, background_color, 
         
         return svg_content
     except Exception as e:
-        print(f"Error in fallback PIL to SVG conversion: {e}")
         return None
 
 
@@ -832,7 +820,7 @@ def add_frame_to_svg(root, frame_type, frame_color='#000000'):
             root.append(frame_rect)
             
     except Exception as e:
-        print(f"Error adding frame to SVG: {e}")
+        pass
 
 
 def add_logo_to_svg(root, logo_info):
@@ -875,7 +863,6 @@ def add_logo_to_svg(root, logo_info):
         
         if logo_info and logo_info.get('data'):
             # Use uploaded or default DataSpark image
-            print("Using image logo from logo_info")
             image_elem = ET.Element(f'{{{svg_ns}}}image')
             image_elem.set('x', str(center_x - logo_size))
             image_elem.set('y', str(center_y - logo_size))
@@ -886,7 +873,6 @@ def add_logo_to_svg(root, logo_info):
             root.append(image_elem)
         else:
             # Fallback to geometric logo
-            print("Using fallback geometric logo")
             logo_group = ET.Element(f'{{{svg_ns}}}g')
             logo_group.set('transform', f'translate({center_x},{center_y})')
             
@@ -909,7 +895,7 @@ def add_logo_to_svg(root, logo_info):
             root.append(logo_group)
             
     except Exception as e:
-        print(f"Error adding logo to SVG: {e}")
+        pass
 
 
 def create_rounded_path_for_component(component, box_size, border, corner_radius):
