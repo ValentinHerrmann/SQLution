@@ -7,8 +7,7 @@ from django.apps import apps
 import form_designer
 import shutil
 import psutil
-
-
+from django.contrib.auth import get_user_model
 from .views_helpers import is_global_admin
 
 from .forms import SQLQueryForm,UploadFileForm
@@ -48,6 +47,20 @@ def logged_out(request):
     request.session.flush()  # Clear the session data
     return redirect('/accounts/login')  # Redirect to the login page+
     
+@login_required
+@user_passes_test(is_global_admin)
+def access_tokens(request):
+    context={}
+
+    User = get_user_model()
+    users = User.objects.all()
+
+    # TODO: add a list of usernames for dropdown menu and use admin as default
+    # When username selected display it's tokens with option so add another with all required options
+
+
+
+    return render(request, 'access_tokens.html', context)
 
 @login_required
 @user_passes_test(is_global_admin)

@@ -54,7 +54,7 @@
           <div class="d-flex align-items-center h-100" style="height: 100%;">
             <b style="color: #082951; font-size: 1.1em; margin-top: 6px;">DataSpark</b>
           </div>
-          <span style="color: #bbbbbb; font-size: 0.5em; margin-top: -8px;">0.1.5</span> <!-- SOFTWARE VERSION -->
+          <span style="color: #bbbbbb; font-size: 0.5em; margin-top: -8px;">0.1.5 #43</span> <!-- SOFTWARE VERSION -->
         </div>
       </a>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
@@ -83,6 +83,11 @@
           <li class="nav-item">
             {% if user.is_authenticated and user.username == 'admin' %}
               <a class="nav-link" href="/admin/">User Management</a>
+            {% endif %}
+          </li>
+          <li class="nav-item">
+            {% if user.is_authenticated and user.username == 'admin' %}
+              <a class="nav-link" href="/access_tokens/">Access Tokens</a>
             {% endif %}
           </li>
           <li class="nav-item">

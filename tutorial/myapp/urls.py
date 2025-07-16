@@ -1,6 +1,7 @@
 from django.urls import include, path, re_path
 from . import views, views_user, views_simple, views_files
 from django.views.generic import RedirectView
+from sesame.views import LoginView
 favicon_view = RedirectView.as_view(url='/static/favicon.ico', permanent=True)
 
 urlpatterns = [
@@ -13,6 +14,7 @@ urlpatterns = [
     path('accounts/login/', views_user.CustomLoginView.as_view(), name='login'),
     path('logged_out/', views_user.logged_out, name='logged_out'),
     path('logged_in/', views_user.logged_in, name='logged_in'),
+    path("sesame/login/", LoginView.as_view(), name="sesame-login"),
 
     path('upload_db/', views_files.upload_db, name='upload_db'),
     path('download_db/', views_files.download_db, name='download_db'),
@@ -27,6 +29,7 @@ urlpatterns = [
 
     path('qr_generator/', views.qr_generator, name='qr_generator'),
     path('admin_overview/', views_user.admin_overview, name='admin_overview'),
+    path('access_tokens/', views_user.access_tokens, name='access_tokens'),
     path('api/system-data/', views_user.get_system_data, name='get_system_data'),
 
     path('sql_ide/', views.sql_ide, name='sql_ide'),
