@@ -5,75 +5,119 @@ DataSpark - Resource Overview
 {% endblock %}
 {% block content %}
 <div class="container mt-4">
-  <h2>Admin Overview
-  <a href="?restart=true" class="btn btn-danger">Update and Restart</a>
-</h2>
-  <p>Last commit: <i>{{ commit }}</i></p>
-  <p>Last launched: <i>{{ last_launched }}</i></p>
-  <p>Working dir: <i>{{ wdir }}</i></p>
-  <!-- System Drive Fullness Bar -->
-  <div class="mb-4">
-    <h5>System Drive Usage</h5>
-    <div class="progress" style="height: 25px;">
-      <div 
-        id="drive-progress-bar"
-        class="progress-bar" 
-        role="progressbar" 
-        style="width: {{ fullness_percentage }}%;" 
-        aria-valuenow="{{ fullness_percentage }}" 
-        aria-valuemin="0" 
-        aria-valuemax="100">
-        {{ fullness_percentage }}%
+  <div class="row">
+    <div class="col-12">
+      <!-- Header -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Admin Overview</h2>
+        <a href="?restart=true" class="btn btn-danger">Update and Restart</a>
+      </div>
+
+      <!-- System Info -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <h5 class="card-title">System Information</h5>
+          <p>Last commit: <a href="https://github.com/ValentinHerrmann/DataSpark/commit/{{ commit_hash }}" target="_blank" rel="noopener noreferrer"><i>{{ commit }}</i></a></p>
+          <p>Last launched: <i>{{ last_launched }}</i></p>
+          <p>Working dir: <i>{{ wdir }}</i></p>
+        </div>
+      </div>
+
+      <!-- Performance Metrics Row -->
+      <div class="row mb-4">
+        <!-- System Drive Usage -->
+        <div class="col-lg-4 mb-4 mb-lg-0">
+          <div class="card h-100">
+            <div class="card-body">
+              <h5 class="card-title">System Drive Usage</h5>
+              <div class="progress" style="height: 25px;">
+                <div 
+                  id="drive-progress-bar"
+                  class="progress-bar" 
+                  role="progressbar" 
+                  style="width: {{ fullness_percentage }}%;" 
+                  aria-valuenow="{{ fullness_percentage }}" 
+                  aria-valuemin="0" 
+                  aria-valuemax="100">
+                  {{ fullness_percentage }}%
+                </div>
+              </div>
+              <p class="mt-2">Free: <span id="drive-free">{{ free_gb }}</span> GB of <span id="drive-total">{{ total_gb }}</span> GB</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- RAM Usage -->
+        <div class="col-lg-4 mb-4 mb-lg-0">
+          <div class="card h-100">
+            <div class="card-body">
+              <h5 class="card-title">RAM Usage</h5>
+              <div class="progress" style="height: 25px;">
+                <div 
+                  id="ram-progress-bar"
+                  class="progress-bar bg-success" 
+                  role="progressbar" 
+                  style="width: {{ ram_percentage }}%;" 
+                  aria-valuenow="{{ ram_percentage }}" 
+                  aria-valuemin="0" 
+                  aria-valuemax="100">
+                  {{ ram_percentage }}%
+                </div>
+              </div>
+              <p class="mt-2">Free: <span id="ram-free">{{ ram_free }}</span> GB of <span id="ram-total">{{ ram_total }}</span> GB</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- CPU Usage -->
+        <div class="col-lg-4">
+          <div class="card h-100">
+            <div class="card-body">
+              <h5 class="card-title">CPU Usage</h5>
+              <div class="progress" style="height: 25px;">
+                <div 
+                  id="cpu-progress-bar"
+                  class="progress-bar bg-info" 
+                  role="progressbar" 
+                  style="width: {{ cpu_percentage }}%;" 
+                  aria-valuenow="{{ cpu_percentage }}" 
+                  aria-valuemin="0" 
+                  aria-valuemax="100">
+                  {{ cpu_percentage }}%
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Directory List -->
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Directories</h5>
+          <div id="directory-list" class="file-tree">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Size</th>
+                  <th>Last Modified</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in users %}
+                  <tr>
+                    <td><strong>{{ item.name }}</strong></td>
+                    <td>{{ item.size }}</td>
+                    <td>{{ item.last_modified }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
-    <p>Free: <span id="drive-free">{{ free_gb }}</span> GB of <span id="drive-total">{{ total_gb }}</span> GB</p>
-  </div>
-
-  <!-- RAM Usage -->
-  <div class="mb-4">
-    <h5>RAM Usage</h5>
-    <div class="progress" style="height: 25px;">
-      <div 
-        id="ram-progress-bar"
-        class="progress-bar bg-success" 
-        role="progressbar" 
-        style="width: {{ ram_percentage }}%;" 
-        aria-valuenow="{{ ram_percentage }}" 
-        aria-valuemin="0" 
-        aria-valuemax="100">
-        {{ ram_percentage }}%
-      </div>
-    </div>
-    <p>Free: <span id="ram-free">{{ ram_free }}</span> GB of <span id="ram-total">{{ ram_total }}</span> GB</p>
-  </div>
-
-  <!-- CPU Usage -->
-  <div class="mb-4">
-    <h5>CPU Usage</h5>
-    <div class="progress" style="height: 25px;">
-      <div 
-        id="cpu-progress-bar"
-        class="progress-bar bg-info" 
-        role="progressbar" 
-        style="width: {{ cpu_percentage }}%;" 
-        aria-valuenow="{{ cpu_percentage }}" 
-        aria-valuemin="0" 
-        aria-valuemax="100">
-        {{ cpu_percentage }}%
-      </div>
-    </div>
-  </div>
-
-  <!-- Directory List -->
-  <div class="mb-4">
-    <h5>Directories</h5>
-    <ul id="directory-list" class="file-tree">
-      {% for item in users %}
-        <li>
-          <strong>{{ item.name }}:</strong> {{ item.size }}, last modified: {{ item.last_modified }}
-        </li>
-      {% endfor %}
-    </ul>
   </div>
 </div>
 
@@ -100,23 +144,12 @@ DataSpark - Resource Overview
 
       // Update Directory List as a Table
       const directoryList = document.getElementById("directory-list");
-      directoryList.innerHTML = `
-        <table class="table table-striped">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Size</th>
-            <th>Last Modified</th>
-          </tr>
-        </thead>
-        <tbody>
-        </tbody>
-        </table>`;
       const tableBody = directoryList.querySelector("tbody");
+      tableBody.innerHTML = ""; // Clear existing rows
       data.directories.forEach(item => {
         const row = document.createElement("tr");
         row.innerHTML = `
-        <td>${item.name}</td>
+        <td><strong>${item.name}</strong></td>
         <td>${item.size}</td>
         <td>${item.last_modified}</td>`;
         tableBody.appendChild(row);
