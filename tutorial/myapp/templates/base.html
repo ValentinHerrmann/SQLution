@@ -36,10 +36,28 @@
   <link rel="stylesheet" href="/static/sql-ide/sql-ide-embedded.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
+  <style>
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+    .main-content {
+      height: calc(100vh - 56px - 30px); /* viewport height minus navbar and footer */
+      overflow-y: auto;
+    }
+    .navbar {
+      flex-shrink: 0;
+    }
+    footer {
+      flex-shrink: 0;
+      height: 30px;
+    }
+  </style>
+
 
 
    </head>
-  <body>
+  <body class="d-flex flex-column" style="height: 100vh;">
     {% load static %}
     {% load extrafilters %}    
     {% if not user.is_authenticated %}
@@ -111,16 +129,26 @@
         </ul>
       </div>
     </nav>
-    <div class="container-fluid">
+    <div class="container-fluid main-content">
       {% block content %} 
       {% endblock %} 
-      
-  <div style="position: fixed; bottom: 7px; left: 7px; color: #888; font-size: 0.8em; z-index: 9999;">
-    <a href="https://valentin-herrmann.com" target="_blank" style="color: #888; text-decoration: underline;">
-      © Valentin Herrmann {% now "Y" %}
-    </a>
-  </div>
     </div>
+    
+    <!-- Footer with copyright -->
+    <footer class="py-2 bg-light border-top">
+      <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center">
+          <small class="text-muted">
+            <a href="https://valentin-herrmann.com" target="_blank" class="text-muted">
+              © Valentin Herrmann {% now "Y" %}
+            </a>
+          </small>
+          <small class="text-muted">
+            {% block powered_by %}{% endblock %}
+          </small>
+        </div>
+      </div>
+    </footer>
     <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
     {% include 'session_security/all.html' %}
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js" ></script>
