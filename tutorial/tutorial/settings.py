@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 
 import os
 from dotenv import load_dotenv
+from datetime import timedelta
 
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -167,3 +168,12 @@ SECURE_CONTENT_NOSNIFF = False
 SESSION_SECURITY_WARN_AFTER = 3600
 
 SESSION_SECURITY_EXPIRE_AFTER  = 3500
+
+SESAME_INVALIDATE_ON_EMAIL_CHANGE = True
+
+SESAME_INVALIDATE_ON_PASSWORD_CHANGE = True
+
+SESAME_MAX_AGE = timedelta (
+    #seconds=10, 
+    days=365
+    )
