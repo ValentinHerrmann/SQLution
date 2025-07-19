@@ -48,7 +48,7 @@ def runSql(sql:str, username:str):
     dbname = get_db_name(username)
     if dbname is None:
         #print("No database name provided.")
-        return None
+        raise Exception('No database name provided')
     with sqlite3.connect(dbname,autocommit=True) as con:
         cur = con.cursor()
         for s in sql.split(';'):

@@ -188,8 +188,7 @@ def overview(request):
     for t in tablenames:
         cursor11 = runSql(f"SELECT * FROM {t} LIMIT 11;", request.user.username)
         cursor10 = runSql(f"SELECT * FROM {t} LIMIT 10;", request.user.username)
-        c10_result = cursor10.fetchall()
-
+        c10_result = remove_nones_from_sqlresult(cursor10.fetchall())
         tables.append(
             {
                 'name': t,

@@ -30,6 +30,7 @@ def execute_sql_query(query, username):
     
 
 def render_sql_form(request, sql, inputs, sqlfile, result, error, columns, dropdowns):
+    result = remove_nones_from_sqlresult(result)
     return render(request, 'sql_form.html', {
         'inputs': inputs,
         'dropdowns': dropdowns,

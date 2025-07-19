@@ -286,6 +286,11 @@ def sqllock_release(dir):
 
 def fullpath(dir:str,file:str):
     normalizedPath = os.path.normpath(os.path.join(dir, file))
-    if not normalizedPath.startswith(dir):
+    if not normalizedPath.startswith(os.path.normpath(dir)):
         raise Exception("Invalid file path. Access denied.")
     return normalizedPath
+
+def remove_nones_from_sqlresult(result:list):
+    if result:
+        return [tuple('' if v is None else v for v in row) for row in result]
+    return []
