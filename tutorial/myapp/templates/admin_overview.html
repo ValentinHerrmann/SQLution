@@ -10,7 +10,16 @@ DataSpark - Resource Overview
       <!-- Header -->
       <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Admin Overview</h2>
-        <a href="?restart=true" class="btn btn-danger">Update and Restart</a>
+        <div>
+          <a href="{% url 'download_resource_logs' %}" class="btn btn-success me-2">
+            <i class="bi bi-download"></i> Download CSV Logs
+          </a>
+          <form method="post" style="display: inline;">
+            {% csrf_token %}
+            <input type="hidden" name="restart" value="true">
+            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to restart the server?')">Update and Restart</button>
+          </form>
+        </div>
       </div>
 
       <!-- System Info -->
@@ -25,8 +34,21 @@ DataSpark - Resource Overview
 
       <!-- Performance Metrics Row -->
       <div class="row mb-4">
+        <!-- Logged-in Users -->
+        <div class="col-lg-3 mb-4 mb-lg-0">
+          <div class="card h-100">
+            <div class="card-body">
+              <h5 class="card-title">Active Users</h5>
+              <div class="text-center">
+                <h2 id="logged-in-users" class="text-primary">{{ logged_in_users|default:0 }}</h2>
+                <p class="mb-0">Currently logged in</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- System Drive Usage -->
-        <div class="col-lg-4 mb-4 mb-lg-0">
+        <div class="col-lg-3 mb-4 mb-lg-0">
           <div class="card h-100">
             <div class="card-body">
               <h5 class="card-title">System Drive Usage</h5>
@@ -48,7 +70,7 @@ DataSpark - Resource Overview
         </div>
 
         <!-- RAM Usage -->
-        <div class="col-lg-4 mb-4 mb-lg-0">
+        <div class="col-lg-3 mb-4 mb-lg-0">
           <div class="card h-100">
             <div class="card-body">
               <h5 class="card-title">RAM Usage</h5>
@@ -70,7 +92,7 @@ DataSpark - Resource Overview
         </div>
 
         <!-- CPU Usage -->
-        <div class="col-lg-4">
+        <div class="col-lg-3">
           <div class="card h-100">
             <div class="card-body">
               <h5 class="card-title">CPU Usage</h5>
@@ -123,9 +145,27 @@ DataSpark - Resource Overview
 
 <script>
   function fetchSystemData() {
+    console.log("Fetching system data...");
     fetch("{% url 'get_system_data' %}")
-      .then(response => response.json())
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
     .then(data => {
+      console.log("Received data:", data);
+      console.log("Logged-in users from API:", data.logged_in_users);
+      
+      // Update Logged-in Users
+      const loggedInUsersElement = document.getElementById("logged-in-users");
+      if (loggedInUsersElement) {
+        loggedInUsersElement.textContent = data.logged_in_users;
+        console.log("Updated display to:", data.logged_in_users);
+      } else {
+        console.error("Could not find logged-in-users element");
+      }
+
       // Update System Drive Usage
       document.getElementById("drive-progress-bar").style.width = data.fullness_percentage + "%";
       document.getElementById("drive-progress-bar").textContent = data.fullness_percentage + "%";
@@ -155,10 +195,18 @@ DataSpark - Resource Overview
         tableBody.appendChild(row);
       });
       })
-      .catch(error => console.error("Error fetching system data:", error));
+      .catch(error => {
+        console.error("Error fetching system data:", error);
+        // Don't stop trying on errors
+      });
   }
+  
+  // Initial fetch
+  console.log("Starting initial fetch...");
   fetchSystemData();
-  // Fetch data every 5 seconds
+  
+  // Set up interval for updates
+  console.log("Setting up interval with rate:", {{refresh_rate}});
   setInterval(fetchSystemData, {{refresh_rate}});
 </script>
 {% endblock %}
