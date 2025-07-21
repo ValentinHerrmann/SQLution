@@ -1,111 +1,15 @@
-
-from django.http import HttpResponse
-from django.shortcuts import redirect
-from .models import *
-from .utils import *  
-from .sqlite_connector import * 
 import json
-from datetime import datetime
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.shortcuts import redirect
-from .views_helpers import is_db_admin
-import zipfile
-import os
+from django.http import HttpResponse, JsonResponse
+import psutil
+from myapp.utils.decorators import *
+from django.contrib.auth.decorators import login_required,user_passes_test
+from myapp.utils.directories import *
+from myapp.utils.diagram import load_json
+from myapp.utils.utils import *
+from myapp.utils.users import *
 
-
-@user_passes_test(is_db_admin)
-@login_required
-def download_db(request):
-    try:
-        db_file = open(get_db_name(request.user.username), "rb").read()
-        response = HttpResponse(db_file, content_type='application/octet-stream')
-        response['Content-Disposition'] = f'attachment; filename="datenbank_{datetime.now().strftime("%Y-%m-%d_%H-%M")}.db"'
-        return response
-    except Exception as e:
-        return redirect('overview')  # Redirect if no database exists for the user
-
-@login_required
-@user_passes_test(is_db_admin)
-def upload_db(request):
-    if request.method == "POST" and request.FILES.get('db_file'):
-        db_file = request.FILES['db_file']
-        with open(get_db_name(request.user.username), "wb+") as destination:
-            for chunk in db_file.chunks():
-                destination.write(chunk)
-    return redirect('overview')
-
-def load_json(json_bytes, username):
-    try:
-        json_string = json_bytes.decode('utf-8')
-        data = json.loads(json_string)
-        
-        sql_output = format_sql(extract_tables(data))
-
-        with open(get_user_directory(username)+'/_CreateDB.sql_', "w") as f:
-            f.write(sql_output)
-        with open(get_user_directory(username)+'/model.json', "wb+") as f:
-            f.write(json_bytes)
-        create_db(sql_output, username)  # Call the function to execute SQL statements
-
-    except Exception as e:
-        print(f"Error: {e}")
-
-
-@login_required
-@user_passes_test(is_db_admin)
-def upload_json(request):
-    if request.method == 'POST' and request.FILES.get('json_file'):
-        json_file = request.FILES['json_file']
-        load_json(json_file, request.user.username)
-    return redirect('apollon')
-
-@login_required
-@user_passes_test(is_db_admin)
-def download_zip(request):
-    try:
-        zip_file = zip_and_save_directory(get_user_directory(request.user.username), False)
-        response = HttpResponse(zip_file, content_type='application/zip')
-        response['Content-Disposition'] = f'attachment; filename="datenbank_{request.user.username[:-6]}{datetime.now().strftime("%Y-%m-%d")}.zip"'
-        return response
-    except Exception as e:
-        return redirect('overview')
-    
-
-@login_required
-@user_passes_test(is_db_admin)
-def upload_zip(request):
-    #print("Upload DB")
-    if request.method == "POST" and request.FILES.get('zip_file'):
-        zip_file = request.FILES['zip_file']
-        dir = get_user_directory(request.user.username)
-
-        with zipfile.ZipFile(zip_file, 'r') as zip_ref:
-            zip_ref.extractall(dir)
-    return redirect('overview')
-
-@login_required
-@user_passes_test(is_db_admin)
-def read_file(request, username):
-    if(username != request.user.username):
-        print("passt net...")
-    #    logout(request)
-    #    request.session.flush()
-    #    redirect('/accounts/login')
-    dir = get_user_directory(request.user.username)
-    print(request.user.username + " - " + dir)
-    f = open(f'{dir}/datenbank.db', 'rb')
-    file_content = f.read()
-    f.close()
-    return HttpResponse(file_content, content_type="application/x-sqlite3")
-@login_required
-@user_passes_test(is_db_admin)
-def read_file_sql(request):
-    dir = get_user_directory(request.user.username)
-    f = open(f'{dir}/Dachau.sql', 'r')
-    file_content = f.read()
-    f.close()
-    return HttpResponse(file_content)
-
+# Import functions from views_user.py
+from .. import views_user
 
 @login_required
 @user_passes_test(is_db_admin)
@@ -146,7 +50,6 @@ def api_sql(request, filename:str):
     finally:
         sqllock_release(dir)
         return HttpResponse("Unknown request", status=500)
-
 
 @login_required
 @user_passes_test(is_db_admin)
@@ -189,6 +92,8 @@ def api_sql_all(request):
     finally:
         sqllock_release(dir)
 
+@login_required
+@user_passes_test(is_db_admin)
 def api_upload_db(request):
     try:
         dir = get_user_directory(request.user.username)
@@ -202,6 +107,8 @@ def api_upload_db(request):
         print(f"Error: {e}")
     return HttpResponse("Internal Error", status=500)
 
+@login_required
+@user_passes_test(is_db_admin)
 def api_diagram_json(request):
     dir = get_user_directory(request.user.username)
     try:
@@ -223,3 +130,85 @@ def api_diagram_json(request):
         return HttpResponse("Internal Error", status=500)
     finally:
         sqllock_release(dir)
+
+@login_required
+@user_passes_test(is_global_admin)
+def get_system_data(request):
+    print(f"{timestamp()}get_system_data endpoint called by {request.user.username}")
+
+    # Get user databases directory information
+    try:
+        user_databases_path = os.path.join(os.getcwd(), 'user_databases')
+        user_data = get_directory_tree_with_sizes(user_databases_path)
+    except Exception as e:
+        print(f"Error getting user directory data: {e}")
+        user_data = []
+
+    # Get system drive usage - use the current drive on Windows
+    try:
+        if os.name == 'nt':  # Windows
+            # Get the drive of the current working directory
+            current_drive = os.path.splitdrive(os.getcwd())[0] + os.sep
+            total, used, free = shutil.disk_usage(current_drive)
+        else:  # Unix/Linux
+            total, used, free = shutil.disk_usage("/")
+        
+        fullness_percentage = (used / total) * 100
+    except Exception as e:
+        print(f"Error getting disk usage: {e}")
+        total, used, free = 0, 0, 0
+        fullness_percentage = 0
+
+    # Convert absolute values to GB for readability
+    total_gb = round(total /(1024 ** 3), 2)
+    used_gb = round(used / (1024 ** 3), 2)
+    free_gb = round(free / (1024 ** 3), 2)
+
+    # Get RAM usage
+    try:
+        ram = psutil.virtual_memory()
+        ram_total = round(ram.total / (1024 ** 3), 2)
+        ram_used = round(ram.used / (1024 ** 3), 2)
+        ram_free = round(ram.available / (1024 ** 3), 2)
+        ram_percentage = ram.percent
+    except Exception as e:
+        print(f"Error getting RAM usage: {e}")
+        ram_total = ram_used = ram_free = ram_percentage = 0
+
+    # Get CPU usage
+    try:
+        cpu_percentage = psutil.cpu_percent(0.5)
+    except Exception as e:
+        print(f"Error getting CPU usage: {e}")
+        cpu_percentage = 0
+
+    # Get logged-in users count
+    logged_in_users = get_logged_in_users_count()
+    print(f"{timestamp()}Returning logged_in_users count: {logged_in_users}")
+
+    # Get detailed session information
+    session_details = get_session_details()
+    print(session_details)
+    # Prepare response data
+    response_data = {
+        'directories': user_data,
+        "fullness_percentage": int(round(fullness_percentage, 0)),
+        "total_gb": "{:.2f}".format(total_gb),
+        "used_gb": "{:.2f}".format(used_gb),
+        "free_gb": "{:.2f}".format(free_gb),
+        "ram_total": "{:.2f}".format(ram_total),
+        "ram_used": "{:.2f}".format(ram_used),
+        "ram_free": "{:.2f}".format(ram_free),
+        "ram_percentage": int(round(ram_percentage, 0)),
+        "cpu_percentage": int(round(cpu_percentage, 0)),
+        "logged_in_users": logged_in_users,
+        "session_info": session_details,
+    }
+
+    # Log data to CSV
+    print(f"{timestamp()}Attempting to log resource data to CSV...")
+    log_resource_data_to_csv(response_data)
+    print(f"{timestamp()}CSV logging completed.")
+
+    # Return data as JSON
+    return JsonResponse(response_data)

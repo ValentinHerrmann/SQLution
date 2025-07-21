@@ -177,3 +177,5 @@ tutorial/static/
 last_launched.txt
 
 tutorial/myapp/staticfiles/_sql-ide/
+resource_logs.csv
+resource_logs.csv
