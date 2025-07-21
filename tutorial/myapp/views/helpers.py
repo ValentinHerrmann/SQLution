@@ -1,20 +1,11 @@
 from django.shortcuts import render
+from myapp.views.forms import *
+from myapp.utils.sqlite_connector import *
+from myapp.models import *
+from myapp.utils.utils import *
+from myapp.utils.directories import *
 
 
-from .forms import SQLQueryForm
-from .sqlite_connector import runSql
-from .models import *
-from .utils import *
-import os
-import zipfile
-from io import BytesIO
-
-
-def is_global_admin(user):
-    return user.is_authenticated and user.username == 'admin'
-
-def is_db_admin(user):
-    return user.is_authenticated and user.username.endswith('_admin')
 
 def execute_sql_query(query, username):
     try:
