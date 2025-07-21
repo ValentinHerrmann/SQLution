@@ -28,6 +28,7 @@ urlpatterns = [
     path('qr_generator/', views.qr_generator, name='qr_generator'),
     path('admin_overview/', views_user.admin_overview, name='admin_overview'),
     path('api/system-data/', views_user.get_system_data, name='get_system_data'),
+    path('download-resource-logs/', views_user.download_resource_logs, name='download_resource_logs'),
 
     path('sql_ide/', views.sql_ide, name='sql_ide'),
     path('user_databases.sqlite', views_files.read_file),
