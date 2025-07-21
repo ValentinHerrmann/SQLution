@@ -271,7 +271,8 @@ def get_session_details():
                 
                 city = location.get('city', 'Unknown') if isinstance(location, dict) else 'Unknown'
                 country = location.get('country', 'Unknown') if isinstance(location, dict) else 'Unknown'
-                location_str = f"{city}, {country}" if city != 'Unknown' and country != 'Unknown' else 'Unknown'
+                full_location = location.get('full_location') if isinstance(location, dict) else None
+                location_str = full_location if full_location else f"{city}, {country}" if city != 'Unknown' and country != 'Unknown' else 'Unknown'
                 
                 session_detail = {
                     'session_key': session.session_key[:8] + '...',  # Truncated for security
