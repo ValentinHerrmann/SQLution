@@ -14,3 +14,4 @@ psutil==7.0.0
 djangorestframework==3.16.0
 pillow>=9.1.0
 qrcode>=8.2.0
+requests>=2.25.0

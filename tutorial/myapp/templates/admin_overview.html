@@ -12,18 +12,20 @@ DataSpark - Resource Overview
         <h2>Admin Overview</h2>
         <div>
           <a href="{% url 'download_resource_logs' %}" class="btn btn-success me-2">
-            <i class="bi bi-download"></i> Download CSV Logs
+            <i class="fas fa-file-csv"></i> Download Performance Logs
           </a>
           <form method="post" action="{% url 'end_all_sessions' %}" style="display: inline;" class="me-2">
             {% csrf_token %}
             <button type="submit" class="btn btn-warning" onclick="return confirm('Are you sure you want to end all user sessions except your own? This will log out all other users.')">
-              <i class="bi bi-power"></i> End All Sessions
+              <i class="fas fa-sign-out-alt"></i> Logout all users
             </button>
           </form>
           <form method="post" style="display: inline;">
             {% csrf_token %}
             <input type="hidden" name="restart" value="true">
-            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to restart the server?')">Update and Restart</button>
+            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to restart the server?')">
+              <i class="fas fa-sync-alt"></i> Update and Restart
+            </button>
           </form>
         </div>
       </div>
@@ -106,56 +108,22 @@ DataSpark - Resource Overview
         </div>
       </div>
 
-      <!-- Session Information Row -->
+      <!-- Active Users and Directory List Row -->
       <div class="row mb-4">
-        <!-- Session Statistics -->
+        <!-- Active Users -->
         <div class="col-lg-6 mb-4 mb-lg-0">
           <div class="card h-100">
             <div class="card-body">
-              <h5 class="card-title">Session Statistics</h5>
-              <div class="row">
-                <div class="col-6">
-                  <div class="text-center">
-                    <h4 id="total-sessions" class="text-info">{{ session_info.total_sessions|default:0 }}</h4>
-                    <p class="mb-0">Total Sessions</p>
-                  </div>
-                </div>
-                <div class="col-6">
-                  <div class="text-center">
-                    <h4 id="valid-sessions" class="text-success">{{ session_info.valid_user_sessions|default:0 }}</h4>
-                    <p class="mb-0">Valid Sessions</p>
-                  </div>
-                </div>
-              </div>
-              <div class="row mt-3">
-                <div class="col-6">
-                  <div class="text-center">
-                    <h4 id="invalid-sessions" class="text-warning">{{ session_info.invalid_sessions|default:0 }}</h4>
-                    <p class="mb-0">Invalid Sessions</p>
-                  </div>
-                </div>
-                <div class="col-6">
-                  <div class="text-center">
-                    <h4 id="expired-cleaned" class="text-secondary">{{ session_info.expired_sessions_cleaned|default:0 }}</h4>
-                    <p class="mb-0">Expired Cleaned</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Active Users -->
-        <div class="col-lg-6">
-          <div class="card h-100">
-            <div class="card-body">
-              <h5 class="card-title">Active Users (<span id="logged-in-users" class="text-primary">{{ logged_in_users|default:0 }}</span>)</h5>
+              <h5 class="card-title">Active Users (<span id="logged-in-users" class="text-primary">{{ logged_in_users|default:0 }}</span> in <span id="total-sessions" class="text-primary">{{ session_info.total_sessions|default:0 }}</span> sessions)</h5>
               <div id="active-users-list" class="overflow-auto" style="max-height: 200px;">
                 <table class="table table-sm">
                   <thead>
                     <tr>
                       <th>Username</th>
                       <th>Sessions</th>
+                      <th>OS</th>
+                      <th>IP Address</th>
+                      <th>Location</th>
                     </tr>
                   </thead>
                   <tbody id="active-users-tbody">
@@ -163,12 +131,15 @@ DataSpark - Resource Overview
                       {% for user in session_info.active_users %}
                         <tr>
                           <td><strong>{{ user.username }}</strong></td>
-                          <td><span class="badge bg-primary">{{ user.session_count }}</span></td>
+                          <td><span class="text-primary">{{ user.session_count }}</span></td>
+                          <td><small class="text-muted">{{ user.os }}</small></td>
+                          <td><small class="text-muted">{{ user.ip }}</small></td>
+                          <td><small class="text-muted">{{ user.location }}</small></td>
                         </tr>
                       {% endfor %}
                     {% else %}
                       <tr>
-                        <td colspan="2" class="text-muted text-center">No active users</td>
+                        <td colspan="5" class="text-muted text-center">No active users</td>
                       </tr>
                     {% endif %}
                   </tbody>
@@ -177,31 +148,33 @@ DataSpark - Resource Overview
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Directory List -->
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title">Directories</h5>
-          <div id="directory-list" class="file-tree">
-            <table class="table table-striped">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Size</th>
-                  <th>Last Modified</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for item in users %}
-                  <tr>
-                    <td><strong>{{ item.name }}</strong></td>
-                    <td>{{ item.size }}</td>
-                    <td>{{ item.last_modified }}</td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
+        <!-- Directory List -->
+        <div class="col-lg-6">
+          <div class="card h-100">
+            <div class="card-body">
+              <h5 class="card-title">Directories</h5>
+              <div id="directory-list" class="file-tree overflow-auto" style="max-height: 400px;">
+                <table class="table table-striped table-sm">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Size</th>
+                      <th>Last Modified</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for item in users %}
+                      <tr>
+                        <td><strong>{{ item.name }}</strong></td>
+                        <td>{{ item.size }}</td>
+                        <td>{{ item.last_modified }}</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -246,10 +219,17 @@ DataSpark - Resource Overview
 
       // Update Session Information
       if (data.session_info) {
-        document.getElementById("total-sessions").textContent = data.session_info.total_sessions;
-        document.getElementById("valid-sessions").textContent = data.session_info.valid_user_sessions;
-        document.getElementById("invalid-sessions").textContent = data.session_info.invalid_sessions;
-        document.getElementById("expired-cleaned").textContent = data.session_info.expired_sessions_cleaned;
+        // Update logged-in users count
+        const loggedInUsersElement = document.getElementById("logged-in-users");
+        if (loggedInUsersElement) {
+          loggedInUsersElement.textContent = data.logged_in_users;
+        }
+        
+        // Update total sessions count
+        const totalSessionsElement = document.getElementById("total-sessions");
+        if (totalSessionsElement) {
+          totalSessionsElement.textContent = data.session_info.total_sessions;
+        }
         
         // Update Active Users List
         const activeUsersTableBody = document.getElementById("active-users-tbody");
@@ -260,13 +240,16 @@ DataSpark - Resource Overview
             const row = document.createElement("tr");
             row.innerHTML = `
               <td><strong>${user.username}</strong></td>
-              <td><span class="badge bg-primary">${user.session_count}</span></td>
+              <td><span class="text-primary">${user.session_count}</span></td>
+              <td><small class="text-muted">${user.os || 'Unknown'}</small></td>
+              <td><small class="text-muted">${user.ip || 'Unknown'}</small></td>
+              <td><small class="text-muted">${user.location || 'Unknown'}</small></td>
             `;
             activeUsersTableBody.appendChild(row);
           });
         } else {
           const row = document.createElement("tr");
-          row.innerHTML = `<td colspan="2" class="text-muted text-center">No active users</td>`;
+          row.innerHTML = `<td colspan="5" class="text-muted text-center">No active users</td>`;
           activeUsersTableBody.appendChild(row);
         }
       } else {

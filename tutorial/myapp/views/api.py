@@ -160,16 +160,16 @@ def get_system_data(request):
         fullness_percentage = 0
 
     # Convert absolute values to GB for readability
-    total_gb = round(total /(1000 ** 3), 2)
-    used_gb = round(used / (1000 ** 3), 2)
-    free_gb = round(free / (1000 ** 3), 2)
+    total_gb = round(total /(1024 ** 3), 2)
+    used_gb = round(used / (1024 ** 3), 2)
+    free_gb = round(free / (1024 ** 3), 2)
 
     # Get RAM usage
     try:
         ram = psutil.virtual_memory()
-        ram_total = round(ram.total / (1000 ** 3), 2)
-        ram_used = round(ram.used / (1000 ** 3), 2)
-        ram_free = round(ram.available / (1000 ** 3), 2)
+        ram_total = round(ram.total / (1024 ** 3), 2)
+        ram_used = round(ram.used / (1024 ** 3), 2)
+        ram_free = round(ram.available / (1024 ** 3), 2)
         ram_percentage = ram.percent
     except Exception as e:
         print(f"Error getting RAM usage: {e}")
@@ -193,12 +193,12 @@ def get_system_data(request):
     response_data = {
         'directories': user_data,
         "fullness_percentage": int(round(fullness_percentage, 0)),
-        "total_gb": total_gb,
-        "used_gb": used_gb,
-        "free_gb": free_gb,
-        "ram_total": ram_total,
-        "ram_used": ram_used,
-        "ram_free": ram_free,
+        "total_gb": "{:.2f}".format(total_gb),
+        "used_gb": "{:.2f}".format(used_gb),
+        "free_gb": "{:.2f}".format(free_gb),
+        "ram_total": "{:.2f}".format(ram_total),
+        "ram_used": "{:.2f}".format(ram_used),
+        "ram_free": "{:.2f}".format(ram_free),
         "ram_percentage": int(round(ram_percentage, 0)),
         "cpu_percentage": int(round(cpu_percentage, 0)),
         "logged_in_users": logged_in_users,

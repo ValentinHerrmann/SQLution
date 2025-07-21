@@ -192,12 +192,16 @@ def get_session_details():
     try:
         from django.contrib.auth.models import User
         from datetime import timedelta
+        import re
         
         current_time = timezone.now()
         print(f"{timestamp()}get_session_details called at {current_time}")
         
         # Get all active sessions
         active_sessions = Session.objects.filter(expire_date__gte=current_time)
+
+        l = list(active_sessions.all())
+
         print(f"{timestamp()}Found {active_sessions.count()} active sessions")
         
         # Initialize counters
@@ -218,19 +222,66 @@ def get_session_details():
         except Exception:
             pass
         
+        def parse_os_from_user_agent(user_agent):
+            """Parse OS from user agent string"""
+            if not user_agent:
+                return "Unknown"
+            
+            user_agent = user_agent.lower()
+            
+            # Check for mobile platforms first
+            if 'android' in user_agent:
+                return "Android"
+            elif 'iphone' in user_agent or 'ipad' in user_agent:
+                return "iOS"
+            
+            # Check for desktop platforms
+            elif 'windows nt 10' in user_agent:
+                return "Windows 10/11"
+            elif 'windows nt 6.3' in user_agent:
+                return "Windows 8.1"
+            elif 'windows nt 6.2' in user_agent:
+                return "Windows 8"
+            elif 'windows nt 6.1' in user_agent:
+                return "Windows 7"
+            elif 'windows' in user_agent:
+                return "Windows"
+            elif 'mac os x' in user_agent or 'macos' in user_agent:
+                return "macOS"
+            elif 'linux' in user_agent:
+                if 'ubuntu' in user_agent:
+                    return "Ubuntu"
+                else:
+                    return "Linux"
+            elif 'freebsd' in user_agent:
+                return "FreeBSD"
+            else:
+                return "Unknown"
+        
         # Analyze each active session
         user_sessions = {}
         for session in active_sessions:
             try:
                 session_data = session.get_decoded()
                 user_id = session_data.get('_auth_user_id')
+                user_agent = session_data.get('user_agent', '')
+                client_ip = session_data.get('client_ip', '')
+                location = session_data.get('location', {})
+                os_info = parse_os_from_user_agent(user_agent)
+                
+                city = location.get('city', 'Unknown') if isinstance(location, dict) else 'Unknown'
+                country = location.get('country', 'Unknown') if isinstance(location, dict) else 'Unknown'
+                location_str = f"{city}, {country}" if city != 'Unknown' and country != 'Unknown' else 'Unknown'
                 
                 session_detail = {
                     'session_key': session.session_key[:8] + '...',  # Truncated for security
                     'expire_date': session.expire_date.strftime('%Y-%m-%d %H:%M:%S'),
                     'user_id': user_id,
                     'username': None,
-                    'is_valid': False
+                    'is_valid': False,
+                    'os': os_info,
+                    'ip': client_ip,
+                    'location': location_str
                 }
                 
                 if user_id:
@@ -240,10 +291,21 @@ def get_session_details():
                         session_detail['is_valid'] = True
                         valid_user_sessions += 1
                         
-                        # Track users with multiple sessions
+                        # Track users with multiple sessions and their info
                         if user.username not in user_sessions:
-                            user_sessions[user.username] = 0
-                        user_sessions[user.username] += 1
+                            user_sessions[user.username] = {
+                                'session_count': 0,
+                                'os_list': [],
+                                'ip_list': [],
+                                'location_list': []
+                            }
+                        user_sessions[user.username]['session_count'] += 1
+                        if os_info not in user_sessions[user.username]['os_list']:
+                            user_sessions[user.username]['os_list'].append(os_info)
+                        if client_ip and client_ip not in user_sessions[user.username]['ip_list']:
+                            user_sessions[user.username]['ip_list'].append(client_ip)
+                        if location_str != 'Unknown' and location_str not in user_sessions[user.username]['location_list']:
+                            user_sessions[user.username]['location_list'].append(location_str)
                         
                     except User.DoesNotExist:
                         invalid_sessions += 1
@@ -255,10 +317,16 @@ def get_session_details():
             except Exception:
                 invalid_sessions += 1
         
-        # Create active users list with session counts
+        # Create active users list with session counts, OS, IP, and location info
         active_users = [
-            {'username': username, 'session_count': count}
-            for username, count in user_sessions.items()
+            {
+                'username': username, 
+                'session_count': data['session_count'],
+                'os': ', '.join(data['os_list']) if data['os_list'] else 'Unknown',
+                'ip': ', '.join(data['ip_list']) if data['ip_list'] else 'Unknown',
+                'location': ', '.join(data['location_list']) if data['location_list'] else 'Unknown'
+            }
+            for username, data in user_sessions.items()
         ]
         
         return {

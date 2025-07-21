@@ -1,6 +1,11 @@
 from django.http import HttpResponse
 from django.shortcuts import render
 from myapp.utils.qr import *
+from myapp import views_user
+from myapp.utils.decorators import *
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.views.decorators.csrf import csrf_protect
+from django.contrib.auth import logout
 
 
 def qr_generator(request):
@@ -132,3 +137,45 @@ def qr_generator(request):
         'logo_info': logo_info
     })
 
+
+@login_required
+@user_passes_test(is_global_admin)
+@csrf_protect  
+def admin_overview(request):  
+    restart = request.POST.get("restart") or request.GET.get("restart")
+    if restart == 'true':
+        if request.user.is_authenticated:
+            logout(request)
+        request.session.flush()
+        os.system("cd .. && ./update_and_launch.sh")
+
+    rate = os.getenv('RESOURCES_REFRESH', default=5000)
+
+    last_launched = ""
+    try:
+        with open('last_launched.txt', 'r') as f:
+            last_launched = f.read().strip()
+    except FileNotFoundError:
+        # If the file doesn't exist, create it with the current timestamp
+        with open('last_launched.txt', 'w') as f:
+            last_launched = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            f.write(last_launched)
+
+    return render(request, 'admin_overview.html', {
+        'refresh_rate': rate,
+        'commit': os.popen('git log -1 --pretty=%B').read().strip(),
+        'last_launched': last_launched,
+        'wdir': os.getcwd(),
+        'logged_in_users': views_user.get_logged_in_users_count(),  # Add initial logged-in users count
+        'session_info': views_user.get_session_details(),  # Add initial session details
+        #'users': user_data,
+        #"fullness_percentage": int(round(fullness_percentage, 0)),
+        #"total_gb": total_gb,
+        #"used_gb": used_gb,
+        #"free_gb": free_gb,
+        #"ram_total": ram_total,
+        #"ram_used": ram_used,
+        #"ram_free": ram_free,
+        #"ram_percentage": int(round(ram_percentage, 0)),
+        #"cpu_percentage": int(round(cpu_percentage, 0)),
+    })
