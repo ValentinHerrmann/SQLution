@@ -13,13 +13,13 @@ DataSpark - Resource Overview
         <div>
           <!-- Performance Logs Section -->
           <div class="btn-group me-2" role="group">
-            <a href="{% url 'download_resource_logs' %}" class="btn btn-success">
+            <a href="{% url 'download_resource_logs' %}" class="btn btn-success" style="margin: 4px;">
               <i class="fas fa-file-csv"></i> Download Performance Logs
               <small class="d-block text-light">({{ resource_log_size }})</small>
             </a>
             <form method="post" action="{% url 'clear_resource_logs' %}" style="display: inline;">
               {% csrf_token %}
-              <button type="submit" class="btn btn-outline-success" 
+              <button type="submit" class="btn btn-outline-success" style="margin: 4px;"
                       onclick="return confirm('Are you sure you want to clear all performance logs? This action cannot be undone.')"
                       title="Clear Performance Logs">
                 <i class="fas fa-trash-alt"></i>
@@ -29,13 +29,13 @@ DataSpark - Resource Overview
           
           <!-- Audit Logs Section -->
           <div class="btn-group me-2" role="group">
-            <a href="{% url 'download_audit_logs' %}" class="btn btn-info">
+            <a href="{% url 'download_audit_logs' %}" class="btn btn-info" style="margin: 4px;">
               <i class="fas fa-user-shield"></i> Download Audit Logs
               <small class="d-block text-light">({{ audit_log_count }})</small>
             </a>
             <form method="post" action="{% url 'clear_audit_logs' %}" style="display: inline;">
               {% csrf_token %}
-              <button type="submit" class="btn btn-outline-info" 
+              <button type="submit" class="btn btn-outline-info" style="margin: 4px;"
                       onclick="return confirm('Are you sure you want to clear all audit logs? This action cannot be undone.')"
                       title="Clear Audit Logs">
                 <i class="fas fa-trash-alt"></i>
@@ -45,14 +45,14 @@ DataSpark - Resource Overview
           
           <form method="post" action="{% url 'end_all_sessions' %}" style="display: inline;" class="me-2">
             {% csrf_token %}
-            <button type="submit" class="btn btn-warning" onclick="return confirm('Are you sure you want to end all user sessions except your own? This will log out all other users.')">
+            <button type="submit" class="btn btn-warning" style="margin: 4px;" onclick="return confirm('Are you sure you want to end all user sessions except your own? This will log out all other users.')">
               <i class="fas fa-sign-out-alt"></i> Logout all users
             </button>
           </form>
           <form method="post" style="display: inline;">
             {% csrf_token %}
             <input type="hidden" name="restart" value="true">
-            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to restart the server?')">
+            <button type="submit" class="btn btn-danger" style="margin: 4px;" onclick="return confirm('Are you sure you want to restart the server?')">
               <i class="fas fa-sync-alt"></i> Update and Restart
             </button>
           </form>
