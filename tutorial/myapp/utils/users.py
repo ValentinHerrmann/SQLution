@@ -78,6 +78,7 @@ def get_logged_in_users_count():
         
         # More aggressive session cleanup - remove expired sessions immediately
         try:
+            print(str(Session.objects))
             expired_sessions = Session.objects.filter(expire_date__lt=current_time)
             expired_count = expired_sessions.count()
             if expired_count > 0:
@@ -184,3 +185,99 @@ def get_logged_in_users_count():
         import traceback
         print(f"Traceback: {traceback.format_exc()}")
         return 0
+
+
+def get_session_details():
+    """Get detailed session information for admin display"""
+    try:
+        from django.contrib.auth.models import User
+        from datetime import timedelta
+        
+        current_time = timezone.now()
+        print(f"{timestamp()}get_session_details called at {current_time}")
+        
+        # Get all active sessions
+        active_sessions = Session.objects.filter(expire_date__gte=current_time)
+        print(f"{timestamp()}Found {active_sessions.count()} active sessions")
+        
+        # Initialize counters
+        total_sessions = active_sessions.count()
+        valid_user_sessions = 0
+        invalid_sessions = 0
+        expired_sessions_cleaned = 0
+        active_users = []
+        session_details = []
+        
+        # Clean up expired sessions and count them
+        try:
+            expired_sessions = Session.objects.filter(expire_date__lt=current_time)
+            expired_count = expired_sessions.count()
+            if expired_count > 0:
+                expired_sessions.delete()
+                expired_sessions_cleaned = expired_count
+        except Exception:
+            pass
+        
+        # Analyze each active session
+        user_sessions = {}
+        for session in active_sessions:
+            try:
+                session_data = session.get_decoded()
+                user_id = session_data.get('_auth_user_id')
+                
+                session_detail = {
+                    'session_key': session.session_key[:8] + '...',  # Truncated for security
+                    'expire_date': session.expire_date.strftime('%Y-%m-%d %H:%M:%S'),
+                    'user_id': user_id,
+                    'username': None,
+                    'is_valid': False
+                }
+                
+                if user_id:
+                    try:
+                        user = User.objects.get(id=user_id, is_active=True)
+                        session_detail['username'] = user.username
+                        session_detail['is_valid'] = True
+                        valid_user_sessions += 1
+                        
+                        # Track users with multiple sessions
+                        if user.username not in user_sessions:
+                            user_sessions[user.username] = 0
+                        user_sessions[user.username] += 1
+                        
+                    except User.DoesNotExist:
+                        invalid_sessions += 1
+                else:
+                    invalid_sessions += 1
+                
+                session_details.append(session_detail)
+                
+            except Exception:
+                invalid_sessions += 1
+        
+        # Create active users list with session counts
+        active_users = [
+            {'username': username, 'session_count': count}
+            for username, count in user_sessions.items()
+        ]
+        
+        return {
+            'total_sessions': total_sessions,
+            'valid_user_sessions': valid_user_sessions,
+            'invalid_sessions': invalid_sessions,
+            'expired_sessions_cleaned': expired_sessions_cleaned,
+            'active_users': active_users,
+            'session_details': session_details
+        }
+        
+    except Exception as e:
+        print(f"Error getting session details: {e}")
+        return {
+            'total_sessions': 0,
+            'valid_user_sessions': 0,
+            'invalid_sessions': 0,
+            'expired_sessions_cleaned': 0,
+            'active_users': [],
+            'session_details': []
+        }
+

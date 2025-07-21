@@ -27,8 +27,9 @@ urlpatterns = [
 
     path('qr_generator/', admin.qr_generator, name='qr_generator'),
     path('admin_overview/', user.admin_overview, name='admin_overview'),
-    path('api/system-data/', user.get_system_data, name='get_system_data'),
+    path('api/system-data/', api.get_system_data, name='get_system_data'),
     path('download-resource-logs/', user.download_resource_logs, name='download_resource_logs'),
+    path('end-all-sessions/', user.end_all_sessions, name='end_all_sessions'),
 
     path('sql_ide/', views.sql_ide, name='sql_ide'),
     path('user_databases.sqlite', files.read_file),

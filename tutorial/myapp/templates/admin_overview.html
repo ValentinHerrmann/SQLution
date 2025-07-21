@@ -4,7 +4,7 @@
 DataSpark - Resource Overview
 {% endblock %}
 {% block content %}
-<div class="container mt-4">
+<div class="container-fluid mt-4">
   <div class="row">
     <div class="col-12">
       <!-- Header -->
@@ -14,6 +14,12 @@ DataSpark - Resource Overview
           <a href="{% url 'download_resource_logs' %}" class="btn btn-success me-2">
             <i class="bi bi-download"></i> Download CSV Logs
           </a>
+          <form method="post" action="{% url 'end_all_sessions' %}" style="display: inline;" class="me-2">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-warning" onclick="return confirm('Are you sure you want to end all user sessions except your own? This will log out all other users.')">
+              <i class="bi bi-power"></i> End All Sessions
+            </button>
+          </form>
           <form method="post" style="display: inline;">
             {% csrf_token %}
             <input type="hidden" name="restart" value="true">
@@ -34,21 +40,8 @@ DataSpark - Resource Overview
 
       <!-- Performance Metrics Row -->
       <div class="row mb-4">
-        <!-- Logged-in Users -->
-        <div class="col-lg-3 mb-4 mb-lg-0">
-          <div class="card h-100">
-            <div class="card-body">
-              <h5 class="card-title">Active Users</h5>
-              <div class="text-center">
-                <h2 id="logged-in-users" class="text-primary">{{ logged_in_users|default:0 }}</h2>
-                <p class="mb-0">Currently logged in</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <!-- System Drive Usage -->
-        <div class="col-lg-3 mb-4 mb-lg-0">
+        <div class="col-lg-4 mb-4 mb-lg-0">
           <div class="card h-100">
             <div class="card-body">
               <h5 class="card-title">System Drive Usage</h5>
@@ -70,7 +63,7 @@ DataSpark - Resource Overview
         </div>
 
         <!-- RAM Usage -->
-        <div class="col-lg-3 mb-4 mb-lg-0">
+        <div class="col-lg-4 mb-4 mb-lg-0">
           <div class="card h-100">
             <div class="card-body">
               <h5 class="card-title">RAM Usage</h5>
@@ -92,7 +85,7 @@ DataSpark - Resource Overview
         </div>
 
         <!-- CPU Usage -->
-        <div class="col-lg-3">
+        <div class="col-lg-4">
           <div class="card h-100">
             <div class="card-body">
               <h5 class="card-title">CPU Usage</h5>
@@ -107,6 +100,79 @@ DataSpark - Resource Overview
                   aria-valuemax="100">
                   {{ cpu_percentage }}%
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Session Information Row -->
+      <div class="row mb-4">
+        <!-- Session Statistics -->
+        <div class="col-lg-6 mb-4 mb-lg-0">
+          <div class="card h-100">
+            <div class="card-body">
+              <h5 class="card-title">Session Statistics</h5>
+              <div class="row">
+                <div class="col-6">
+                  <div class="text-center">
+                    <h4 id="total-sessions" class="text-info">{{ session_info.total_sessions|default:0 }}</h4>
+                    <p class="mb-0">Total Sessions</p>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="text-center">
+                    <h4 id="valid-sessions" class="text-success">{{ session_info.valid_user_sessions|default:0 }}</h4>
+                    <p class="mb-0">Valid Sessions</p>
+                  </div>
+                </div>
+              </div>
+              <div class="row mt-3">
+                <div class="col-6">
+                  <div class="text-center">
+                    <h4 id="invalid-sessions" class="text-warning">{{ session_info.invalid_sessions|default:0 }}</h4>
+                    <p class="mb-0">Invalid Sessions</p>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="text-center">
+                    <h4 id="expired-cleaned" class="text-secondary">{{ session_info.expired_sessions_cleaned|default:0 }}</h4>
+                    <p class="mb-0">Expired Cleaned</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Active Users -->
+        <div class="col-lg-6">
+          <div class="card h-100">
+            <div class="card-body">
+              <h5 class="card-title">Active Users (<span id="logged-in-users" class="text-primary">{{ logged_in_users|default:0 }}</span>)</h5>
+              <div id="active-users-list" class="overflow-auto" style="max-height: 200px;">
+                <table class="table table-sm">
+                  <thead>
+                    <tr>
+                      <th>Username</th>
+                      <th>Sessions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="active-users-tbody">
+                    {% if session_info.active_users %}
+                      {% for user in session_info.active_users %}
+                        <tr>
+                          <td><strong>{{ user.username }}</strong></td>
+                          <td><span class="badge bg-primary">{{ user.session_count }}</span></td>
+                        </tr>
+                      {% endfor %}
+                    {% else %}
+                      <tr>
+                        <td colspan="2" class="text-muted text-center">No active users</td>
+                      </tr>
+                    {% endif %}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -145,7 +211,6 @@ DataSpark - Resource Overview
 
 <script>
   function fetchSystemData() {
-    console.log("Fetching system data...");
     fetch("{% url 'get_system_data' %}")
       .then(response => {
         if (!response.ok) {
@@ -154,14 +219,11 @@ DataSpark - Resource Overview
         return response.json();
       })
     .then(data => {
-      console.log("Received data:", data);
-      console.log("Logged-in users from API:", data.logged_in_users);
       
       // Update Logged-in Users
       const loggedInUsersElement = document.getElementById("logged-in-users");
       if (loggedInUsersElement) {
         loggedInUsersElement.textContent = data.logged_in_users;
-        console.log("Updated display to:", data.logged_in_users);
       } else {
         console.error("Could not find logged-in-users element");
       }
@@ -181,6 +243,35 @@ DataSpark - Resource Overview
       // Update CPU Usage
       document.getElementById("cpu-progress-bar").style.width = data.cpu_percentage + "%";
       document.getElementById("cpu-progress-bar").textContent = data.cpu_percentage + "%";
+
+      // Update Session Information
+      if (data.session_info) {
+        document.getElementById("total-sessions").textContent = data.session_info.total_sessions;
+        document.getElementById("valid-sessions").textContent = data.session_info.valid_user_sessions;
+        document.getElementById("invalid-sessions").textContent = data.session_info.invalid_sessions;
+        document.getElementById("expired-cleaned").textContent = data.session_info.expired_sessions_cleaned;
+        
+        // Update Active Users List
+        const activeUsersTableBody = document.getElementById("active-users-tbody");
+        activeUsersTableBody.innerHTML = ""; // Clear existing rows
+        
+        if (data.session_info.active_users && data.session_info.active_users.length > 0) {
+          data.session_info.active_users.forEach(user => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+              <td><strong>${user.username}</strong></td>
+              <td><span class="badge bg-primary">${user.session_count}</span></td>
+            `;
+            activeUsersTableBody.appendChild(row);
+          });
+        } else {
+          const row = document.createElement("tr");
+          row.innerHTML = `<td colspan="2" class="text-muted text-center">No active users</td>`;
+          activeUsersTableBody.appendChild(row);
+        }
+      } else {
+        console.error("No session_info in response data");
+      }
 
       // Update Directory List as a Table
       const directoryList = document.getElementById("directory-list");

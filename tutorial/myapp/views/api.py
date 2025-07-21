@@ -8,6 +8,9 @@ from myapp.utils.diagram import load_json
 from myapp.utils.utils import *
 from myapp.utils.users import *
 
+# Import functions from views_user.py
+from .. import views_user
+
 @login_required
 @user_passes_test(is_db_admin)
 def api_sql(request, filename:str):
@@ -157,7 +160,7 @@ def get_system_data(request):
         fullness_percentage = 0
 
     # Convert absolute values to GB for readability
-    total_gb = round(total / (1000 ** 3), 2)
+    total_gb = round(total /(1000 ** 3), 2)
     used_gb = round(used / (1000 ** 3), 2)
     free_gb = round(free / (1000 ** 3), 2)
 
@@ -183,6 +186,9 @@ def get_system_data(request):
     logged_in_users = get_logged_in_users_count()
     print(f"{timestamp()}Returning logged_in_users count: {logged_in_users}")
 
+    # Get detailed session information
+    session_details = get_session_details()
+    print(session_details)
     # Prepare response data
     response_data = {
         'directories': user_data,
@@ -196,6 +202,7 @@ def get_system_data(request):
         "ram_percentage": int(round(ram_percentage, 0)),
         "cpu_percentage": int(round(cpu_percentage, 0)),
         "logged_in_users": logged_in_users,
+        "session_info": session_details,
     }
 
     # Log data to CSV

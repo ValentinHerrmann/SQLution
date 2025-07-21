@@ -1,16 +1,25 @@
-from django.http import HttpResponse, JsonResponse
-from django.shortcuts import render, redirect
+
+import pprint
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
+from django.shortcuts import get_object_or_404, render, redirect
+from django.db import connection, DatabaseError
+from django.apps import apps
+import form_designer
 import shutil
 import psutil
 import csv
 from django.contrib.sessions.models import Session
+from django.contrib.auth.models import User
+from django.utils import timezone
+
 from myapp.utils.decorators import *
-from myapp.utils.directories import *
 from myapp.utils.users import *
 
+from myapp.views.forms import SQLQueryForm,UploadFileForm
 from myapp.models import *
 from myapp.utils.utils import *  # Assuming you have this function in utils.py
 from myapp.utils.sqlite_connector import *  # Import sqlite3 for SQLite database connection
+from myapp.utils.directories import get_directory_tree_with_sizes
 import json
 from datetime import datetime
 from django.views.decorators.csrf import csrf_protect
@@ -20,12 +29,73 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import redirect
 from django.contrib.auth import logout
 import os
+import re
 
-# Import functions from views_user.py
-from .. import views_user
+def timestamp():
+    return datetime.now().strftime("[%Y-%m-%d %H:%M:%S]") + "\t"
 
 
-
+def log_resource_data_to_csv(data):
+    """Log resource data to CSV file"""
+    try:
+        # Use multiple possible paths for the CSV file
+        possible_paths = [
+            os.path.join(os.getcwd(), 'resource_logs.csv'),  # Current directory (tutorial/myapp)
+            os.path.join(os.path.dirname(os.getcwd()), 'resource_logs.csv'),  # Parent directory (tutorial)
+            os.path.join(os.path.dirname(os.path.dirname(os.getcwd())), 'resource_logs.csv'),  # Project root
+        ]
+        
+        csv_file_path = None
+        for path in possible_paths:
+            try:
+                # Try to create/write to this path
+                test_dir = os.path.dirname(path)
+                if os.path.exists(test_dir) and os.access(test_dir, os.W_OK):
+                    csv_file_path = path
+                    break
+            except:
+                continue
+        
+        if csv_file_path is None:
+            # Fallback to current directory
+            csv_file_path = os.path.join(os.getcwd(), 'resource_logs.csv')
+        
+        file_exists = os.path.isfile(csv_file_path)
+        
+        with open(csv_file_path, 'a', newline='', encoding='utf-8') as csvfile:
+            fieldnames = [
+                'timestamp', 'logged_in_users', 'fullness_percentage', 'total_gb', 'used_gb', 'free_gb',
+                'ram_total', 'ram_used', 'ram_free', 'ram_percentage', 'cpu_percentage'
+            ]
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            
+            # Write header if file is new
+            if not file_exists:
+                writer.writeheader()
+            
+            # Write the data
+            csv_data = {
+                'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                'logged_in_users': data.get('logged_in_users', 0),
+                'fullness_percentage': data.get('fullness_percentage', 0),
+                'total_gb': data.get('total_gb', 0),
+                'used_gb': data.get('used_gb', 0),
+                'free_gb': data.get('free_gb', 0),
+                'ram_total': data.get('ram_total', 0),
+                'ram_used': data.get('ram_used', 0),
+                'ram_free': data.get('ram_free', 0),
+                'ram_percentage': data.get('ram_percentage', 0),
+                'cpu_percentage': data.get('cpu_percentage', 0)
+            }
+            writer.writerow(csv_data)
+            
+        print(f"Successfully logged resource data to: {csv_file_path}")
+            
+    except Exception as e:
+        print(f"Error logging resource data to CSV: {e}")
+        # Try to log the error details for debugging
+        import traceback
+        print(f"Full error details: {traceback.format_exc()}")
 
 @login_required
 def logged_in(request):
@@ -35,6 +105,7 @@ def logged_in(request):
         pass#return redirect('admin')  # Redirect to the admin page
     #restore_zip_to_directory(get_user_directory(user))
     return redirect('home')  # Redirect to the home page after login
+
 
 @csrf_protect
 @require_http_methods(["GET", "POST"])
@@ -112,8 +183,8 @@ def admin_overview(request):
         'commit': os.popen('git log -1 --pretty=%B').read().strip(),
         'last_launched': last_launched,
         'wdir': os.getcwd(),
-        'logged_in_users': views_user.get_logged_in_users_count(),  # Add initial logged-in users count
-        'session_info': views_user.get_session_details(),  # Add initial session details
+        'logged_in_users': get_logged_in_users_count(),  # Add initial logged-in users count
+        'session_info': get_session_details(),  # Add initial session details
         #'users': user_data,
         #"fullness_percentage": int(round(fullness_percentage, 0)),
         #"total_gb": total_gb,
@@ -125,7 +196,6 @@ def admin_overview(request):
         #"ram_percentage": int(round(ram_percentage, 0)),
         #"cpu_percentage": int(round(cpu_percentage, 0)),
     })
-
 
 @login_required
 @user_passes_test(is_global_admin)
@@ -170,63 +240,6 @@ def download_resource_logs(request):
         response = HttpResponse("Error: Could not download resource logs CSV file.", content_type='text/plain')
         response.status_code = 500
         return response
-
-@login_required
-@user_passes_test(is_global_admin)
-@csrf_protect
-@require_http_methods(["POST"])
-def end_all_sessions(request):
-    """End all sessions except the current session"""
-    try:
-        from django.core.cache import cache
-        from django.contrib import messages
-        
-        # Get the current session key to preserve it
-        current_session_key = request.session.session_key
-        current_user = request.user.username if request.user.is_authenticated else 'Unknown'
-        
-        print(f"{timestamp()}Admin {current_user} initiated session cleanup - preserving session {current_session_key}")
-        
-        # Count sessions before cleanup
-        all_sessions = Session.objects.all()
-        initial_count = all_sessions.count()
-        
-        # Delete all sessions except the current one
-        if current_session_key:
-            deleted_sessions = Session.objects.exclude(session_key=current_session_key)
-            deleted_count = deleted_sessions.count()
-            deleted_sessions.delete()
-            print(f"{timestamp()}Deleted {deleted_count} sessions, preserved current session")
-        else:
-            # If no current session key, delete all sessions (shouldn't happen but safety first)
-            deleted_count = Session.objects.all().delete()[0]
-            print(f"{timestamp()}WARNING: No current session key found, deleted all {deleted_count} sessions")
-        
-        # Clear cache to ensure fresh counts
-        try:
-            cache.clear()
-            print(f"{timestamp()}Cleared Django cache after session cleanup")
-        except Exception as e:
-            print(f"{timestamp()}Cache clear failed: {e}")
-        
-        # Log the final state
-        remaining_sessions = Session.objects.all().count()
-        print(f"{timestamp()}Session cleanup complete: {initial_count} -> {remaining_sessions} sessions remaining")
-        
-        # Add a success message
-        messages.success(request, f'Successfully ended {deleted_count} user sessions. {remaining_sessions} session(s) remaining.')
-        
-        return redirect('admin_overview')
-        
-    except Exception as e:
-        print(f"{timestamp()}Error in end_all_sessions: {e}")
-        import traceback
-        print(f"{timestamp()}Traceback: {traceback.format_exc()}")
-        
-        from django.contrib import messages
-        messages.error(request, f'Error ending sessions: {str(e)}')
-        return redirect('admin_overview')
-
 
 # views.py
 from django.contrib.auth.views import LoginView
