@@ -138,6 +138,8 @@ def end_all_sessions(request):
     try:
         from django.core.cache import cache
         from django.contrib import messages
+        from myapp.utils.audit import log_audit_event
+        from django.contrib.auth.models import User
         
         # Get the current session key to preserve it
         current_session_key = request.session.session_key
@@ -145,15 +147,35 @@ def end_all_sessions(request):
         
         print(f"{timestamp()}Admin {current_user} initiated session cleanup - preserving session {current_session_key}")
         
-        # Count sessions before cleanup
+        # Count sessions before cleanup and log forced logouts
         all_sessions = Session.objects.all()
         initial_count = all_sessions.count()
         
+        # Log forced logout for each active user session
+        sessions_to_delete = Session.objects.exclude(session_key=current_session_key) if current_session_key else Session.objects.all()
+        
+        for session in sessions_to_delete:
+            try:
+                session_data = session.get_decoded()
+                user_id = session_data.get('_auth_user_id')
+                if user_id:
+                    try:
+                        user = User.objects.get(id=user_id)
+                        # Create a mock request object with session data for audit logging
+                        mock_request = type('MockRequest', (), {
+                            'session': session_data,
+                            'META': {}
+                        })()
+                        log_audit_event(user, 'FORCED_LOGOUT', mock_request, f'Admin {current_user} ended all sessions')
+                    except User.DoesNotExist:
+                        pass
+            except Exception:
+                pass
+        
         # Delete all sessions except the current one
         if current_session_key:
-            deleted_sessions = Session.objects.exclude(session_key=current_session_key)
-            deleted_count = deleted_sessions.count()
-            deleted_sessions.delete()
+            deleted_count = sessions_to_delete.count()
+            sessions_to_delete.delete()
             print(f"{timestamp()}Deleted {deleted_count} sessions, preserved current session")
         else:
             # If no current session key, delete all sessions (shouldn't happen but safety first)

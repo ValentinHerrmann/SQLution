@@ -160,4 +160,8 @@ class UserAgentMiddleware(MiddlewareMixin):
                     request.session['stored_ip_for_location'] = client_ip
                     print(f"Location result: {location}")
         
+        # Store request for signal handlers
+        from myapp.signals import set_current_request
+        set_current_request(request)
+        
         return None

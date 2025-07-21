@@ -1,5 +1,6 @@
 from django.urls import include, path, re_path
 from myapp.views import api,files,simple,user,views,admin
+from myapp import views_user
 from django.views.generic import RedirectView
 favicon_view = RedirectView.as_view(url='/static/favicon.ico', permanent=True)
 
@@ -29,6 +30,9 @@ urlpatterns = [
     path('admin_overview/', admin.admin_overview, name='admin_overview'),
     path('api/system-data/', api.get_system_data, name='get_system_data'),
     path('download-resource-logs/', user.download_resource_logs, name='download_resource_logs'),
+    path('download-audit-logs/', views_user.download_audit_logs, name='download_audit_logs'),
+    path('clear-resource-logs/', views_user.clear_resource_logs, name='clear_resource_logs'),
+    path('clear-audit-logs/', views_user.clear_audit_logs, name='clear_audit_logs'),
     path('end-all-sessions/', user.end_all_sessions, name='end_all_sessions'),
 
     path('sql_ide/', views.sql_ide, name='sql_ide'),

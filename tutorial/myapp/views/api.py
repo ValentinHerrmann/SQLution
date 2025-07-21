@@ -207,8 +207,17 @@ def get_system_data(request):
 
     # Log data to CSV
     print(f"{timestamp()}Attempting to log resource data to CSV...")
-    log_resource_data_to_csv(response_data)
+    views_user.log_resource_data_to_csv(response_data)
     print(f"{timestamp()}CSV logging completed.")
+    
+    # Check for audit log rotation (every 10th call to avoid overhead)
+    import random
+    if random.randint(1, 10) == 1:  # Run rotation check roughly 10% of the time
+        try:
+            print(f"{timestamp()}Checking audit log rotation...")
+            views_user.rotate_audit_logs()
+        except Exception as e:
+            print(f"{timestamp()}Error during audit log rotation check: {e}")
 
     # Return data as JSON
     return JsonResponse(response_data)

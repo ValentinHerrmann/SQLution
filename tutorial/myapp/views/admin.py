@@ -164,10 +164,13 @@ def admin_overview(request):
     return render(request, 'admin_overview.html', {
         'refresh_rate': rate,
         'commit': os.popen('git log -1 --pretty=%B').read().strip(),
+        'commit_hash': os.popen('git log -1 --pretty=%H').read().strip(),
         'last_launched': last_launched,
         'wdir': os.getcwd(),
         'logged_in_users': views_user.get_logged_in_users_count(),  # Add initial logged-in users count
         'session_info': views_user.get_session_details(),  # Add initial session details
+        'resource_log_size': views_user.get_resource_log_file_size(),  # Add resource log file size
+        'audit_log_count': views_user.get_audit_log_count(),  # Add audit log count
         #'users': user_data,
         #"fullness_percentage": int(round(fullness_percentage, 0)),
         #"total_gb": total_gb,
