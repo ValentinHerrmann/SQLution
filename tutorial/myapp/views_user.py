@@ -179,7 +179,7 @@ def admin_overview(request):
         request.session.flush()
         os.system("cd .. && ./update_and_launch.sh")
 
-    rate = os.getenv('RESOURCES_REFRESH', default=5000)
+    rate = os.getenv('RESOURCES_REFRESH', default=1000)
 
     last_launched = ""
     try:
