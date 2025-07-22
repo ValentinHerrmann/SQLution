@@ -171,6 +171,7 @@ def admin_overview(request):
         'session_info': views_user.get_session_details(),  # Add initial session details
         'resource_log_size': views_user.get_resource_log_file_size(),  # Add resource log file size
         'audit_log_count': views_user.get_audit_log_count(),  # Add audit log count
+        'recent_audit_logs': views_user.get_recent_audit_logs(),  # Add recent audit logs
         #'users': user_data,
         #"fullness_percentage": int(round(fullness_percentage, 0)),
         #"total_gb": total_gb,
