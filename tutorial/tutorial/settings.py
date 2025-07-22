@@ -57,6 +57,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'myapp.middleware.UserAgentMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'session_security.middleware.SessionSecurityMiddleware',
@@ -159,6 +160,12 @@ SECURE_CONTENT_NOSNIFF = False
 
 #SESSION_SECURITY_INSECURE = True
 
-SESSION_SECURITY_WARN_AFTER = 3600
+SESSION_SECURITY_WARN_AFTER = 1740
 
-SESSION_SECURITY_EXPIRE_AFTER  = 3500
+SESSION_SECURITY_EXPIRE_AFTER  = 1800
+
+SESSION_COOKIE_AGE = 1800
+
+# Log Rotation Settings
+LOG_ROTATION_MAX_SIZE_MB = 10  # Maximum log file size in MB before rotation
+LOG_ROTATION_MAX_FILES = 4     # Maximum number of old log files to keep

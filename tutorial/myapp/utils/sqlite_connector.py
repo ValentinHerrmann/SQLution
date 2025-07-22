@@ -1,7 +1,6 @@
 import sqlite3
 import os
-from .utils import get_user_directory
-from datetime import datetime
+from myapp.utils.directories import get_user_directory
 import re
 from html import escape
 
