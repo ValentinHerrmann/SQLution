@@ -70,6 +70,9 @@ def log_resource_data_to_csv(data):
             """Format number with comma as decimal separator"""
             if isinstance(value, (int, float)):
                 return str(value).replace('.', ',')
+            elif isinstance(value, str):
+                # Handle string values that might already be formatted with decimal points
+                return value.replace('.', ',')
             return str(value)
         
         with open(csv_file_path, 'a', newline='', encoding='utf-8') as csvfile:
@@ -273,7 +276,7 @@ def download_audit_logs(request):
             'Operating System',
             'Location',
             'Forced Reason',
-            'User Agent'
+            'Session ID'
         ])
         
         # Get all audit logs ordered by timestamp (newest first)
@@ -289,7 +292,7 @@ def download_audit_logs(request):
                 log.operating_system or 'Unknown',
                 log.location or 'Unknown',
                 log.forced_reason or '',
-                log.user_agent or ''
+                log.session_id or ''
             ])
         
         return response
@@ -486,7 +489,7 @@ def rotate_audit_logs():
                     # Write header
                     writer.writerow([
                         'Timestamp', 'Username', 'Action', 'IP Address', 
-                        'Operating System', 'Location', 'Forced Reason', 'User Agent'
+                        'Operating System', 'Location', 'Forced Reason', 'Session ID'
                     ])
                     
                     # Write archived logs
@@ -499,7 +502,7 @@ def rotate_audit_logs():
                             log.operating_system or 'Unknown',
                             log.location or 'Unknown',
                             log.forced_reason or '',
-                            log.user_agent or ''
+                            log.session_id or ''
                         ])
                 
                 # Delete archived logs from database

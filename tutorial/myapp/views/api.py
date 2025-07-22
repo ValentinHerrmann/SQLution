@@ -189,6 +189,10 @@ def get_system_data(request):
     # Get detailed session information
     session_details = get_session_details()
     print(session_details)
+    
+    # Get recent audit logs
+    recent_audit_logs = views_user.get_recent_audit_logs()
+    
     # Prepare response data
     response_data = {
         'directories': user_data,
@@ -203,6 +207,18 @@ def get_system_data(request):
         "cpu_percentage": int(round(cpu_percentage, 0)),
         "logged_in_users": logged_in_users,
         "session_info": session_details,
+        "recent_audit_logs": [
+            {
+                'timestamp': log.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+                'username': log.username,
+                'action': log.action,
+                'action_display': dict(log.ACTION_CHOICES).get(log.action, log.action),
+                'ip_address': log.ip_address or 'Unknown',
+                'operating_system': log.operating_system or 'Unknown',
+                'location': log.location or 'Unknown',
+                'session_id': log.session_id or 'Unknown'
+            } for log in recent_audit_logs
+        ]
     }
 
     # Log data to CSV
