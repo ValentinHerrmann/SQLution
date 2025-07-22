@@ -166,6 +166,8 @@ SESSION_SECURITY_EXPIRE_AFTER  = 1800
 
 SESSION_COOKIE_AGE = 1800
 
+RESOURCES_REFRESH = 500
+
 # Log Rotation Settings
 LOG_ROTATION_MAX_SIZE_MB = 10  # Maximum log file size in MB before rotation
 LOG_ROTATION_MAX_FILES = 4     # Maximum number of old log files to keep

@@ -179,7 +179,6 @@ def admin_overview(request):
         request.session.flush()
         os.system("cd .. && ./update_and_launch.sh")
 
-    rate = os.getenv('RESOURCES_REFRESH', default=1000)
 
     last_launched = ""
     try:
@@ -192,7 +191,7 @@ def admin_overview(request):
             f.write(last_launched)
 
     return render(request, 'admin_overview.html', {
-        'refresh_rate': rate,
+        'refresh_rate': settings.RESOURCES_REFRESH,
         'commit': os.popen('git log -1 --pretty=%B').read().strip(),
         'last_launched': last_launched,
         'wdir': os.getcwd(),
