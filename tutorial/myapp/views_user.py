@@ -571,6 +571,15 @@ def get_audit_log_count():
     """Get rotation information for audit logs (wrapper for compatibility)"""
     return get_audit_rotation_info()
 
+def get_recent_audit_logs(limit=20):
+    """Get recent audit logs for display in admin overview"""
+    try:
+        from myapp.models import AuditLog
+        return AuditLog.objects.all().order_by('-timestamp')[:limit]
+    except Exception as e:
+        print(f"Error getting recent audit logs: {e}")
+        return []
+
 @login_required
 @user_passes_test(is_global_admin)
 def clear_resource_logs(request):
