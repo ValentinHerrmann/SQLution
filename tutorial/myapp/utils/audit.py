@@ -19,16 +19,18 @@ def log_audit_event(user, action, request=None, forced_reason=None):
         ip_address = None
         operating_system = None
         location = None
-        user_agent = None
+        session_id = None
         
         if request:
             # Get IP address
             ip_address = request.session.get('client_ip') or get_client_ip_from_request(request)
             
+            # Get session ID
+            session_id = request.session.session_key
+            
             # Get OS info
             user_agent_str = request.META.get('HTTP_USER_AGENT', '')
             if user_agent_str:
-                user_agent = user_agent_str
                 operating_system = parse_os_from_user_agent(user_agent_str)
             
             # Get location info
@@ -69,7 +71,7 @@ def log_audit_event(user, action, request=None, forced_reason=None):
             ip_address=ip_address,
             operating_system=operating_system,
             location=location,
-            user_agent=user_agent,
+            session_id=session_id,
             forced_reason=forced_reason,
             timestamp=local_time
         )

@@ -20,7 +20,7 @@ class AuditLog(models.Model):
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     operating_system = models.CharField(max_length=100, null=True, blank=True)
     location = models.CharField(max_length=200, null=True, blank=True)
-    user_agent = models.TextField(null=True, blank=True)
+    session_id = models.CharField(max_length=40, null=True, blank=True)  # Django session key length
     timestamp = models.DateTimeField(default=timezone.now)
     forced_reason = models.CharField(max_length=200, null=True, blank=True)  # For forced logouts
     
