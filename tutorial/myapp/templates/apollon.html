@@ -7,7 +7,7 @@ DataSpark - Klassendiagramm
 {% block content %} 
 
 
-<div id="div-full-page" class="flex-col" style="height:87vh">
+<div id="div-full-page" class="flex-col" style="height:84vh">
 
   <div id="div-top-section" class="flex-row" style="justify-content: space-evenly;">
 
@@ -73,33 +73,7 @@ DataSpark - Klassendiagramm
     dropZone.addEventListener('drop', async function(e) {
       e.preventDefault();
       fileInput.files = e.dataTransfer.files;
-      
-      const confirmed = await showConfirmDialog(
-        "Achtung, hierdurch wird das aktuelle Klassendiagramm gelöscht! Die Datenbank wird nicht verändert.",
-        "fas fa-project-diagram"
-      );
-      
-      if (!confirmed) {
-          return;
-      }
-
-      if(fileInput.files.length > 0)
-      {
-        let f = fileInput.files[0];
-       //console.log(f);
-
-        const reader = new FileReader();
-        reader.onload = function(event) {
-          try {
-            const json =event.target.result;
-            window.apollon.loadModel(json);
-          } catch (err) {
-            showAlertDialog("Fehler beim Laden der JSON-Datei: " + err.message, "fas fa-exclamation-triangle", "red");
-          }
-        };
-        reader.readAsText(f);
-      }
-    });
+      triggerUpload();
   });
   
   async function triggerUpload() {  
@@ -126,6 +100,7 @@ DataSpark - Klassendiagramm
       reader.onload = function(event) {
         try {
           const json = JSON.parse(event.target.result);
+          console.log(json);
           window.apollon.loadModel(json);
         } catch (err) {
           showAlertDialog("Fehler beim Laden der JSON-Datei: " + err.message, "fas fa-exclamation-triangle", "red");
@@ -165,7 +140,7 @@ DataSpark - Klassendiagramm
           showAlertDialog("Fehler beim Laden des Klassendiagramms als Datenbank. Überprüfe, ob das Format deines Diagramms korrekt ist!", "fas fa-exclamation-triangle", "red");
         }
     });
-    loadJsonFromServer();
+    //loadJsonFromServer();
   }
 
   function downloadJson() {
@@ -275,16 +250,16 @@ DataSpark - Klassendiagramm
     flex-direction: column;
     justify-content: center;
     align-items: stretch;
-    gap: 5px;
-    margin: 5px;
+    gap: 3px;
+    margin: 3px;
   }
   .flex-row {
     display: flex;
     flex-direction: row; /* Force horizontal layout */
     justify-content: center;
     align-items: stretch;
-    gap: 5px;
-    margin: 5px;
+    gap: 3px;
+    margin: 3px;
   }
   </style>
 
