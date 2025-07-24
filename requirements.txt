@@ -16,3 +16,4 @@ pillow>=9.1.0
 qrcode>=8.2.0
 requests>=2.25.0
 pytz>=2025.2
+django-axes[ipware]>=8.0.0
