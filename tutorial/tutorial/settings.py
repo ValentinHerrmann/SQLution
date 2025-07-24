@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'form_designer',
     'admin_ordering',
     'session_security',
+    'axes',
 ]
 
 MIDDLEWARE = [
@@ -61,6 +62,15 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'session_security.middleware.SessionSecurityMiddleware',
+    'axes.middleware.AxesMiddleware',
+]
+
+AUTHENTICATION_BACKENDS = [
+    # AxesStandaloneBackend should be the first backend in the AUTHENTICATION_BACKENDS list.
+    'axes.backends.AxesStandaloneBackend',
+
+    # Django ModelBackend is the default authentication backend.
+    'django.contrib.auth.backends.ModelBackend',
 ]
 
 ROOT_URLCONF = 'tutorial.urls'
@@ -171,3 +181,7 @@ RESOURCES_REFRESH = 500
 # Log Rotation Settings
 LOG_ROTATION_MAX_SIZE_MB = 10  # Maximum log file size in MB before rotation
 LOG_ROTATION_MAX_FILES = 4     # Maximum number of old log files to keep
+
+AXES_FAILURE_LIMIT = 5
+
+AXES_COOLOFF_TIME = 2
