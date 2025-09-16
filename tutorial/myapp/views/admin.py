@@ -49,7 +49,7 @@ def qr_generator(request):
                 
                 # Ensure content is not empty
                 if not content.strip():
-                    content = "DataSpark QR Code"  # Default content if empty
+                    content = "SQLution QR Code"  # Default content if empty
                 
                 # Generate QR code SVG with fallback logic
                 try:
@@ -106,7 +106,7 @@ def qr_generator(request):
                 
                 # Ensure content is not empty
                 if not content or not content.strip():
-                    content = "DataSpark QR Code"  # Default content if empty
+                    content = "SQLution QR Code"  # Default content if empty
                 
                 # Generate QR code SVG with all options - this should ALWAYS work
                 try:

@@ -19,7 +19,7 @@ class UploadFileForm(forms.Form):
 
 class QRGeneratorForm(forms.Form):
     LOGO_CHOICES = [
-        ('dataspark', 'DataSpark Logo (Standard)'),
+        ('dataspark', 'SQLution Logo (Standard)'),
         ('custom', 'Eigenes Logo hochladen'),
         ('none', 'Kein Logo'),
     ]
