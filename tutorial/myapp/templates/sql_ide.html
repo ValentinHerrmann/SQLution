@@ -1,6 +1,6 @@
 {% extends "base.html" %} 
 {% block title %}
-DataSpark - SQL IDE
+SQLution - SQL IDE
 {% endblock %}
 {% block content %}
 {% load static %}
@@ -10,15 +10,15 @@ DataSpark - SQL IDE
 <style>
     html, body, .main-flex-container {
         height: 100%;
-        min-height: 90vh;
+        min-height: 88vh;
         margin: 0;
         padding: 0;
     }
     .main-flex-container {
         display: flex;
         flex-direction: column;
-        height: 90vh;
-        min-height: 90vh;
+        height: 88vh;
+        min-height: 88vh;
     }
     .top-bar {
         flex: 0 0 auto;
@@ -147,12 +147,6 @@ DataSpark - SQL IDE
             {% endfor %}
         </div>
     </div>
-    
-  <div style="text-align: right; color: #888; font-size: 0.8em; margin-top: 2px;">
-    <a href="https://github.com/martin-pabst/SQL-IDE/" target="_blank" style="color: #888; text-decoration: underline;">
-      Powered by Martin Pabst's SQL-IDE
-    </a>
-  </div>
 </div>
 
 <script>
@@ -244,4 +238,10 @@ allDetails.forEach((details, idx) => {
 });
 </script>
 
+{% endblock %}
+
+{% block powered_by %}
+<a href="https://github.com/martin-pabst/SQL-IDE/" target="_blank" style="color: #888; text-decoration: underline;">
+      Powered by Martin Pabst's SQL-IDE
+    </a>
 {% endblock %}

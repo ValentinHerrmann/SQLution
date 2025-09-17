@@ -1,20 +1,11 @@
 from django.shortcuts import render
+from myapp.views.forms import *
+from myapp.utils.sqlite_connector import *
+from myapp.models import *
+from myapp.utils.utils import *
+from myapp.utils.directories import *
 
 
-from .forms import SQLQueryForm
-from .sqlite_connector import runSql
-from .models import *
-from .utils import *
-import os
-import zipfile
-from io import BytesIO
-
-
-def is_global_admin(user):
-    return user.is_authenticated and user.username == 'admin'
-
-def is_db_admin(user):
-    return user.is_authenticated and user.username.endswith('_admin')
 
 def execute_sql_query(query, username):
     try:
@@ -30,6 +21,7 @@ def execute_sql_query(query, username):
     
 
 def render_sql_form(request, sql, inputs, sqlfile, result, error, columns, dropdowns):
+    result = remove_nones_from_sqlresult(result)
     return render(request, 'sql_form.html', {
         'inputs': inputs,
         'dropdowns': dropdowns,
@@ -62,7 +54,7 @@ def load_sql_queryfile(request):
         sqlfile = ''
     if sqlfile and sqlfile != '':
         dir = get_user_directory(request.user.username)
-        with open(f"{dir}/{sqlfile}.sql", "r") as f:
+        with open(fullpath(dir,f"{sqlfile}.sql"), "r") as f:
             sql = f.read()
         form = SQLQueryForm(initial={'query': sql})
     return form
