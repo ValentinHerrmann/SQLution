@@ -32,11 +32,11 @@ def process_logo_for_qr(logo_file=None):
             # Handle uploaded custom logo
             image = Image.open(logo_file)
         else:
-            # Use default DataSpark icon - try multiple possible paths
+            # Use default SQLution icon - try multiple possible paths
             possible_paths = [
-                os.path.join(settings.BASE_DIR, 'tutorial', 'static', 'DataSpark_Icon_582px.png'),
-                os.path.join(settings.BASE_DIR, 'tutorial', 'myapp', 'staticfiles', 'DataSpark_Icon_582px.png'),
-                os.path.join(settings.BASE_DIR, 'static', 'DataSpark_Icon_582px.png'),
+                os.path.join(settings.BASE_DIR, 'tutorial', 'static', 'SQLution.svg'),
+                os.path.join(settings.BASE_DIR, 'tutorial', 'myapp', 'staticfiles', 'SQLution.svg'),
+                os.path.join(settings.BASE_DIR, 'static', 'SQLution.svg'),
             ]
             
             image = None
@@ -79,7 +79,7 @@ def generate_qr_svg(content, logo_info=None, qr_color='#0066cc', background_colo
     try:
         # Ensure content is not empty
         if not content or not content.strip():
-            content = "DataSpark QR Code"  # Default content
+            content = "SQLution QR Code"  # Default content
         
         # Ensure colors are not None
         if qr_color is None:
@@ -89,9 +89,9 @@ def generate_qr_svg(content, logo_info=None, qr_color='#0066cc', background_colo
         if frame_color is None:
             frame_color = '#000000'
         
-        # If no logo_info provided and we want DataSpark logo, try to get it
+        # If no logo_info provided and we want SQLution logo, try to get it
         if logo_info is None:
-            # Don't automatically load DataSpark logo - respect the user's choice
+            # Don't automatically load SQLution logo - respect the user's choice
             pass
         
         # Determine if background should be transparent
@@ -198,7 +198,7 @@ def generate_qr_svg(content, logo_info=None, qr_color='#0066cc', background_colo
         try:
             # Ensure content exists
             if not content or not content.strip():
-                content = "DataSpark QR Code"
+                content = "SQLution QR Code"
             
             # Create minimal QR code as fallback
             qr = qrcode.QRCode(
@@ -507,7 +507,7 @@ def add_logo_to_svg(root, logo_info):
         root.append(circle)
         
         if logo_info and logo_info.get('data'):
-            # Use uploaded or default DataSpark image
+            # Use uploaded or default SQLution image
             image_elem = ET.Element(f'{{{svg_ns}}}image')
             image_elem.set('x', str(center_x - logo_size))
             image_elem.set('y', str(center_y - logo_size))
@@ -521,7 +521,7 @@ def add_logo_to_svg(root, logo_info):
             logo_group = ET.Element(f'{{{svg_ns}}}g')
             logo_group.set('transform', f'translate({center_x},{center_y})')
             
-            # Add a stylized diamond shape for "DataSpark"
+            # Add a stylized diamond shape for "SQLution"
             diamond = ET.Element(f'{{{svg_ns}}}polygon')
             diamond_size = logo_size * 0.7
             points = f"{-diamond_size*0.5},0 0,{-diamond_size*0.5} {diamond_size*0.5},0 0,{diamond_size*0.5}"
