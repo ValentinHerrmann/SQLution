@@ -1,36 +1,119 @@
 <!-- filepath: /home/vale/github/django-tutorial/tutorial/myapp/templates/admin_overview.html -->
 {% extends "base.html" %} 
 {% block title %}
-DataSpark - Resource Overview
+SQLution - Resource Overview
 {% endblock %}
 {% block content %}
-<div class="container mt-4">
+<!-- Chart.js Library for Performance Diagrams -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+  /* Compact admin overview styles */
+  .admin-compact .card {
+    margin-top: 0.5rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+  .admin-compact .card-body {
+    padding: 0.5rem !important;
+  }
+  .admin-compact .card-title {
+    font-size: 0.95rem !important;
+    margin-bottom: 0.25rem !important;
+    font-weight: 600;
+  }
+  .admin-compact .btn {
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.85rem !important;
+  }
+  .admin-compact .table {
+    font-size: 0.85rem !important;
+  }
+  .admin-compact .progress {
+    height: 18px !important;
+  }
+  .admin-compact p {
+    margin-bottom: 0.25rem !important;
+    font-size: 0.9rem;
+  }
+  .admin-compact .row {
+    margin-bottom: 0.5rem !important;
+  }
+</style>
+
+<div class="container-fluid mt-2 admin-compact">
   <div class="row">
     <div class="col-12">
       <!-- Header -->
-      <div class="d-flex justify-content-between align-items-center mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-2">
         <h2>Admin Overview</h2>
-        <a href="?restart=true" class="btn btn-danger">Update and Restart</a>
+        <div>
+          <!-- Performance Logs Section -->
+          <div class="btn-group me-2" role="group">
+            <a href="{% url 'download_resource_logs' %}" class="btn btn-success" style="margin: 2px;">
+              <i class="fas fa-file-csv"></i> Download Performance Logs
+              <small class="d-block text-light">({{ resource_log_size }})</small>
+            </a>
+            <form method="post" action="{% url 'clear_resource_logs' %}" style="display: inline;">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-outline-success d-flex flex-column align-items-center justify-content-center" style="margin: 2px; height: 50px; min-width: 45px;"
+                      onclick="return confirm('Are you sure you want to clear all performance logs? This action cannot be undone.')"
+                      title="Clear Performance Logs">
+                <i class="fas fa-trash-alt"></i>
+              </button>
+            </form>
+          </div>
+          
+          <!-- Audit Logs Section -->
+          <div class="btn-group me-2" role="group">
+            <a href="{% url 'download_audit_logs' %}" class="btn btn-info" style="margin: 2px;">
+              <i class="fas fa-user-shield"></i> Download Audit Logs
+              <small class="d-block text-light">({{ audit_log_count }})</small>
+            </a>
+            <form method="post" action="{% url 'clear_audit_logs' %}" style="display: inline;">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-outline-info d-flex flex-column align-items-center justify-content-center" style="margin: 2px; height: 50px; min-width: 45px;"
+                      onclick="return confirm('Are you sure you want to clear all audit logs? This action cannot be undone.')"
+                      title="Clear Audit Logs">
+                <i class="fas fa-trash-alt"></i>
+              </button>
+            </form>
+          </div>
+          
+          <form method="post" action="{% url 'end_all_sessions' %}" style="display: inline;" class="me-2">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-warning" style="margin: 2px;" onclick="return confirm('Are you sure you want to end all user sessions except your own? This will log out all other users.')">
+              <i class="fas fa-sign-out-alt"></i> Logout all users
+            </button>
+          </form>
+          <form method="post" style="display: inline;">
+            {% csrf_token %}
+            <input type="hidden" name="restart" value="true">
+            <button type="submit" class="btn btn-danger" style="margin: 2px;" onclick="return confirm('Are you sure you want to restart the server?')">
+              <i class="fas fa-sync-alt"></i> Update and Restart
+            </button>
+          </form>
+        </div>
       </div>
 
       <!-- System Info -->
-      <div class="card mb-4">
-        <div class="card-body">
-          <h5 class="card-title">System Information</h5>
-          <p>Last commit: <a href="https://github.com/ValentinHerrmann/DataSpark/commit/{{ commit_hash }}" target="_blank" rel="noopener noreferrer"><i>{{ commit }}</i></a></p>
-          <p>Last launched: <i>{{ last_launched }}</i></p>
-          <p>Working dir: <i>{{ wdir }}</i></p>
+      <div class="card mb-2">
+        <div class="card-body py-2">
+          <h6 class="card-title mb-1">System Information</h6>
+          <p class="mb-1">Last commit: <a href="https://github.com/ValentinHerrmann/DataSpark/commit/{{ commit_hash }}" target="_blank" rel="noopener noreferrer"><i>{{ commit }}</i></a></p>
+          <p class="mb-1">Last launched: <i>{{ last_launched }}</i></p>
+          <p class="mb-1">Working dir: <i>{{ wdir }}</i></p>
         </div>
       </div>
 
       <!-- Performance Metrics Row -->
-      <div class="row mb-4">
-        <!-- System Drive Usage -->
-        <div class="col-lg-4 mb-4 mb-lg-0">
-          <div class="card h-100">
-            <div class="card-body">
-              <h5 class="card-title">System Drive Usage</h5>
-              <div class="progress" style="height: 25px;">
+      <div class="row mb-2">
+        <!-- Left Column - Progress Bars -->
+        <div class="col-lg-4">
+          <!-- System Drive Usage -->
+          <div class="card mb-2">
+            <div class="card-body py-2">
+              <h6 class="card-title mb-1">System Drive Usage</h6>
+              <div class="progress" style="height: 20px;">
                 <div 
                   id="drive-progress-bar"
                   class="progress-bar" 
@@ -42,17 +125,15 @@ DataSpark - Resource Overview
                   {{ fullness_percentage }}%
                 </div>
               </div>
-              <p class="mt-2">Free: <span id="drive-free">{{ free_gb }}</span> GB of <span id="drive-total">{{ total_gb }}</span> GB</p>
+              <p class="mt-1 mb-0">Free: <span id="drive-free">{{ free_gb }}</span> GB of <span id="drive-total">{{ total_gb }}</span> GB</p>
             </div>
           </div>
-        </div>
 
-        <!-- RAM Usage -->
-        <div class="col-lg-4 mb-4 mb-lg-0">
-          <div class="card h-100">
-            <div class="card-body">
-              <h5 class="card-title">RAM Usage</h5>
-              <div class="progress" style="height: 25px;">
+          <!-- RAM Usage -->
+          <div class="card mb-2">
+            <div class="card-body py-2">
+              <h6 class="card-title mb-1">RAM Usage</h6>
+              <div class="progress" style="height: 20px;">
                 <div 
                   id="ram-progress-bar"
                   class="progress-bar bg-success" 
@@ -64,17 +145,15 @@ DataSpark - Resource Overview
                   {{ ram_percentage }}%
                 </div>
               </div>
-              <p class="mt-2">Free: <span id="ram-free">{{ ram_free }}</span> GB of <span id="ram-total">{{ ram_total }}</span> GB</p>
+              <p class="mt-1 mb-0">Free: <span id="ram-free">{{ ram_free }}</span> GB of <span id="ram-total">{{ ram_total }}</span> GB</p>
             </div>
           </div>
-        </div>
 
-        <!-- CPU Usage -->
-        <div class="col-lg-4">
-          <div class="card h-100">
-            <div class="card-body">
-              <h5 class="card-title">CPU Usage</h5>
-              <div class="progress" style="height: 25px;">
+          <!-- CPU Usage -->
+          <div class="card">
+            <div class="card-body py-2">
+              <h6 class="card-title mb-1">CPU Usage</h6>
+              <div class="progress" style="height: 20px;">
                 <div 
                   id="cpu-progress-bar"
                   class="progress-bar bg-info" 
@@ -89,31 +168,149 @@ DataSpark - Resource Overview
             </div>
           </div>
         </div>
+
+        <!-- Right Column - Performance Chart -->
+        <div class="col-lg-8">
+          <div class="card h-100">
+            <div class="card-body d-flex flex-column py-2">
+               <div class="flex-grow-1" style="position: relative; height: 240px;">
+                <canvas id="performanceChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- Directory List -->
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title">Directories</h5>
-          <div id="directory-list" class="file-tree">
-            <table class="table table-striped">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Size</th>
-                  <th>Last Modified</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for item in users %}
-                  <tr>
-                    <td><strong>{{ item.name }}</strong></td>
-                    <td>{{ item.size }}</td>
-                    <td>{{ item.last_modified }}</td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
+      <!-- Active Users and Directory List Row -->
+      <div class="row mb-2">
+        <!-- Active Users -->
+        <div class="col-lg-6 mb-2 mb-lg-0">
+          <div class="card h-100">
+            <div class="card-body d-flex flex-column py-2">
+              <h6 class="card-title mb-2">Active Users (<span id="logged-in-users" class="text-primary">{{ logged_in_users|default:0 }}</span> in <span id="total-sessions" class="text-primary">{{ session_info.total_sessions|default:0 }}</span> sessions)</h6>
+              <div id="active-users-list" class="overflow-auto flex-grow-1" style="max-height: 320px;">
+                <table class="table table-sm">
+                  <thead>
+                    <tr>
+                      <th>Username</th>
+                      <th>Sessions</th>
+                      <th>OS</th>
+                      <th>IP Address</th>
+                      <th>Location</th>
+                    </tr>
+                  </thead>
+                  <tbody id="active-users-tbody">
+                    {% if session_info.active_users %}
+                      {% for user in session_info.active_users %}
+                        <tr>
+                          <td><strong>{{ user.username }}</strong></td>
+                          <td><span class="text-primary">{{ user.session_count }}</span></td>
+                          <td><small class="text-muted">{{ user.os }}</small></td>
+                          <td><small class="text-muted">{{ user.ip }}</small></td>
+                          <td><small class="text-muted">{{ user.location }}</small></td>
+                        </tr>
+                      {% endfor %}
+                    {% else %}
+                      <tr>
+                        <td colspan="5" class="text-muted text-center">No active users</td>
+                      </tr>
+                    {% endif %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Directory List -->
+        <div class="col-lg-6">
+          <div class="card h-100">
+            <div class="card-body d-flex flex-column py-2">
+              <h6 class="card-title mb-2">Directories</h6>
+              <div id="directory-list" class="file-tree overflow-auto flex-grow-1" style="max-height: 320px;">
+                <table class="table table-striped table-sm" id="directories-table">
+                  <thead>
+                    <tr>
+                      <th style="cursor: pointer;" onclick="sortTable(0, 'directories-table')">
+                        Name <i class="fas fa-sort" id="sort-icon-0"></i>
+                      </th>
+                      <th style="cursor: pointer;" onclick="sortTable(1, 'directories-table')">
+                        Size <i class="fas fa-sort" id="sort-icon-1"></i>
+                      </th>
+                      <th style="cursor: pointer;" onclick="sortTable(2, 'directories-table')">
+                        Last Modified <i class="fas fa-sort" id="sort-icon-2"></i>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for item in users %}
+                      <tr>
+                        <td><strong>{{ item.name }}</strong></td>
+                        <td>{{ item.size }}</td>
+                        <td>{{ item.last_modified }}</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Audit Logs Row -->
+      <div class="row mb-2">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-body py-2">
+              <h6 class="card-title mb-2">Recent Login Activity</h6>
+              <div class="overflow-auto" style="max-height: 300px;">
+                <table class="table table-sm table-striped" id="recent-audit-logs">
+                  <thead>
+                    <tr>
+                      <th>Time</th>
+                      <th>User</th>
+                      <th>Action</th>
+                      <th>IP Address</th>
+                      <th>OS</th>
+                      <th>Location</th>
+                      <th>Session ID</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% if recent_audit_logs %}
+                      {% for log in recent_audit_logs %}
+                        <tr>
+                          <td><small class="text-muted">{{ log.timestamp|date:"Y-m-d H:i:s" }}</small></td>
+                          <td><strong>{{ log.username }}</strong></td>
+                          <td>
+                            {% if log.action == 'LOGIN' %}
+                              <span class="badge badge-success">{{ log.get_action_display }}</span>
+                            {% elif log.action == 'LOGOUT' %}
+                              <span class="badge badge-info">{{ log.get_action_display }}</span>
+                            {% elif log.action == 'FORCED_LOGOUT' %}
+                              <span class="badge badge-warning">{{ log.get_action_display }}</span>
+                            {% elif log.action == 'SESSION_TIMEOUT' %}
+                              <span class="badge badge-secondary">{{ log.get_action_display }}</span>
+                            {% else %}
+                              <span class="badge badge-light">{{ log.get_action_display }}</span>
+                            {% endif %}
+                          </td>
+                          <td><small class="text-muted">{{ log.ip_address|default:"Unknown" }}</small></td>
+                          <td><small class="text-muted">{{ log.operating_system|default:"Unknown" }}</small></td>
+                          <td><small class="text-muted">{{ log.location|default:"Unknown" }}</small></td>
+                          <td><small class="text-muted">{{ log.session_id|default:"Unknown" }}</small></td>
+                        </tr>
+                      {% endfor %}
+                    {% else %}
+                      <tr>
+                        <td colspan="7" class="text-muted text-center">No audit logs available</td>
+                      </tr>
+                    {% endif %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -122,10 +319,277 @@ DataSpark - Resource Overview
 </div>
 
 <script>
+  // CPU and RAM Performance Chart Setup
+  let performanceChart;
+  let cpuData = [];
+  let ramData = [];
+  let cpuAvgData = [];
+  let timeLabels = [];
+  const averageWindow = 20; // Calculate average over last 20 data points
+  
+  // Calculate max data points based on refresh rate to maintain exactly 5 minutes
+  const refreshRateMs = {{refresh_rate}}; // Refresh rate in milliseconds from Django settings
+  const fiveMinutesMs = 5 * 60 * 1000; // 5 minutes in milliseconds
+  const maxDataPoints = Math.ceil(fiveMinutesMs / refreshRateMs); // Dynamic calculation
+  
+  console.log(`Refresh rate: ${refreshRateMs}ms, Max data points for 5 minutes: ${maxDataPoints}`);
+  
+  // Load existing data from localStorage
+  function loadChartData() {
+    try {
+      const savedData = localStorage.getItem('performanceChartData');
+      if (savedData) {
+        const parsed = JSON.parse(savedData);
+        
+        // Validate data structure
+        if (parsed.cpuData && parsed.ramData && parsed.timeLabels && 
+            Array.isArray(parsed.cpuData) && Array.isArray(parsed.ramData) && Array.isArray(parsed.timeLabels)) {
+          
+          cpuData = parsed.cpuData;
+          ramData = parsed.ramData;
+          timeLabels = parsed.timeLabels;
+          
+          // Recalculate averages from loaded data
+          cpuAvgData = calculateFloatingAverage(cpuData, averageWindow);
+          
+          // Clean old data that exceeds the time window
+          const now = Date.now();
+          let validIndex = 0;
+          for (let i = 0; i < timeLabels.length; i++) {
+            const timeStr = timeLabels[i];
+            // Create a date object from today with the time string
+            const today = new Date();
+            const [hours, minutes, seconds] = timeStr.split(':');
+            const dataTime = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hours, minutes, seconds);
+            
+            if (now - dataTime.getTime() <= fiveMinutesMs) {
+              validIndex = i;
+              break;
+            }
+          }
+          
+          if (validIndex > 0) {
+            cpuData = cpuData.slice(validIndex);
+            ramData = ramData.slice(validIndex);
+            timeLabels = timeLabels.slice(validIndex);
+            // Recalculate averages after slicing
+            cpuAvgData = calculateFloatingAverage(cpuData, averageWindow);
+          }
+          
+          console.log(`Loaded ${cpuData.length} data points from localStorage`);
+        } else {
+          console.warn("Invalid data structure in localStorage, starting fresh");
+          resetChartData();
+        }
+      }
+    } catch (error) {
+      console.error("Error loading chart data:", error);
+      resetChartData();
+    }
+  }
+  
+  function resetChartData() {
+    cpuData = [];
+    ramData = [];
+    cpuAvgData = [];
+    timeLabels = [];
+  }
+  
+  // Calculate floating average for the last N data points
+  function calculateFloatingAverage(data, windowSize) {
+    if (data.length === 0) return [];
+    
+    const averages = [];
+    for (let i = 0; i < data.length; i++) {
+      const start = Math.max(0, i - windowSize + 1);
+      const slice = data.slice(start, i + 1);
+      const avg = slice.reduce((sum, val) => sum + val, 0) / slice.length;
+      averages.push(Math.round(avg * 100) / 100); // Round to 2 decimal places
+    }
+    return averages;
+  }
+  
+  // Save chart data to localStorage
+  function saveChartData() {
+    try {
+      const dataToSave = {
+        cpuData: cpuData,
+        ramData: ramData,
+        cpuAvgData: cpuAvgData,
+        timeLabels: timeLabels,
+        timestamp: Date.now()
+      };
+      localStorage.setItem('performanceChartData', JSON.stringify(dataToSave));
+    } catch (error) {
+      console.error("Error saving chart data:", error);
+    }
+  }
+  
+  function initializePerformanceChart() {
+    try {
+      // Load existing data first
+      loadChartData();
+      
+      const ctx = document.getElementById('performanceChart').getContext('2d');
+      performanceChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: timeLabels,
+          datasets: [{
+            label: 'CPU Usage (%)',
+            data: cpuData,
+            borderColor: 'rgb(23, 162, 184)',
+            backgroundColor: 'rgba(23, 162, 184, 0.1)',
+            fill: false,
+            tension: 0.4,
+            pointRadius: 0,
+            pointHoverRadius: 6,
+            borderWidth: 2
+          }, {
+            label: 'RAM Usage (%)',
+            data: ramData,
+            borderColor: 'rgb(40, 167, 69)',
+            backgroundColor: 'rgba(40, 167, 69, 0.1)',
+            fill: false,
+            tension: 0.4,
+            pointRadius: 0,
+            pointHoverRadius: 6,
+            borderWidth: 2
+          }, {
+            label: 'CPU Average (%)',
+            data: cpuAvgData,
+            borderColor: 'rgba(255, 100, 100, 1)',
+            backgroundColor: 'rgba(255, 100, 100, 0.05)',
+            fill: false,
+            tension: 0.4,
+            pointRadius: 0,
+            pointHoverRadius: 6,  
+            borderWidth: 2,
+            order: -1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: {
+            duration: 750,
+            easing: 'easeInOutQuart'
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100,
+              ticks: {
+                callback: function(value) {
+                  return value + '%';
+                }
+              },
+              title: {
+                display: true,
+                text: 'Usage (%)'
+              }
+            },
+            x: {
+              title: {
+                display: true,
+                text: 'Time (Last 5 Minutes)'
+              },
+              ticks: {
+                maxTicksLimit: Math.min(10, Math.ceil(maxDataPoints / 6)) // Adjust ticks based on data points
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top'
+            },
+            tooltip: {
+              mode: 'index',
+              intersect: false,
+              callbacks: {
+                label: function(context) {
+                  return context.dataset.label + ': ' + context.parsed.y + '%';
+                }
+              }
+            }
+          },
+          interaction: {
+            mode: 'nearest',
+            axis: 'x',
+            intersect: false
+          }
+        }
+      });
+      console.log("Performance chart initialized successfully");
+    } catch (error) {
+      console.error("Error initializing performance chart:", error);
+    }
+  }
+  
+  function updatePerformanceChart(cpuPercentage, ramPercentage) {
+    try {
+      if (!performanceChart) {
+        console.warn("Performance chart not initialized yet");
+        return;
+      }
+      
+      const now = new Date();
+      const timeLabel = now.toLocaleTimeString('de-DE', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+      
+      // Add new data points
+      cpuData.push(cpuPercentage);
+      ramData.push(ramPercentage);
+      timeLabels.push(timeLabel);
+      
+      // Remove old data points to maintain exactly 5-minute window
+      // maxDataPoints is calculated as: (5 minutes in ms) / (refresh rate in ms)
+      if (cpuData.length > maxDataPoints) {
+        cpuData.shift();
+        ramData.shift();
+        timeLabels.shift();
+      }
+      
+      // Calculate floating averages
+      cpuAvgData = calculateFloatingAverage(cpuData, averageWindow);
+      
+      // Update chart datasets
+      if (performanceChart.data.datasets.length >= 3) {
+        performanceChart.data.datasets[2].data = cpuAvgData;
+      }
+      
+      // Update chart
+      performanceChart.update('none');
+      
+      // Save data to localStorage for persistence
+      saveChartData();
+    } catch (error) {
+      console.error("Error updating performance chart:", error);
+    }
+  }
+
   function fetchSystemData() {
     fetch("{% url 'get_system_data' %}")
-      .then(response => response.json())
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
     .then(data => {
+      
+      // Update Logged-in Users
+      const loggedInUsersElement = document.getElementById("logged-in-users");
+      if (loggedInUsersElement) {
+        loggedInUsersElement.textContent = data.logged_in_users;
+      } else {
+        console.error("Could not find logged-in-users element");
+      }
+
       // Update System Drive Usage
       document.getElementById("drive-progress-bar").style.width = data.fullness_percentage + "%";
       document.getElementById("drive-progress-bar").textContent = data.fullness_percentage + "%";
@@ -141,6 +605,48 @@ DataSpark - Resource Overview
       // Update CPU Usage
       document.getElementById("cpu-progress-bar").style.width = data.cpu_percentage + "%";
       document.getElementById("cpu-progress-bar").textContent = data.cpu_percentage + "%";
+      
+      // Update Performance Chart with both CPU and RAM
+      updatePerformanceChart(data.cpu_percentage, data.ram_percentage);
+
+      // Update Session Information
+      if (data.session_info) {
+        // Update logged-in users count
+        const loggedInUsersElement = document.getElementById("logged-in-users");
+        if (loggedInUsersElement) {
+          loggedInUsersElement.textContent = data.logged_in_users;
+        }
+        
+        // Update total sessions count
+        const totalSessionsElement = document.getElementById("total-sessions");
+        if (totalSessionsElement) {
+          totalSessionsElement.textContent = data.session_info.total_sessions;
+        }
+        
+        // Update Active Users List
+        const activeUsersTableBody = document.getElementById("active-users-tbody");
+        activeUsersTableBody.innerHTML = ""; // Clear existing rows
+        
+        if (data.session_info.active_users && data.session_info.active_users.length > 0) {
+          data.session_info.active_users.forEach(user => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+              <td><strong>${user.username}</strong></td>
+              <td><span class="text-primary">${user.session_count}</span></td>
+              <td><small class="text-muted">${user.os || 'Unknown'}</small></td>
+              <td><small class="text-muted">${user.ip || 'Unknown'}</small></td>
+              <td><small class="text-muted">${user.location || 'Unknown'}</small></td>
+            `;
+            activeUsersTableBody.appendChild(row);
+          });
+        } else {
+          const row = document.createElement("tr");
+          row.innerHTML = `<td colspan="5" class="text-muted text-center">No active users</td>`;
+          activeUsersTableBody.appendChild(row);
+        }
+      } else {
+        console.error("No session_info in response data");
+      }
 
       // Update Directory List as a Table
       const directoryList = document.getElementById("directory-list");
@@ -154,11 +660,149 @@ DataSpark - Resource Overview
         <td>${item.last_modified}</td>`;
         tableBody.appendChild(row);
       });
+
+      // Update Recent Audit Logs
+      if (data.recent_audit_logs) {
+        const auditTableBody = document.querySelector('#recent-audit-logs tbody');
+        if (auditTableBody) {
+          auditTableBody.innerHTML = ""; // Clear existing rows
+          
+          if (data.recent_audit_logs.length > 0) {
+            data.recent_audit_logs.forEach(log => {
+              const row = document.createElement("tr");
+              
+              // Determine badge class based on action
+              let badgeClass = 'badge-light';
+              switch(log.action) {
+                case 'LOGIN':
+                  badgeClass = 'badge-success';
+                  break;
+                case 'LOGOUT':
+                  badgeClass = 'badge-info';
+                  break;
+                case 'FORCED_LOGOUT':
+                  badgeClass = 'badge-warning';
+                  break;
+                case 'SESSION_TIMEOUT':
+                  badgeClass = 'badge-secondary';
+                  break;
+              }
+              
+              row.innerHTML = `
+                <td><small class="text-muted">${log.timestamp}</small></td>
+                <td><strong>${log.username}</strong></td>
+                <td><span class="badge ${badgeClass}">${log.action_display}</span></td>
+                <td><small class="text-muted">${log.ip_address}</small></td>
+                <td><small class="text-muted">${log.operating_system}</small></td>
+                <td><small class="text-muted">${log.location}</small></td>
+                <td><small class="text-muted">${log.session_id}</small></td>
+              `;
+              auditTableBody.appendChild(row);
+            });
+          } else {
+            const row = document.createElement("tr");
+            row.innerHTML = `<td colspan="7" class="text-muted text-center">No audit logs available</td>`;
+            auditTableBody.appendChild(row);
+          }
+        }
+      }
       })
-      .catch(error => console.error("Error fetching system data:", error));
+      .catch(error => {
+        console.error("Error fetching system data:", error);
+        // Don't stop trying on errors
+      });
   }
+  
+  // Table sorting functionality
+  let sortDirection = {}; // Track sort direction for each column
+  
+  function sortTable(columnIndex, tableId) {
+    const table = document.getElementById(tableId);
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    
+    // Initialize sort direction for this column if not exists
+    if (!(tableId + '-' + columnIndex in sortDirection)) {
+      sortDirection[tableId + '-' + columnIndex] = 'asc';
+    }
+    
+    // Toggle sort direction
+    const isAsc = sortDirection[tableId + '-' + columnIndex] === 'asc';
+    sortDirection[tableId + '-' + columnIndex] = isAsc ? 'desc' : 'asc';
+    
+    // Sort rows
+    rows.sort((a, b) => {
+      const aText = a.cells[columnIndex].textContent.trim();
+      const bText = b.cells[columnIndex].textContent.trim();
+      
+      // Handle numeric sorting for size column
+      if (columnIndex === 1) {
+        const aSize = parseFileSize(aText);
+        const bSize = parseFileSize(bText);
+        return isAsc ? aSize - bSize : bSize - aSize;
+      }
+      
+      // Handle date sorting for last modified column
+      if (columnIndex === 2) {
+        const aDate = new Date(aText);
+        const bDate = new Date(bText);
+        return isAsc ? aDate - bDate : bDate - aDate;
+      }
+      
+      // Default string sorting
+      return isAsc ? aText.localeCompare(bText) : bText.localeCompare(aText);
+    });
+    
+    // Update sort icons
+    updateSortIcons(tableId, columnIndex, !isAsc);
+    
+    // Re-append sorted rows
+    rows.forEach(row => tbody.appendChild(row));
+  }
+  
+  function parseFileSize(sizeStr) {
+    if (!sizeStr || sizeStr === '-') return 0;
+    
+    const units = { 'B': 1, 'KB': 1024, 'MB': 1024*1024, 'GB': 1024*1024*1024, 'TB': 1024*1024*1024*1024 };
+    const match = sizeStr.match(/^([\d.]+)\s*([A-Z]+)$/i);
+    
+    if (match) {
+      const value = parseFloat(match[1]);
+      const unit = match[2].toUpperCase();
+      return value * (units[unit] || 1);
+    }
+    
+    return parseFloat(sizeStr) || 0;
+  }
+  
+  function updateSortIcons(tableId, activeColumn, isDesc) {
+    // Reset all icons for this table
+    const table = document.getElementById(tableId);
+    const headers = table.querySelectorAll('th i[id^="sort-icon-"]');
+    headers.forEach(icon => {
+      icon.className = 'fas fa-sort';
+    });
+    
+    // Set active column icon
+    const activeIcon = document.getElementById(`sort-icon-${activeColumn}`);
+    if (activeIcon) {
+      activeIcon.className = isDesc ? 'fas fa-sort-down' : 'fas fa-sort-up';
+    }
+  }
+  
+  // Initialize everything when page loads
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log("Initializing performance chart...");
+    console.log(`Chart will maintain ${maxDataPoints} data points for exactly 5 minutes at ${refreshRateMs}ms intervals`);
+    initializePerformanceChart();
+  });
+  
+  // Initial fetch
+  console.log("Starting initial fetch...");
   fetchSystemData();
-  // Fetch data every 5 seconds
+  
+  // Set up interval for updates
+  console.log("Setting up interval with rate:", {{refresh_rate}});
   setInterval(fetchSystemData, {{refresh_rate}});
 </script>
 {% endblock %}
