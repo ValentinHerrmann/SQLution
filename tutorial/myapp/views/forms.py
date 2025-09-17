@@ -19,7 +19,7 @@ class UploadFileForm(forms.Form):
 
 class QRGeneratorForm(forms.Form):
     LOGO_CHOICES = [
-        ('dataspark', 'DataSpark Logo (Standard)'),
+        ('dataspark', 'SQLution Logo (Standard)'),
         ('custom', 'Eigenes Logo hochladen'),
         ('none', 'Kein Logo'),
     ]
@@ -36,7 +36,7 @@ class QRGeneratorForm(forms.Form):
     ]
     
     content = forms.CharField(
-        initial='https://db.valentin-herrmann.com',
+        initial='https://sqlution.de',
         widget=forms.TextInput(attrs={"placeholder": "Text oder URL eingeben..."}),
         label="QR Code Inhalt"
     )
