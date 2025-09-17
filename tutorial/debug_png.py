@@ -20,7 +20,7 @@ def debug_png_generation():
     print("Debugging PNG generation...")
     
     # Test parameters
-    content = "https://db.valentin-herrmann.com"
+    content = "https://sqlution.de"
     logo_info = None
     qr_color = "#000000"
     background_color = "#ffffff"

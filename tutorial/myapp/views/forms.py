@@ -36,7 +36,7 @@ class QRGeneratorForm(forms.Form):
     ]
     
     content = forms.CharField(
-        initial='https://db.valentin-herrmann.com',
+        initial='https://sqlution.de',
         widget=forms.TextInput(attrs={"placeholder": "Text oder URL eingeben..."}),
         label="QR Code Inhalt"
     )

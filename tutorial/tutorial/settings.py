@@ -30,7 +30,7 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['db.valentin-herrmann.com','127.0.0.1','localhost', '217.154.94.239']
+ALLOWED_HOSTS = ['sqlution.de','127.0.0.1','localhost', '217.154.94.239']
 
 #SESSION_COOKIE_SECURE = True
 #CSRF_COOKIE_SECURE = True
@@ -97,7 +97,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'tutorial.wsgi.application'
 
-CSRF_TRUSTED_ORIGINS = ['https://db.valentin-herrmann.com',
+CSRF_TRUSTED_ORIGINS = ['https://sqlution.de',
                         'https://127.0.0.1','http://127.0.0.1',
                         'https://localhost','http://localhost']
 
