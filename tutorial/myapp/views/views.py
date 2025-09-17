@@ -1,16 +1,30 @@
-
-
 from django.http import HttpResponse
 from django.shortcuts import render
-from .forms import SQLFileForm, SQLQueryForm
-from .utils import *
-from .models import *
-from .views_helpers import *
-from .sqlite_connector import *  # Import sqlite3 for SQLite database connection
+from myapp.views.forms import *
+from myapp.utils.utils import *
+from myapp.utils.decorators import *
+from myapp.models import *
+from myapp.utils.directories import fullpath
+from myapp.views.helpers import *
+from myapp.utils.sqlite_connector import * 
+
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import redirect
+from django.conf import settings
+from PIL import Image
 import os
 import re
+import qrcode
+import qrcode.image.svg
+import qrcode.constants
+try:
+    from qrcode.image.styledpil import StyledPilImage
+    STYLED_PIL_AVAILABLE = True
+except ImportError:
+    STYLED_PIL_AVAILABLE = False
+import io
+import base64
+import xml.etree.ElementTree as ET
 
 
 
@@ -58,7 +72,6 @@ def sql_form(request):
 
         if request.method == 'POST' or len(inputs)+len(dropdowns) == 0:
             try:
-                print(request.POST.keys())
                 inpVals = {}
                 for inp in inputs:
                     inpVals[inp] = request.POST.get(f'input_{inp}')
@@ -94,7 +107,6 @@ def sql_form(request):
     
     return render_sql_form(request, '', [], '', [], 'Keine SQL Datei gefunden.', [], [])
 
-
 @login_required
 @user_passes_test(is_db_admin)
 def sql_query_view(request):
@@ -129,7 +141,7 @@ def sql_query_view(request):
                 cursor, columns, result, error = execute_sql_query(query, request.user.username)
                 if not error and cursor and cursor.description: # read query
                     rowcount = f"{len(result)} Zeile(n) gefunden."
-                elif not error: # write query
+                elif not error and cursor: # write query
                     result = ""
                     rowcount = f"{cursor.rowcount} Zeile(n) verändert."
                 try:
@@ -138,7 +150,7 @@ def sql_query_view(request):
                         select_query = f"SELECT * FROM {table_name}"
                         cursor, columns, result, error = execute_sql_query(select_query, request.user.username)
                 except Exception as e:
-                    print(str(e))
+                    pass
 
             if save=='on' and sqlfile and sqlfile != '':
                 dir = get_user_directory(request.user.username)
@@ -160,7 +172,6 @@ def sql_query_view(request):
 
     return render_sql(request, queryForm, result, error, columns, rowcount, table_scheme_html, sqlfile)
 
-
 @login_required
 @user_passes_test(is_db_admin)
 def overview(request):
@@ -178,8 +189,7 @@ def overview(request):
     for t in tablenames:
         cursor11 = runSql(f"SELECT * FROM {t} LIMIT 11;", request.user.username)
         cursor10 = runSql(f"SELECT * FROM {t} LIMIT 10;", request.user.username)
-        c10_result = cursor10.fetchall()
-
+        c10_result = remove_nones_from_sqlresult(cursor10.fetchall())
         tables.append(
             {
                 'name': t,
@@ -209,8 +219,6 @@ def overview(request):
         'models': tables,
         'functions': sql
     })
-
-
 
 
 @login_required

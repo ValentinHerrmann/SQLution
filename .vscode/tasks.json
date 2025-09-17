@@ -4,42 +4,54 @@
         {
             "label": "build sql ide",
             "type": "shell",
-            "command": "cd ${workspaceFolder}/../DataSpark_SQL-IDE ; npm run build",
+            "command": "cd '${workspaceFolder}/../DataSpark_SQL-IDE' ; npm run build",
         },
         {
             "label": "copy sql ide",
             "type": "shell",
-            "command": "cd ${workspaceFolder}/../DataSpark_SQL-IDE/dist ; copy-Item * -Destination '${workspaceFolder}/tutorial/myapp/staticfiles/sql-ide' -Recurse -force",
+            "command": "cd '${workspaceFolder}/../DataSpark_SQL-IDE/dist' ; copy-Item * -Destination '${workspaceFolder}/tutorial/myapp/staticfiles/sql-ide' -Recurse -force",
             "dependsOn": [
                 "build sql ide"
             ]
         },
         {
-            "label": "build apollon",
-            "type": "shell",
-            "command": "cd ${workspaceFolder}/../DataSpark_Apollon ; npm run-script custom_build",
-        },
-        {
             "label": "copy apollon",
             "type": "shell",
-            "command": "cd ${workspaceFolder}/../DataSpark_Apollon/dist ; copy-Item * -Destination '${workspaceFolder}/tutorial/myapp/staticfiles/apollon' -Recurse -force",
+            "command": "cd '${workspaceFolder}/../DataSpark_Apollon/dist' ; copy-Item * -Destination '${workspaceFolder}/tutorial/myapp/staticfiles/apollon' -Recurse -force",
             "dependsOn": [
                 "build apollon"
             ]
         },
         {
-            "label": "makemigrations",
+            "label": "copy apollon",
             "type": "shell",
-            "command": "${command:python.interpreterPath} ${workspaceFolder}/tutorial/manage.py makemigrations",
+            "command": "cd '${workspaceFolder}/../DataSpark_Apollon/dist' ; copy-Item * -Destination '${workspaceFolder}/tutorial/myapp/staticfiles/apollon' -Recurse -force",
+            "dependsOn": [
+                "build apollon"
+            ]
+        },
+        {
+            "label": "venv",
+            "type": "shell",
+            "command": "${workspaceFolder}/.venv/Scripts/activate ; pip install -r ${workspaceFolder}/requirements.txt",
             "dependsOn": [
                 "copy sql ide",
                 "copy apollon"
             ]
         },
         {
+            "label": "makemigrations",
+            "type": "shell",
+            "command": "python ${workspaceFolder}/tutorial/manage.py makemigrations",
+            "dependsOn": [
+                "venv"
+            ]
+            
+        },
+        {
             "label": "migrate",
             "type": "shell",
-            "command": "${command:python.interpreterPath} ${workspaceFolder}/tutorial/manage.py migrate",
+            "command": "python '${workspaceFolder}/tutorial/manage.py' migrate",
             "dependsOn": [
                 "makemigrations"
             ]
@@ -47,7 +59,7 @@
         {
             "label": "collectstatic",
             "type": "shell",
-            "command": "${command:python.interpreterPath} ${workspaceFolder}/tutorial/manage.py collectstatic --noinput",
+            "command": "python '${workspaceFolder}/tutorial/manage.py' collectstatic --noinput",
             "dependsOn": [
                 "migrate"
             ]

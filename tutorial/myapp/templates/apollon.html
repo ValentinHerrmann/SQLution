@@ -1,13 +1,13 @@
 {% extends "base.html" %} 
 {% block title %}
-DataSpark - Klassendiagramm
+SQLution - Klassendiagramm
 {% endblock %}
 
 
 {% block content %} 
 
 
-<div id="div-full-page" class="flex-col" style="height:90vh">
+<div id="div-full-page" class="flex-col" style="height:87vh">
 
   <div id="div-top-section" class="flex-row" style="justify-content: space-evenly;">
 
@@ -52,110 +52,11 @@ DataSpark - Klassendiagramm
   <div class="apollon-container" style="flex: 1 1 auto; min-height: 0;">
     <main id="apollon" style="height: 100%;"></main>
   </div>
-  <div style="text-align: right; color: #888; font-size: 0.9em; margin-top: 2px;">
-    <a href="https://github.com/ls1intum/Apollon" target="_blank" style="color: #888; text-decoration: underline;">
-      Powered by TUM's Apollon Editor
-    </a>
-  </div>
 </div>
 
 <script>
 
-  // Custom confirmation dialog with icon
-  function showConfirmDialog(message, iconClass = 'fas fa-exclamation-triangle', color="#f39c12") {
-    return new Promise((resolve) => {
-      // Create modal HTML
-      const modalHtml = `
-        <div id="customConfirmModal" class="modal-overlay" style="
-          position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-          background: rgba(0,0,0,0.5); z-index: 9999; 
-          display: flex; justify-content: center; align-items: center;">
-          <div class="modal-content" style="
-            background: white; padding: 20px; border-radius: 8px; 
-            max-width: 400px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-            <div style="margin-bottom: 15px;">
-              <i class="${iconClass}" style="font-size: 48px; color: ${color};"></i>
-            </div>
-            <p style="margin-bottom: 20px; font-size: 16px;">${message}</p>
-            <div>
-              <button id="confirmYes" class="btn btn-danger" style="margin-right: 10px;">Ok</button>
-              <button id="confirmNo" class="btn btn-secondary">Abbrechen</button>
-            </div>
-          </div>
-        </div>
-      `;
-      
-      // Add modal to body
-      document.body.insertAdjacentHTML('beforeend', modalHtml);
-      
-      const modal = document.getElementById('customConfirmModal');
-      const yesBtn = document.getElementById('confirmYes');
-      const noBtn = document.getElementById('confirmNo');
-      
-      // Handle button clicks
-      yesBtn.onclick = () => {
-        modal.remove();
-        resolve(true);
-      };
-      
-      noBtn.onclick = () => {
-        modal.remove();
-        resolve(false);
-      };
-      
-      // Handle clicking outside modal
-      modal.onclick = (e) => {
-        if (e.target === modal) {
-          modal.remove();
-          resolve(false);
-        }
-      };
-    });
-  }
-
-  function showAlertDialog(message, iconClass = 'fas fa-exclamation-triangle', color="#f39c12") {
-    return new Promise((resolve) => {
-      // Create modal HTML
-      const modalHtml = `
-        <div id="customConfirmModal" class="modal-overlay" style="
-          position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-          background: rgba(0,0,0,0.5); z-index: 9999; 
-          display: flex; justify-content: center; align-items: center;">
-          <div class="modal-content" style="
-            background: white; padding: 20px; border-radius: 8px; 
-            max-width: 400px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-            <div style="margin-bottom: 15px;">
-              <i class="${iconClass}" style="font-size: 48px; color: ${color};"></i>
-            </div>
-            <p style="margin-bottom: 20px; font-size: 16px;">${message}</p>
-            <div>
-              <button id="confirmYes" class="btn btn-secondary" style="margin-right: 10px;">Ok</button>
-            </div>
-          </div>
-        </div>
-      `;
-      
-      // Add modal to body
-      document.body.insertAdjacentHTML('beforeend', modalHtml);
-      
-      const modal = document.getElementById('customConfirmModal');
-      const yesBtn = document.getElementById('confirmYes');
-      
-      // Handle button clicks
-      yesBtn.onclick = () => {
-        modal.remove();
-        resolve(true);
-      };
-      
-      // Handle clicking outside modal
-      modal.onclick = (e) => {
-        if (e.target === modal) {
-          modal.remove();
-          resolve(false);
-        }
-      };
-    });
-  }
+  
 
   document.addEventListener('DOMContentLoaded', function() {
     const dropZone = document.getElementById('drop-zone');
@@ -387,4 +288,10 @@ DataSpark - Klassendiagramm
   }
   </style>
 
+{% endblock %} 
+
+{% block powered_by %}
+    <a href="https://github.com/ls1intum/Apollon" target="_blank" style="color: #888; text-decoration: underline;">
+      Powered by TUM's Apollon Editor
+    </a>
 {% endblock %} 

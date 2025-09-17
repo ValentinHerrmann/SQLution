@@ -1,22 +1,12 @@
 
-import pprint
-from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render, redirect
-from django.db import connection, DatabaseError
-from django.apps import apps
-import form_designer
-from .forms import SQLQueryForm,UploadFileForm
-from .models import *
-from .utils import *  # Assuming you have this function in utils.py
-from .sqlite_connector import *  # Import sqlite3 for SQLite database connection
-import json
-from datetime import datetime
+from myapp.models import *
+from myapp.utils.utils import *
+from myapp.utils.sqlite_connector import *
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import redirect
-from django.contrib.auth import logout
+from myapp.utils.decorators import *
 import os
-import re
-from .views_helpers import is_db_admin, is_global_admin
 
 
 

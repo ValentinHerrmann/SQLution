@@ -30,7 +30,7 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['db.valentin-herrmann.com','127.0.0.1','localhost', '217.154.94.239']
+ALLOWED_HOSTS = ['www.sqlution.de', 'sqlution.de','127.0.0.1','localhost', '217.154.94.239']
 
 #SESSION_COOKIE_SECURE = True
 #CSRF_COOKIE_SECURE = True
@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'form_designer',
     'admin_ordering',
     'session_security',
+    'axes',
 ]
 
 MIDDLEWARE = [
@@ -57,9 +58,19 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'myapp.middleware.UserAgentMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'session_security.middleware.SessionSecurityMiddleware',
+    'axes.middleware.AxesMiddleware',
+]
+
+AUTHENTICATION_BACKENDS = [
+    # AxesStandaloneBackend should be the first backend in the AUTHENTICATION_BACKENDS list.
+    'axes.backends.AxesStandaloneBackend',
+
+    # Django ModelBackend is the default authentication backend.
+    'django.contrib.auth.backends.ModelBackend',
 ]
 
 ROOT_URLCONF = 'tutorial.urls'
@@ -86,7 +97,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'tutorial.wsgi.application'
 
-CSRF_TRUSTED_ORIGINS = ['https://db.valentin-herrmann.com',
+CSRF_TRUSTED_ORIGINS = ['https://sqlution.de',
                         'https://127.0.0.1','http://127.0.0.1',
                         'https://localhost','http://localhost']
 
@@ -159,6 +170,18 @@ SECURE_CONTENT_NOSNIFF = False
 
 #SESSION_SECURITY_INSECURE = True
 
-SESSION_SECURITY_WARN_AFTER = 3600
+SESSION_SECURITY_WARN_AFTER = 1740
 
-SESSION_SECURITY_EXPIRE_AFTER  = 3500
+SESSION_SECURITY_EXPIRE_AFTER  = 1800
+
+SESSION_COOKIE_AGE = 1800
+
+RESOURCES_REFRESH = 500
+
+# Log Rotation Settings
+LOG_ROTATION_MAX_SIZE_MB = 10  # Maximum log file size in MB before rotation
+LOG_ROTATION_MAX_FILES = 4     # Maximum number of old log files to keep
+
+AXES_FAILURE_LIMIT = 5
+
+AXES_COOLOFF_TIME = 2
