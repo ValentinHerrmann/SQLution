@@ -145,6 +145,9 @@ SQLution - SQL IDE
                     {{ f.content }}
                 </script>
             {% endfor %}
+                <script type="text/plain" title="NeueAbfrage.sql" data-type="sql">
+                   
+                </script>
         </div>
     </div>
 </div>
@@ -183,7 +186,6 @@ function saveSQLFiles() {
     for(let i = 0; i < files.length; i++){
         let file = files[i];
         let filename = file.getName();
-        console.log(filename);
         let content = file.getText();
         sql_files.push({ 'filename': filename, 'sql': content });
     }
@@ -202,6 +204,7 @@ function saveDB() {
     if (!window.confirm("Das Speichern überschreibt alle Daten auf dem Server. Das kann nicht rückgängig gemacht werden!")) {
         return;
     }
+    
     let ide = window.sql_ide_access.getIDE('{{ user_name }}');
     const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
     ide.getDatabase().then((blob) => {        
@@ -236,8 +239,9 @@ allDetails.forEach((details, idx) => {
         }
     });
 });
-
-window.sql_ide_access.getIDE().forceReload();
+if(window.sql_ide_access && window.sql_ide_access.getIDE()){
+    window.sql_ide_access.getIDE().forceReload();
+}
 </script>
 
 {% endblock %}
