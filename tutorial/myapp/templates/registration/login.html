@@ -6,11 +6,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - SQLution</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css" integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
+
     {% load static %}
+        
+    <!-- Theme Switcher CSS Files -->
+    <link rel="stylesheet" href="{% static 'lightmode.css' %}">
+    <link rel="stylesheet" href="{% static 'darkmode.css' %}">
+    <link rel="stylesheet" href="{% static 'theme-switcher.css' %}">
+
   </head>
   <body>
     {% load extrafilters %}
-    <div class="d-flex justify-content-center align-items-center" style="height: 100vh; background-color: #f8f9fa;">
+        
+    <!-- Theme Toggle Switch -->
+    <div style="position: fixed; top: 20px; right: 20px; z-index: 1000;">
+      <div id="theme-toggle-btn"></div>
+    </div>
+    
+    <div class="d-flex justify-content-center align-items-center" style="height: 100vh;">
       <div class="card shadow-lg p-4" style="width: 400px;">
         <div class="text-center mb-4">
           <img src="{% static 'SQLution.svg' %}" alt="SQLution Logo" style="width: 150px;">
@@ -52,5 +66,8 @@
     </div>
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Theme Switcher JavaScript -->
+    <script src="{% static 'theme-switcher.js' %}"></script>
   </body>
 </html>

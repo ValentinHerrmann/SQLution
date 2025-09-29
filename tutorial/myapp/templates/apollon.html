@@ -7,6 +7,7 @@ SQLution - Klassendiagramm
 {% block content %} 
 
 
+
 <div id="div-full-page" class="flex-col" style="height:84vh">
 
   <div id="div-top-section" class="flex-row" style="justify-content: space-evenly;">
@@ -32,7 +33,7 @@ SQLution - Klassendiagramm
       <div class="flex-col">
         <button id="btn-download-json" class="btn btn-primary" onclick="downloadJson()" title="Datenbank erstellen"> <a class="fas fa-download"> *.json</a> </button>
         <button id="btn-download-svg" class="btn btn-primary" onclick="downloadSvg()" title="Datenbank erstellen"> <a class="fas fa-download"> *.svg</a> </button>
-        <button id="btn-download-png" class="btn btn-secondary" onclick="downloadPng()" title="Datenbank erstellen"> <a class="fas fa-download"> *.png</a> </button>
+        <button id="btn-download-png" class="btn btn-inactive" onclick="downloadPng()" title="Datenbank erstellen"> <a class="fas fa-download"> *.png</a> </button>
       </div>
 
       <div id="drop-zone" class="flex-col" style="border: 2px dashed #ccc; padding: 5px; ">
@@ -145,29 +146,18 @@ SQLution - Klassendiagramm
   }
 
   function downloadJson() {
-    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-    fetch('/api/diagram.json', {
-        method: "GET",
-        headers: { "Content-Type": "application/json", "X-CSRFToken": csrftoken }
-      })
-      .then(response => response.json())
-      .then(data => {
-       //console.log(data);
-       //console.log(JSON.stringify(data));
-        const jsonStr = JSON.stringify(data, null, 2);
-        const blob = new Blob([jsonStr], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = "diagram.json";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      })
-      .catch(error => {
-        console.error('Error fetching JSON:', error);
-      });
+    
+    let json = window.apollon.model();
+
+    const blob = new Blob([JSON.stringify(json)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = "diagram.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
   async function downloadSvg() {
    //console.log("x");
