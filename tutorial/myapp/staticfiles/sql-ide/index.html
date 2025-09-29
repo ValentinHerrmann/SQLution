@@ -7,28 +7,21 @@
     <title>SQL-IDE</title>
     <meta name='viewport' content='width=device-width, initial-scale=1'>
 
-    <link rel="preload" href="lib/monaco-editor/dev/vs/editor/editor.main.js" as="script">
-    <link rel="preload" href="lib/monaco-editor/dev/vs/editor/editor.main.nls.de.js" as="script">
-
     <!-- VIDIS -->
     <script src="https://repo.vidis.schule/repository/vidis-cdn/latest/vidisLogin.umd.js"
         crossorigin="anonymous"></script>
 
 
     <link rel='stylesheet' type='text/css' media='screen' href='assets/fonts/fonts.css'>
-
-    <script src="lib/pako/pako.js"></script>
-    <script src="lib/zip.js/zip.min.js"></script>
-    <script src="lib/jquery/jquery-3.3.1.js"></script>
-    <script src="lib/monaco-editor/dev/vs/loader.js"></script>
-    <script src="lib/diffMatchPatch/diffMatchPatch.js"></script>
-
-    
-
-
-
-  <script type="module" crossorigin src="/main-6736ca04.js"></script>
-  <link rel="stylesheet" href="/index-a668f24c.css">
+
+  <script type="module" crossorigin src="/assets/main-BK1bXqJT.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/jquery-LQstgaFL.js">
+  <link rel="modulepreload" crossorigin href="/assets/pako-DwGzBETv.js">
+  <link rel="modulepreload" crossorigin href="/assets/monaco-editor-Cht2978M.js">
+  <link rel="modulepreload" crossorigin href="/assets/sql.js-Do1AdGhD.js">
+  <link rel="modulepreload" crossorigin href="/assets/zip.js-CID5G6MR.js">
+  <link rel="stylesheet" crossorigin href="/assets/monaco-editor_css-D6kYW_CN.css">
+  <link rel="stylesheet" crossorigin href="/assets/main-DhGHduI1.css">
 </head>
 
 <body>
@@ -132,8 +125,9 @@
                 <vidis-login loginurl="https://aai.vidis.schule/auth/realms/vidis/protocol/openid-connect/auth?client_id=online-ide-o&response_type=code&scope=openid&redirect_uri=https://sql-ide.de/vidisRedirect" size="S" cookie="false"></vidis-login>
             </div> -->
 
-            <div><a
-                    href="https://aai-test.vidis.schule/auth/realms/vidis/protocol/openid-connect/auth?client_id=online-ide-o&response_type=code&scope=openid&redirect_uri=https://sql-ide.de/vidisRedirect">VIDIS</a>
+            <div>
+                <!-- <a href="https://aai-test.vidis.schule/auth/realms/vidis/protocol/openid-connect/auth?client_id=online-ide-o&response_type=code&scope=openid&redirect_uri=https://sql-ide.de/vidisRedirect">VIDIS</a> -->
+                <a href="https://aai.vidis.schule/auth/realms/vidis/protocol/openid-connect/auth?client_id=online-ide-o&response_type=code&scope=openid&redirect_uri=https://sql-ide.de/vidisRedirect">VIDIS-Prod</a>
             </div>
             <div id="login-datenschutz">
                 <a href="https://www.learnj.de/doku.php?id=ide:datenschutzerklaerung"
