@@ -47,8 +47,7 @@ class ThemeSwitcher {
         this.currentTheme = theme;
         localStorage.setItem('theme', theme);
 
-        const apollon = document.getElementById('apollon');
-        if (apollon && apollon.setTheming) {
+        if (apollon) {
             apollon.setTheming(theme);
         }
         
