@@ -1,0 +1,336 @@
+/* ===== LIGHT MODE THEME ===== */
+
+/* CSS Variables for Light Mode */
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --bg-tertiary: #e9ecef;
+  --text-muted: #868e96;
+  --border-color: #dee2e6;
+  --border-hover: #adb5bd;
+  --text-primary: #000000;
+  --text-secondary: hsl(214, 84%, 17%);
+  --text-tertiary: hsl(183, 96%, 31%);
+  --text-success: hsl(136, 95%, 56%);
+  --text-warning: hsl(50, 93%, 62%);
+  --text-danger: hsl(351, 95%, 56%);
+  --text-info: hsl(179, 82%, 39%);
+  --accent-primary: hsl(214, 84%, 73%);
+  --accent-secondary: hsl(183, 96%, 59%);
+  --accent-tertiary: hsl(50, 93%, 38%);
+  --accent-success: hsl(136, 95%, 44%);
+  --accent-warning: hsl(45, 100%, 49%);
+  --accent-danger: hsl(351, 95%, 44%);
+  --accent-info: hsl(179, 82%, 61%);
+  --shadow-light: rgba(0, 0, 0, 0.1);
+  --shadow-medium: rgba(0, 0, 0, 0.15);
+  --shadow-dark: rgba(0, 0, 0, 0.25);
+}
+
+/* Body and Main Layout */
+[data-theme="light"] body,
+body:not([data-theme]) {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Navigation */
+[data-theme="light"] .navbar,
+body:not([data-theme]) .navbar {
+  background-color: var(--bg-secondary) !important;
+  border-bottom: 1px solid var(--border-color);
+}
+
+[data-theme="light"] .navbar-brand,
+[data-theme="light"] .navbar-nav .nav-link,
+body:not([data-theme]) .navbar-brand,
+body:not([data-theme]) .navbar-nav .nav-link {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="light"] .navbar-nav .nav-link:hover,
+body:not([data-theme]) .navbar-nav .nav-link:hover {
+  color: var(--text-tertiary) !important;
+}
+
+[data-theme="light"] .navbar-text,
+body:not([data-theme]) .navbar-text {
+  color: var(--text-primary) !important;
+}
+
+/* Cards and Containers */
+[data-theme="light"] .card,
+body:not([data-theme]) .card {
+  background-color: var(--bg-primary);
+  border-color: var(--border-color);
+  box-shadow: 0 2px 4px var(--shadow-light);
+}
+
+[data-theme="light"] .card-header,
+body:not([data-theme]) .card-header {
+  background-color: var(--bg-secondary);
+  border-bottom-color: var(--border-color);
+}
+
+/* Buttons */
+[data-theme="light"] .btn-primary,
+body:not([data-theme]) .btn-primary {
+  background-color: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+
+[data-theme="light"] .btn-secondary,
+body:not([data-theme]) .btn-secondary {
+  background-color: var(--accent-secondary);
+  border-color: var(--accent-secondary);
+}
+
+[data-theme="light"] .btn-inactive,
+body:not([data-theme]) .btn-inactive {
+  background-color: var(--border-hover);
+  color: var(--background-secondary);
+}
+
+[data-theme="light"] .btn-outline-primary,
+body:not([data-theme]) .btn-outline-primary {
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+
+[data-theme="light"] .btn-outline-primary:hover,
+body:not([data-theme]) .btn-outline-primary:hover {
+  background-color: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+
+/* Forms */
+[data-theme="light"] .form-control,
+body:not([data-theme]) .form-control {
+  background-color: var(--bg-primary);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .form-control:focus,
+body:not([data-theme]) .form-control:focus {
+  background-color: var(--bg-primary);
+  border-color: var(--accent-primary);
+  color: var(--text-primary);
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Tables */
+[data-theme="light"] .table,
+body:not([data-theme]) .table {
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .table th,
+[data-theme="light"] .table td,
+body:not([data-theme]) .table th,
+body:not([data-theme]) .table td {
+  border-color: var(--border-color);
+}
+
+[data-theme="light"] .table-striped tbody tr:nth-of-type(odd),
+body:not([data-theme]) .table-striped tbody tr:nth-of-type(odd) {
+  background-color: var(--bg-secondary);
+}
+
+/* Tooltips */
+[data-theme="light"] .tooltip,
+body:not([data-theme]) .tooltip {
+  position: relative;
+  display: inline-block;
+  border-bottom: 1px dotted var(--text-secondary);
+  cursor: pointer;
+}
+
+[data-theme="light"] .tooltiptext,
+body:not([data-theme]) .tooltiptext {
+  visibility: hidden;
+  width: 130px;
+  background-color: var(--text-primary);
+  color: var(--bg-primary);
+  text-align: center;
+  padding: 5px 8px;
+  border-radius: 6px;
+  position: absolute;
+  z-index: 1000;
+  bottom: 125%;
+  left: 50%;
+  margin-left: -65px;
+  box-shadow: 0 2px 8px var(--shadow-medium);
+  font-size: 12px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+[data-theme="light"] .tooltiptext::after,
+body:not([data-theme]) .tooltiptext::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: var(--text-primary) transparent transparent transparent;
+}
+
+[data-theme="light"] .tooltip:hover .tooltiptext,
+body:not([data-theme]) .tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Modals */
+[data-theme="light"] .modal-content,
+body:not([data-theme]) .modal-content {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+[data-theme="light"] .modal-header,
+body:not([data-theme]) .modal-header {
+  border-bottom-color: var(--border-color);
+}
+
+[data-theme="light"] .modal-footer,
+body:not([data-theme]) .modal-footer {
+  border-top-color: var(--border-color);
+}
+
+/* Alerts */
+[data-theme="light"] .alert-info,
+body:not([data-theme]) .alert-info {
+  background-color: #d1ecf1;
+  border-color: #bee5eb;
+  color: #0c5460;
+}
+
+[data-theme="light"] .alert-warning,
+body:not([data-theme]) .alert-warning {
+  background-color: #fff3cd;
+  border-color: #ffeaa7;
+  color: #856404;
+}
+
+[data-theme="light"] .alert-danger,
+body:not([data-theme]) .alert-danger {
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+  color: #721c24;
+}
+
+[data-theme="light"] .alert-success,
+body:not([data-theme]) .alert-success {
+  background-color: #d4edda;
+  border-color: #c3e6cb;
+  color: #155724;
+}
+
+/* Footer */
+[data-theme="light"] footer,
+body:not([data-theme]) footer {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-secondary) !important;
+  border-top: 1px solid var(--border-color) !important;
+}
+
+[data-theme="light"] footer small,
+body:not([data-theme]) footer small {
+  color: var(--text-muted) !important;
+}
+
+[data-theme="light"] footer a,
+body:not([data-theme]) footer a {
+  color: var(--text-muted) !important;
+  text-decoration: none;
+}
+
+[data-theme="light"] footer a:hover,
+body:not([data-theme]) footer a:hover {
+  color: var(--text-secondary) !important;
+  text-decoration: underline;
+}
+
+/* Login Page Specific Styles */
+[data-theme="light"] body,
+body:not([data-theme]) {
+  background-color: var(--bg-secondary) !important;
+}
+
+[data-theme="light"] .card,
+body:not([data-theme]) .card {
+  background-color: var(--bg-primary) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="light"] .alert-danger,
+body:not([data-theme]) .alert-danger {
+  background-color: #f8d7da !important;
+  border-color: #f5c6cb !important;
+  color: #721c24 !important;
+}
+
+[data-theme="light"] .alert-warning,
+body:not([data-theme]) .alert-warning {
+  background-color: #fff3cd !important;
+  border-color: #ffecb5 !important;
+  color: #856404 !important;
+}
+
+[data-theme="light"] .alert-info,
+body:not([data-theme]) .alert-info {
+  background-color: #d1ecf1 !important;
+  border-color: #bee5eb !important;
+  color: #0c5460 !important;
+}
+
+[data-theme="light"] .form-control,
+body:not([data-theme]) .form-control {
+  background-color: var(--bg-primary) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="light"] .form-control:focus,
+body:not([data-theme]) .form-control:focus {
+  background-color: var(--bg-primary) !important;
+  border-color: var(--accent-primary) !important;
+  color: var(--text-primary) !important;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+}
+
+[data-theme="light"] .btn-primary,
+body:not([data-theme]) .btn-primary {
+  background-color: var(--accent-primary) !important;
+  border-color: var(--accent-primary) !important;
+  color: #ffffff !important;
+}
+
+[data-theme="light"] .btn-primary:hover,
+body:not([data-theme]) .btn-primary:hover {
+  background-color: var(--text-secondary) !important;
+  border-color: var(--text-secondary) !important;
+}
+
+/* Custom Classes */
+[data-theme="light"] .bg-custom,
+body:not([data-theme]) .bg-custom {
+  background-color: var(--bg-secondary);
+}
+
+[data-theme="light"] .text-custom,
+body:not([data-theme]) .text-custom {
+  color: var(--text-secondary);
+}
+
+[data-theme="light"] .border-custom,
+body:not([data-theme]) .border-custom {
+  border-color: var(--border-color);
+}
