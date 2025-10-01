@@ -133,18 +133,25 @@ def extract_tables(data):
             )
 
         # Build CREATE TABLE statement
+        
+        pk_name, pk_type = pk_map.get(class_id, (None, None))
+
         lines = [f'CREATE TABLE "{class_name}" (']
         for col_name, col_type in attr_defs:
-            lines.append(f'  "{col_name}" {col_type},')
-        
-            
-        pk_name, pk_type = pk_map.get(class_id, (None, None))
-        
+            if pk_name and col_name == pk_name:
+                if pk_type.lower() == 'auto':
+                    lines.append(f'  "{col_name}" INTEGER PRIMARY KEY AUTOINCREMENT,')
+                else:
+                    lines.append(f'  "{col_name}" {col_type} PRIMARY KEY,')
+            else:
+                lines.append(f'  "{col_name}" {col_type},')
+
+
         # Add foreign-key constraints
         for constraint in fk_constraints:
             lines.append(f'  {constraint},')
-        if pk_name:
-            lines.append("  PRIMARY KEY(\"" + pk_name.replace(",", '","') + "\"),")
+        #if pk_name:
+            #lines.append("  PRIMARY KEY(\"" + pk_name.replace(",", '","') + "\"),")
         if lines[-1].endswith(','):
             lines[-1] = lines[-1][:-1]
         lines.append(');')
