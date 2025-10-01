@@ -13,3 +13,4 @@ The release notes of intermediate versions list all changes since the last inter
 
 #### Contributing
 Feel free to contribute to the project by forking it and creating a pull request. For larger changes please open an issue first to discuss the proposed changes. If you don't want to contribute code, you can also help by reporting bugs or suggesting features via the issue tracker.
+
