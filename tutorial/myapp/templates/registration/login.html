@@ -27,9 +27,11 @@
     <div class="d-flex justify-content-center align-items-center" style="height: 100vh;">
       <div class="card shadow-lg p-4" style="width: 400px;">
         <div class="text-center mb-4">
-          <img src="{% static 'SQLution.svg' %}" alt="SQLution Logo" style="width: 150px;">
+          <div class="d-flex flex-column align-items-center">
+            <img src="{% static 'SQLution.svg' %}" alt="SQLution Logo" style="width: 150px;">
+            <span style="color: #bbbbbb; font-size: 0.75em; margin-top: -5px;">SQLution - {% get_version %}</span> <!-- SOFTWARE VERSION -->
+          </div>
         </div>
-        <h4 class="text-center mb-4">Login to SQLution</h4>
 
         {% if form.errors %}
           <div class="alert alert-danger" role="alert">
