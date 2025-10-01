@@ -1,6 +1,7 @@
 pkill gunicorn
 source ../../bin/activate
-git pull
+git fetch --tags
+git checkout $(git describe --tags `git rev-list --tags --max-count=1`)
 pip install -r requirements.txt
 cd tutorial
 python3 manage.py makemigrations --merge
