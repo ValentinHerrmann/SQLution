@@ -66,11 +66,11 @@ SQLution - Übersicht
 
 <h4 style="text-align: center;">Nutzerfunktionen / gespeicherte SQL-Abfragen</h4>
 
-<table border="1" style="width: 100%;">
+<table border="1" style="width: 100%; border-color: var(--border-color);">
     {% for fkt in functions %}
         <tr>
-            <th>{{fkt.name}}</th>
-            <td style="font-size: 0.8em;">{{fkt.sql|safe}}</td>
+            <th style="border-color: var(--border-color);">{{fkt.name}}</th>
+            <td style="font-size: 0.8em; border-color: var(--border-color);">{{fkt.sql|safe}}</td>
         </tr>
     {% endfor %}
 </table>
@@ -81,16 +81,16 @@ SQLution - Übersicht
 <table border="1">
     {% for mod in models %}
         <b>{{ mod.name }}</b>
-        <table border="1" style="width: 100%;">
+        <table border="1" style="width: 100%; border-color: var(--border-color);">
             <tr>
                 {% for col in mod.columns %}
-                    <th>{{ col }}</th>
+                    <th style="border-color: var(--border-color); padding-left: 4px;">{{ col }}</th>
                 {% endfor %}
             </tr>
             {% for row in mod.rows %}
                 <tr>
                     {% for cell in row %}
-                        <td>{{ cell }}</td>
+                        <td style="border-color: var(--border-color); padding-left: 4px;">{{ cell }}</td>
                     {% endfor %}
                 </tr>
             {% endfor %}
