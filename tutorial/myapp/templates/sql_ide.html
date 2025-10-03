@@ -145,9 +145,11 @@ SQLution - SQL IDE
                     {{ f.content }}
                 </script>
             {% endfor %}
-                <script type="text/plain" title="NeueAbfrage.sql" data-type="sql">
-                   
+            {% if sql_files|length == 0 %}
+                <script type="text/plain" title="Neue Abfrage" data-type="sql">
+                    SELECT * FROM {Tabelle}
                 </script>
+            {% endif %}
         </div>
     </div>
 </div>
