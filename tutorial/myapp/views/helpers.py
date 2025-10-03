@@ -20,17 +20,6 @@ def execute_sql_query(query, username):
         return None, [], {}, str(e)
     
 
-def render_user_fun_exec(request, sql, inputs, sqlfile, result, error, columns, dropdowns):
-    result = remove_nones_from_sqlresult(result)
-    return render(request, 'user_functions_execute.html', {
-        'inputs': inputs,
-        'dropdowns': dropdowns,
-        'query': sql,
-        'title': sqlfile,
-        'result': result,
-        'error': error,
-        'columns': columns,
-    })
 
 
 # def render_sql(request, form, result, error, columns, rowcount, tablescheme, file):
