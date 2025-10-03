@@ -1,7 +1,4 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
@@ -13,15 +10,22 @@
                 "localhost:8000"
             ],
             "django": true,
-            "autoStartBrowser": true,
             "program": "${workspaceFolder}/tutorial/manage.py",
             "console": "internalConsole",
-            "preLaunchTask": "PreLaunchRoutine" ,
+            "preLaunchTask": "PreLaunchRoutine",
             "serverReadyAction": {
                 "pattern": "Starting development server at http://localhost:([0-9]+)/",
-                "action": "openExternally",
-                "uriFormat": "http://localhost:%s"
+                "action": "startDebugging",
+                "name": "Launch Firefox Session"
             }
-        }        
+        },
+        {
+            "type": "firefox",
+            "request": "launch",
+            "reAttach": true,
+            "name": "Launch Firefox Session",
+            "url": "http://localhost:8000",
+            "webRoot": "${workspaceFolder}/tutorial/"
+        }
     ]
 }
