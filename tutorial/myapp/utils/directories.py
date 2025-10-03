@@ -9,14 +9,18 @@ from django.core.files.base import ContentFile
 from myapp.models import ZippedFolder
 
 
-def get_user_directory(username):
-    if username.endswith('_admin'):
-        username = username[:-6]
+def get_user_directory(username) -> str:
+    if '_' in username:
+        username = username.split('_')[0]
     return f"user_databases/{username}/"
 
+def get_user_suffix(username) -> str:
+    if '_' in username and not username.endswith('_admin'):
+        return username.split('_')[1]
+    return ''
 
 
-def zip_and_save_directory(directory_path:str, delete:bool=True, storeToDB:bool=False):
+def zip_and_save_directory(directory_path:str, delete:bool=True, storeToDB:bool=False) -> ContentFile:
     # Create a zip file in memory
     memory_file = BytesIO()
     with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
@@ -42,7 +46,7 @@ def zip_and_save_directory(directory_path:str, delete:bool=True, storeToDB:bool=
     
     return ContentFile(memory_file.read())
 
-def restore_zip_to_directory(target_directory):
+def restore_zip_to_directory(target_directory) -> bool:
     try:
         # Fetch the zip entry from the DB
         zipped = ZippedFolder.objects.get(pk=target_directory)
@@ -68,7 +72,7 @@ def restore_zip_to_directory(target_directory):
         return False
     
 
-def get_directory_tree_with_sizes(directory):
+def get_directory_tree_with_sizes(directory) -> list[dict[str, str]]:
     tree = []
 
     sum_size = 0
@@ -101,19 +105,19 @@ def get_directory_tree_with_sizes(directory):
     return tree
 
 
-def sqllock_get(dir):
+def sqllock_get(dir) -> None:
     lockfile_name = f'{dir}/lockfile'
     while os.path.exists(lockfile_name):
         time.sleep(0.1)
     lockFile = open(f'{dir}/lockfile', 'w')
     lockFile.close()
 
-def sqllock_release(dir):
+def sqllock_release(dir) -> None:
     lockfile_name = f'{dir}/lockfile'
     if os.path.exists(lockfile_name):
         os.remove(lockfile_name)
 
-def fullpath(dir:str,file:str):
+def fullpath(dir:str,file:str) -> str:
     normalizedPath = os.path.normpath(os.path.join(dir, file))
     if not normalizedPath.startswith(os.path.normpath(dir)):
         raise Exception("Invalid file path. Access denied.")

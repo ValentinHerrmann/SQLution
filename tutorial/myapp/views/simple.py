@@ -6,6 +6,7 @@ from myapp.utils.sqlite_connector import *
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import redirect
 from myapp.utils.decorators import *
+from myapp.utils.directories import *
 import os
 
 
@@ -28,9 +29,11 @@ def apollon(request):
 @login_required
 def user_functions(request):
     dir = get_user_directory(request.user.username)
+    suffix = get_user_suffix(request.user.username)
     sql_files = []
     if os.path.exists(dir):
-        sql_files = [file[:-4] for file in os.listdir(dir) if file.endswith('.sql')]
+        accessAllowed = lambda x: '_' not in x or x.startswith(suffix) or x.endswith('_admin')
+        sql_files = [file[:-4] for file in os.listdir(dir) if file.endswith('.sql') and accessAllowed(file)]
     sql_files.sort()
     context = {'sqlfiles': sql_files}
     return render(request, 'user_functions.html', context)
