@@ -23,9 +23,16 @@ def user_functions(request):
     sql_files.sort()
 
     removePrefix = lambda x: x.split('_')[1] if '_' in x else x 
-    sqlfiledict = [{'file': file, 'name': removePrefix(file) } for file in sql_files]
+    get_category = lambda x: x.split(' - ')[0] if ' - ' in x else 'Allgemein'
+    sqlfiledict = [{'file': file, 'name': removePrefix(file), 'category': get_category( removePrefix(file)) } for file in sql_files]
 
-    context = {'sqlfiles': sqlfiledict}
+    context = {'data': {}}
+    for entry in sqlfiledict:
+        cat = entry['category']
+        if cat not in context['data']:
+            context['data'][cat] = []
+        context['data'][cat].append(entry)
+        
     return render(request, 'user_functions.html', context)
 
 

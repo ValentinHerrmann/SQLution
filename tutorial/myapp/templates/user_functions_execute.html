@@ -68,10 +68,10 @@
 
 
 {% if columns %}
-    <table border="1" style="width: 100%;">
+    <table border="1" style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
         <tr>
             {% for col in columns %}
-                <th style="border-color: var(--border-color); padding-left: 4px;">{{ col }}</th>
+                <th style="padding-left: 4px;">{{ col }}</th>
             {% endfor %}
         </tr>
         {% for row in result %}

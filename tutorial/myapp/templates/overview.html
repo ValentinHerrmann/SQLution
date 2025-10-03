@@ -81,10 +81,10 @@ SQLution - Übersicht
 <table border="1">
     {% for mod in models %}
         <b>{{ mod.name }}</b>
-        <table border="1" style="width: 100%; border-color: var(--border-color);">
+    <table border="1" style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
             <tr>
                 {% for col in mod.columns %}
-                    <th style="border-color: var(--border-color); padding-left: 4px;">{{ col }}</th>
+                    <th style="padding-left: 4px;">{{ col }}</th>
                 {% endfor %}
             </tr>
             {% for row in mod.rows %}

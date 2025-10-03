@@ -3,9 +3,16 @@
 SQLution - Nutzerfunktionen
 {% endblock %}
 {% block content %}
+<br/>
+
 <ul>
-  {% for file in sqlfiles %}
-    <a href="{% url 'user_functions_execute' %}?file={{ file.file }}" class="btn btn-primary" style="margin-bottom: 20px;  margin-top: 20px;">{{ file.name }}</a>
+  {% for category, files in data.items %}
+    <h4>{{ category }}</h4>
+    <div style="margin-bottom: 20px;">
+      {% for file in files %}
+        <a href="{% url 'user_functions_execute' %}?file={{ file.file }}" class="btn btn-primary" style="margin: 5px 5px 5px 0;">{{ file.name }}</a>
+      {% endfor %}
+    </div>
   {% endfor %}
 </ul>
 {% endblock %}
