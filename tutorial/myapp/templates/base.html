@@ -52,6 +52,7 @@
     .main-content {
       height: calc(100vh - 56px - 30px); /* viewport height minus navbar and footer */
       overflow-y: auto;
+      background-color: var(--bg-primary);
     }
     .navbar {
       flex-shrink: 0;
@@ -132,6 +133,7 @@
             background: white; padding: 20px; border-radius: 8px; 
             max-width: 400px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
             background-color: var(--bg-tertiary);">
+            <div style="margin-bottom: 15px;">
               <i class="${iconClass}" style="font-size: 48px; color: ${color};"></i>
             </div>
             <p style="margin-bottom: 20px; font-size: 16px; color: var(--text-primary);">${message}</p>

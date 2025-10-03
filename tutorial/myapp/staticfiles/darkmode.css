@@ -3,12 +3,12 @@
 /* CSS Variables for Dark Mode */
 [data-theme="dark"] {
   --bg-primary: #1a1a1a;
-  --bg-secondary: #2d2d2d;
+  --bg-secondary: #333333;
   --bg-tertiary: #404040;
   --text-muted: #888888;
   --border-color: #404040;
   --border-hover: #555555;
-  --text-primary: #ffffff;
+  --text-primary: #ececec;
   --text-secondary: hsl(214, 84%, 83%);
   --text-tertiary: hsl(183, 96%, 69%);
   --text-success: hsl(136, 95%, 44%);
@@ -22,9 +22,9 @@
   --accent-warning: hsl(45, 100%, 51%);
   --accent-danger: hsl(351, 95%, 56%);
   --accent-info: hsl(179, 82%, 39%);
-  --shadow-light: rgba(0, 0, 0, 0.3);
-  --shadow-medium: rgba(0, 0, 0, 0.4);
-  --shadow-dark: rgba(0, 0, 0, 0.6);
+  --shadow-light: rgba(255,255,255, 0.1);
+  --shadow-medium: rgba(255,255,255, 0.15);
+  --shadow-dark: rgba(255,255,255, 0.25);
 }
 
 /* Body and Main Layout */

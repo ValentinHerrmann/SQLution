@@ -2,20 +2,20 @@
 
 /* CSS Variables for Light Mode */
 :root {
-  --bg-primary: #ffffff;
-  --bg-secondary: #f8f9fa;
-  --bg-tertiary: #e9ecef;
-  --text-muted: #868e96;
-  --border-color: #dee2e6;
-  --border-hover: #adb5bd;
-  --text-primary: #000000;
+  --bg-primary: hsl(0, 0%, 100%);
+  --bg-secondary: hsl(0, 0%, 96%);
+  --bg-tertiary: hsl(0, 0%, 92%);
+  --text-muted: hsl(0, 0%, 53%);
+  --border-color: hsl(0, 0%, 86%);
+  --border-hover: hsl(0, 0%, 73%);
+  --text-primary: hsl(0, 0%, 0%);
   --text-secondary: hsl(214, 84%, 17%);
   --text-tertiary: hsl(183, 96%, 31%);
   --text-success: hsl(136, 95%, 56%);
   --text-warning: hsl(50, 93%, 62%);
   --text-danger: hsl(351, 95%, 56%);
   --text-info: hsl(179, 82%, 39%);
-  --accent-primary: hsl(214, 84%, 73%);
+  --accent-primary: hsl(214, 84%, 60%);
   --accent-secondary: hsl(183, 96%, 59%);
   --accent-tertiary: hsl(50, 93%, 38%);
   --accent-success: hsl(136, 95%, 44%);
