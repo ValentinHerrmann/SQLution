@@ -13,8 +13,8 @@
         <div class="form-flex-container">
             {% for inp in inputs %}
             <div class="form-flex-item">
-                <label for="input_{{ inp }}">{{ inp }}</label>
-                <input type="text" id="input_{{ inp }}" name="input_{{ inp }}" value="">
+                <label for="input_{{ inp }}" style="text-align: center; width: 100%;">{{ inp }}</label>
+                <input type="text" style="background-color: var(--bg-tertiary); color: var(--text-primary); width: 100%;" id="input_{{ inp }}" name="input_{{ inp }}" value="">
             </div>
             {% endfor %}
             {% for inp in dropdowns %}
@@ -34,12 +34,12 @@
             flex-wrap: wrap;
             gap: 10px;
             justify-content: center;
-            align-items: flex-start;
+            align-items: flex-center;
         }
         .form-flex-item {
             display: flex;
             flex-direction: column;
-            align-items: flex-start;
+            align-items: center;
             min-width: 140px;
             margin-bottom: 10px;
         }
