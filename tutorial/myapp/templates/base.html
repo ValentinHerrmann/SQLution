@@ -52,6 +52,7 @@
     .main-content {
       height: calc(100vh - 56px - 30px); /* viewport height minus navbar and footer */
       overflow-y: auto;
+      background-color: var(--bg-primary);
     }
     .navbar {
       flex-shrink: 0;
@@ -255,7 +256,7 @@
         </ul>
       </div>
     </nav>
-    <div class="container-fluid main-content" style="background-color: var(--bg-primary);">
+    <div class="container-fluid main-content">
       {% block content %} 
       {% endblock %} 
     </div>
