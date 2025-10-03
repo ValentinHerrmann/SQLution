@@ -20,9 +20,9 @@ def execute_sql_query(query, username):
         return None, [], {}, str(e)
     
 
-def render_sql_form(request, sql, inputs, sqlfile, result, error, columns, dropdowns):
+def render_user_fun_exec(request, sql, inputs, sqlfile, result, error, columns, dropdowns):
     result = remove_nones_from_sqlresult(result)
-    return render(request, 'sql_form.html', {
+    return render(request, 'user_functions_execute.html', {
         'inputs': inputs,
         'dropdowns': dropdowns,
         'query': sql,
@@ -33,18 +33,18 @@ def render_sql_form(request, sql, inputs, sqlfile, result, error, columns, dropd
     })
 
 
-def render_sql(request, form, result, error, columns, rowcount, tablescheme, file):
-    if file is None:
-        file = ''
-    return render(request, 'sql.html', {
-        'queryForm': form,
-        'result': result,
-        'error': error,
-        'columns': columns,
-        'rowcount': rowcount,
-        'tablescheme': tablescheme,
-        'file': file,
-    })
+# def render_sql(request, form, result, error, columns, rowcount, tablescheme, file):
+#     if file is None:
+#         file = ''
+#     return render(request, 'sql.html', {
+#         'queryForm': form,
+#         'result': result,
+#         'error': error,
+#         'columns': columns,
+#         'rowcount': rowcount,
+#         'tablescheme': tablescheme,
+#         'file': file,
+#     })
 
 def load_sql_queryfile(request):
     form = SQLQueryForm()

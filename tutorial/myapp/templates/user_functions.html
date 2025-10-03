@@ -5,7 +5,7 @@ SQLution - Nutzerfunktionen
 {% block content %}
 <ul>
   {% for file in sqlfiles %}
-    <a href="{% url 'sql_form' %}?file={{ file }}" class="btn btn-primary" style="margin-bottom: 20px;  margin-top: 20px;">{{ file }}</a>
+    <a href="{% url 'user_functions_execute' %}?file={{ file.file }}" class="btn btn-primary" style="margin-bottom: 20px;  margin-top: 20px;">{{ file.name }}</a>
   {% endfor %}
 </ul>
 {% endblock %}

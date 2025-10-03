@@ -31,7 +31,7 @@ import xml.etree.ElementTree as ET
 
 
 @login_required
-def sql_form(request):    
+def user_functions_execute(request):    
     error = ''
     result = []
     columns = []
@@ -103,13 +103,13 @@ def sql_form(request):
             except Exception as e:
                 error = str(e)
         sql = sql.replace("\n", "<br>")
-        return render_sql_form(request, sql, inputs, sqlfile, result, error, columns, dropdowns)
+        return render_user_fun_exec(request, sql, inputs, sqlfile, result, error, columns, dropdowns)
     
-    return render_sql_form(request, '', [], '', [], 'Keine SQL Datei gefunden.', [], [])
+    return render_user_fun_exec(request, '', [], '', [], 'Keine SQL Datei gefunden.', [], [])
 
-@login_required
-@user_passes_test(is_db_admin)
-def sql_query_view(request):
+# @login_required
+# @user_passes_test(is_db_admin)
+# def sql_query_view(request):
     result = None
     error = None
     columns = []

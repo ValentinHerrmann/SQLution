@@ -8,7 +8,8 @@ urlpatterns = [
     re_path(r'^favicon\.ico$', favicon_view),
     path('', simple.home, name='home'),
     path('apollon/', simple.apollon, name='apollon'),
-    path('user_functions', simple.user_functions, name='user_functions'),
+    path('user_functions/', simple.user_functions, name='user_functions'),
+    path('user_functions/execute/', views.user_functions_execute, name='user_functions_execute'),
     
     #path('accounts/', include('django.contrib.auth.urls')),
     path('accounts/login/', user.CustomLoginView.as_view(), name='login'),
@@ -21,9 +22,8 @@ urlpatterns = [
     path('download_zip/', files.download_zip, name='download_zip'),
     path('upload_zip/', files.upload_zip, name='upload_zip'),
     
-    path('sql/', views.sql_query_view, name='sql'),
+    # path('sql/', views.sql_query_view, name='sql'),
     path('overview/', views.overview, name='overview'),
-    path('sql_form/', views.sql_form, name='sql_form'),
     
 
     path('qr_generator/', admin.qr_generator, name='qr_generator'),

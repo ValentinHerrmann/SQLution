@@ -37,6 +37,23 @@ SQLution - SQL IDE
         margin-left: 5px;
         width: calc(100% - 10px);
     }
+    
+    /* Style for expanded details elements */
+    /* Top-level details get --bg-secondary */
+    details[open]:not(details details) {
+        background-color: var(--bg-secondary) !important;
+        padding: 0.5rem;
+        border-radius: 0.25rem;
+        box-shadow: 0 0px 5px var(--shadow-light);
+    }
+    
+    /* Nested details elements get --bg-tertiary */
+    details details[open] {
+        background-color: var(--bg-tertiary) !important;
+        padding: 0.5rem;
+        border-radius: 0.25rem;
+        margin-top: 0.5rem;
+    }
 </style>
 <div class="main-flex-container">
     <div class="top-bar" style="display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
@@ -70,6 +87,21 @@ SQLution - SQL IDE
                             <img src="{% static 'QueriesUser.png' %}" alt="SQL Variablen Beispiel" style="max-width: 230px; height: auto; border: 1px solid #ccc; border-radius: 6px; box-shadow: 1px 1px 6px #eee;">
                         </div>
                     </details>
+
+                    <details class="single-details" style="margin-left: 1.2em">
+                        <summary style="cursor: pointer">
+                            <i>Mehrere Nutzer mit unterschiedlichen Rechten</i>
+                        </summary>
+                        <div style="display: flex; align-items: flex-start; gap: 1.5em; margin-left: 1.2em;">
+                            <div>
+                                Deine Datenbank hat immer einen Admin-Account (mit dem bist du gerade eingeloggt), um die Datenbank mit SQL-Abfragen zu erstellen und einen Nutzer-Account, der nur auf die fertigen SQL-Abfragen zugreifen kann. Diese beiden Accounts können immer auf alle gespeicherten SQL-Abfragen zugreifen.
+                                <br><br>
+                                Zusätzlich kannst du von deiner Lehrkraft weitere Nutzeraccounts mit eingeschränkten Rechten bekommen. Diese können dann nur auf die SQL-Abfragen zugreifen, die du für sie freigegeben hast. Das eignet sich zum Beispiel gut, wenn verschiedene Mitarbeiter:innen einer Firma auf unterschiedliche Daten zugreifen sollen. Beispielsweise die Finanzabteilung auf die Gehaltsdaten, die Personalabteilung auf die Adressdaten der Mitarbeiter:innen und den Schichtplan dürfen alle ansehen.
+                                <br><br>
+                                Die Accounts könnten dann z.B. so heißen: <i>'firma_finanz'</i> und <i>'firma_personal'</i>. Nennst du eine SQL-Abfrage dann z.B.  <i>'finanz_Gehälter'</i>, kann nur der Nutzer firma_finanz diese Abfrage sehen und ausführen, eine SQL-Abfrage namens  <i>'Schichtplan'</i> können alle Nutzer sehen und ausführen.
+                            </div>
+                        </div>
+                    </details>
                         
                     <details class="single-details" style="margin-left: 1.2em;">
                         <summary style="cursor: pointer">
@@ -82,9 +114,9 @@ SQLution - SQL IDE
                                 <br>
                                 <br>
                                 <b>Beispiel:</b> 
-                                <i style="color: navy;">SELECT * FROM Schueler WHERE vorname="{Name}"</i> 
+                                <i style="color: var(--text-secondary);">SELECT * FROM Schueler WHERE vorname="{Name}"</i> 
                                 <br> ➔ Nutzer gibt Max ein 
-                                <br> ➔ <i style="color: navy;">SELECT * FROM Schueler WHERE vorname="Max"</i> wird ausgeführt
+                                <br> ➔ <i style="color: var(--text-secondary);">SELECT * FROM Schueler WHERE vorname="Max"</i> wird ausgeführt
                             </div>
                             <img src="{% static 'Variable_Example.png' %}" alt="SQL Variablen Beispiel" style="max-width: 230px; height: auto; border: 1px solid #ccc; border-radius: 6px; box-shadow: 1px 1px 6px #eee;">
                         </div>
@@ -100,16 +132,16 @@ SQLution - SQL IDE
                             vorgegebenen Optionen verwenden.
 
                             Die Optionen werden als SQL-Abfrage in eckigen Klammern nach der Variable angegeben 
-                            <i style="color: navy;">{Variable}[SQL-Abfrage]</i> angegeben.
+                            <i style="color: var(--text-secondary);">{Variable}[SQL-Abfrage]</i> angegeben.
 
                             Der Wert in der <b>ersten Spalte der gewählten Option</b> wird dann als <b>Wert für die Variable</b> verwendet.
 
                             <br>
                             <br>
                             <b>Beispiel:</b> 
-                            <i style="color: navy;">SELECT * FROM Lehrer WHERE schule={Dropdown Schule}[SELECT * FROM Schule]</i> 
+                            <i style="color: var(--text-secondary);">SELECT * FROM Lehrer WHERE schule={Dropdown Schule}[SELECT * FROM Schule]</i> 
                             <br> ➔ Nutzer wählt Dante Gymnasium aus
-                            <br> ➔ <i style="color: navy;">SELECT * FROM Lehrer WHERE schule=2</i> wird ausgeführt
+                            <br> ➔ <i style="color: var(--text-secondary);">SELECT * FROM Lehrer WHERE schule=2</i> wird ausgeführt
                             
                             <br><br>
                             Beim Ausführen auf dieser Seite, wird statt eines Dropdowns ein Textfeld angezeigt.
@@ -139,7 +171,7 @@ SQLution - SQL IDE
             'withOutput': true,
             'withErrorList': true,
             'withBottomPanel': true
-        }">
+        }" style="box-shadow: 0 0px 10px var(--shadow-light);">
             {% for f in sql_files %}
                 <script type="text/plain" title="{{ f.filename }}" data-type="sql">
                     {{ f.content }}

@@ -14,7 +14,7 @@
             {% for inp in inputs %}
             <div class="form-flex-item">
                 <label for="input_{{ inp }}" style="text-align: center; width: 100%;">{{ inp }}</label>
-                <input type="text" style="background-color: var(--bg-tertiary); color: var(--text-primary); width: 100%;" id="input_{{ inp }}" name="input_{{ inp }}" value="">
+                <input type="text" style="background-color: var(--bg-secondary); color: var(--text-primary); width: 100%;" id="input_{{ inp }}" name="input_{{ inp }}" value="">
             </div>
             {% endfor %}
             {% for inp in dropdowns %}
@@ -61,7 +61,7 @@
 
 
 {% if error %}
-    <p style="color:red;">Fehler: {{ error }}</p>
+    <p style="color:var(--accent-danger);">Fehler: {{ error }}</p>
 {% endif %}
 <br>
 
@@ -87,15 +87,14 @@
 
 
 {% if user.is_authenticated and user.username|endswith:'_admin' %}
-    <div style="color: blue; text-align: center; display: block;">
+<div style="margin-top: 10px; margin-bottom: 5px; color: var(--text-muted); font-size: 12px; text-align: center;">
+    Nur in der Admin-Ansicht sichtbar: SQL-Abfrage mit eingesetzten Variablen.
+</div>
+    <div style="color: var(--text-secondary); text-align: center; display: block;">
         <div style="text-align: left; display: inline-block;">
             <i>{{query|safe}}</i>
             </div>
     </div>
-        <!-- 
-        <a href="{% url 'sql' %}?file={{ title }}" class="btn btn-secondary" style="margin-bottom: 20px; margin-top: 20px;">Bearbeiten</a>
-        <a href="{% url 'sql' %}?file={{ title }}&delete=true" class="btn btn-secondary" style="margin-bottom: 20px; margin-top: 20px;">Löschen</a>
-        -->
 {% endif %}
 
 </div>
