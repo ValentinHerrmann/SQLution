@@ -71,13 +71,13 @@
     <table border="1" style="width: 100%;">
         <tr>
             {% for col in columns %}
-                <th>{{ col }}</th>
+                <th style="border-color: var(--border-color); padding-left: 4px;">{{ col }}</th>
             {% endfor %}
         </tr>
         {% for row in result %}
             <tr>
                 {% for cell in row %}
-                    <td>{{ cell }}</td>
+                    <td style="border-color: var(--border-color); padding-left: 4px;">{{ cell }}</td>
                 {% endfor %}
             </tr>
         {% endfor %}
