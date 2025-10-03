@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python Debugger: Django",
+            "name": "Django Full",
             "type": "debugpy",
             "request": "launch",
             "args": [
@@ -13,6 +13,42 @@
             "program": "${workspaceFolder}/tutorial/manage.py",
             "console": "internalConsole",
             "preLaunchTask": "PreLaunchRoutine",
+            "serverReadyAction": {
+                "pattern": "Starting development server at http://localhost:([0-9]+)/",
+                "action": "startDebugging",
+                "name": "Launch Firefox Session"
+            }
+        },
+        {
+            "name": "Django Basic",
+            "type": "debugpy",
+            "request": "launch",
+            "args": [
+                "runserver",
+                "localhost:8000"
+            ],
+            "django": true,
+            "program": "${workspaceFolder}/tutorial/manage.py",
+            "console": "internalConsole",
+            //"preLaunchTask": "PreLaunchRoutine_simple",
+            "serverReadyAction": {
+                "pattern": "Starting development server at http://localhost:([0-9]+)/",
+                "action": "startDebugging",
+                "name": "Launch Firefox Session"
+            }
+        },
+        {
+            "name": "Django Simple",
+            "type": "debugpy",
+            "request": "launch",
+            "args": [
+                "runserver",
+                "localhost:8000"
+            ],
+            "django": true,
+            "program": "${workspaceFolder}/tutorial/manage.py",
+            "console": "internalConsole",
+            "preLaunchTask": "PreLaunchRoutine_simple",
             "serverReadyAction": {
                 "pattern": "Starting development server at http://localhost:([0-9]+)/",
                 "action": "startDebugging",

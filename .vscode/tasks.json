@@ -69,6 +69,44 @@
             "dependsOn": [
                 "collectstatic"
             ]
+        },
+        {
+            "label": "venv_simple",
+            "type": "shell",
+            "command": "${workspaceFolder}/.venv/Scripts/activate ; pip install -r ${workspaceFolder}/requirements.txt",
+            "dependsOn": [
+            ]
+        },
+        {
+            "label": "makemigrations_simple",
+            "type": "shell",
+            "command": "python ${workspaceFolder}/tutorial/manage.py makemigrations",
+            "dependsOn": [
+                "venv_simple"
+            ]
+            
+        },
+        {
+            "label": "migrate_simple",
+            "type": "shell",
+            "command": "python '${workspaceFolder}/tutorial/manage.py' migrate",
+            "dependsOn": [
+                "makemigrations_simple"
+            ]
+        },
+        {
+            "label": "collectstatic_simple",
+            "type": "shell",
+            "command": "python '${workspaceFolder}/tutorial/manage.py' collectstatic --noinput",
+            "dependsOn": [
+                "migrate_simple"
+            ]
+        },    
+        {
+            "label": "PreLaunchRoutine_simple",
+            "dependsOn": [
+                "collectstatic_simple"
+            ]
         }
     ]
 }
