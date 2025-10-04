@@ -5,8 +5,31 @@ SQLution - SQL IDE
 {% block content %}
 {% load static %}
 
-  <script type="module" crossorigin src="/static/sql-ide/sql-ide-embedded.js"></script>
-<script src="/static/sql-ide/lib/monaco-editor/dev/vs/loader.js"></script>
+
+    <link rel='stylesheet' type='text/css' media='screen' href='/static/sql-ide/assets/fonts/fonts.css'>
+{% comment %} <script src="lib/pako/pako.js"></script>
+<script src="lib/zip.js/zip.min.js"></script>
+<script src="lib/markdownit/markdownit.min.js"></script>
+<script src="/static/sql-ide/lib/monaco-editor/dev/vs/loader.js"></script> {% endcomment %}
+
+<script type="module" crossorigin src="/static/sql-ide/sql-ide-embedded.js"></script>
+<link rel="modulepreload" crossorigin href="/static/sql-ide/assets/js/jquery.js">
+<link rel="modulepreload" crossorigin href="/static/sql-ide/assets/js/pako.js">
+<link rel="modulepreload" crossorigin href="/static/sql-ide/assets/js/sql.js.js">
+<link rel="modulepreload" crossorigin href="/static/sql-ide/assets/js/zip.js.js">
+<link rel="modulepreload" crossorigin href="/static/sql-ide/assets/js/mdurl.js">
+<link rel="modulepreload" crossorigin href="/static/sql-ide/assets/js/uc.micro.js">
+<link rel="modulepreload" crossorigin href="/static/sql-ide/assets/js/entities.js">
+<link rel="modulepreload" crossorigin href="/static/sql-ide/assets/js/linkify-it.js">
+<link rel="modulepreload" crossorigin href="/static/sql-ide/assets/js/punycode.js.js">
+<link rel="modulepreload" crossorigin href="/static/sql-ide/assets/js/markdown-it.js">
+<link rel="modulepreload" crossorigin href="/static/sql-ide/sql-ide-embedded.js">
+<link rel="modulepreload" crossorigin href="/static/sql-ide/assets/js/monaco-editor.js">
+<link rel="stylesheet" crossorigin href="/static/sql-ide/sql-ide-embedded.css">
+
+
+
+
 <style>
     html, body, .main-flex-container {
         height: 100%;
