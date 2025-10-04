@@ -1,0 +1,16 @@
+name: SonarCube
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Official SonarQube Scan
+      uses: SonarSource/sonarqube-scan-action@v6.0.0
