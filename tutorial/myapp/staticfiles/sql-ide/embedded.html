@@ -7,22 +7,28 @@
     <title>Embedded-Test</title>
     <meta name='viewport' content='width=device-width, initial-scale=1'>
 
-    <link rel="preload" href="lib/monaco-editor/dev/vs/editor/editor.main.js" as="script">
-    <link rel="preload" href="lib/monaco-editor/dev/vs/editor/editor.main.nls.de.js" as="script">
-
-    <link rel='stylesheet' type='text/css' media='screen' href='assets/fonts/fonts.css'>
-    <script src="lib/jquery/jquery-3.3.1.js"></script>
     <script src="lib/pako/pako.js"></script>
     <script src="lib/zip.js/zip.min.js"></script>
     <script src="lib/markdownit/markdownit.min.js"></script>
-    <script src="lib/monaco-editor/dev/vs/loader.js"></script>
 
-    
+
 
     <script>window.javaOnlineDir = "";</script>
 
-  <script type="module" crossorigin src="/sql-ide-embedded.js"></script>
-  <link rel="stylesheet" href="/sql-ide-embedded.css">
+  <script type="module" crossorigin src="./sql-ide-embedded.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/js/jquery.js">
+  <link rel="modulepreload" crossorigin href="./assets/js/pako.js">
+  <link rel="modulepreload" crossorigin href="./assets/js/sql.js.js">
+  <link rel="modulepreload" crossorigin href="./assets/js/zip.js.js">
+  <link rel="modulepreload" crossorigin href="./assets/js/mdurl.js">
+  <link rel="modulepreload" crossorigin href="./assets/js/uc.micro.js">
+  <link rel="modulepreload" crossorigin href="./assets/js/entities.js">
+  <link rel="modulepreload" crossorigin href="./assets/js/linkify-it.js">
+  <link rel="modulepreload" crossorigin href="./assets/js/punycode.js.js">
+  <link rel="modulepreload" crossorigin href="./assets/js/markdown-it.js">
+  <link rel="modulepreload" crossorigin href="./sql-ide-embedded.js">
+  <link rel="modulepreload" crossorigin href="./assets/js/monaco-editor.js">
+  <link rel="stylesheet" crossorigin href="./sql-ide-embedded.css">
 </head>
 
 <body>

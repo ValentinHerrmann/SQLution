@@ -1,0 +1,298 @@
+/* =================================================================
+   Consolidated Stylesheet for DataSpark Project
+   Generated from inline <style> tags across templates
+   ================================================================= */
+
+/* =================================================================
+   BASE.HTML STYLES
+   ================================================================= */
+
+/* Main layout styles */
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+.main-content {
+  height: calc(100vh - 56px - 30px); /* viewport height minus navbar and footer */
+  overflow-y: auto;
+  background-color: var(--bg-primary);
+}
+
+.navbar {
+  flex-shrink: 0;
+}
+
+footer {
+  flex-shrink: 0;
+  height: 30px;
+}
+
+/* Theme toggle fallback */
+.theme-toggle-fallback {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* =================================================================
+   USER_FUNCTIONS_EXECUTE.HTML STYLES
+   ================================================================= */
+
+.form-flex-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  align-items: flex-center;
+}
+
+.form-flex-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 140px;
+  margin-bottom: 10px;
+}
+
+@media (max-width: 600px) {
+  .form-flex-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .form-flex-item {
+    min-width: unset;
+    align-items: center;
+  }
+}
+
+/* =================================================================
+   SQL_IDE.HTML STYLES
+   ================================================================= */
+
+html, body, .main-flex-container {
+  height: 100%;
+  min-height: 88vh;
+  margin: 0;
+  padding: 0;
+}
+
+.main-flex-container {
+  display: flex;
+  flex-direction: column;
+  height: 88vh;
+  min-height: 88vh;
+}
+
+.top-bar {
+  flex: 0 0 auto;
+  margin-bottom: 0.5rem;
+}
+
+.sql-flex-grow {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.sql-online {
+  flex: 1 1 0;
+  min-height: 0;
+  height: 100%;
+  margin-left: 5px;
+  width: calc(100% - 10px);
+}
+
+/* Style for expanded details elements */
+/* Top-level details get --bg-secondary */
+details[open]:not(details details) {
+  background-color: var(--bg-secondary) !important;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  box-shadow: 0 0px 5px var(--shadow-light);
+}
+
+/* Nested details elements get --bg-tertiary */
+details details[open] {
+  background-color: var(--bg-tertiary) !important;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  margin-top: 0.5rem;
+}
+
+/* =================================================================
+   QR_GENERATOR.HTML STYLES
+   ================================================================= */
+
+.qr-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.qr-svg-container {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+}
+
+.download-section {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.btn-download {
+  background-color: #28a745;
+  border-color: #28a745;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+  text-decoration: none;
+  display: inline-block;
+  border: none;
+  cursor: pointer;
+  margin-right: 10px;
+}
+
+.btn-download:hover {
+  background-color: #218838;
+  color: white;
+  text-decoration: none;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.form-group input[type="text"] {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.form-group input[type="file"] {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.form-row {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.form-row .form-group {
+  flex: 1;
+  margin-bottom: 0;
+  min-width: 200px;
+}
+
+@media (max-width: 768px) {
+  .form-row {
+    flex-direction: column;
+  }
+  
+  .form-row .form-group {
+    min-width: auto;
+  }
+}
+
+.color-input-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.help-text {
+  font-size: 12px;
+  color: #666;
+  margin-top: 5px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 20px;
+}
+
+/* =================================================================
+   APOLLON.HTML STYLES
+   ================================================================= */
+
+.flex-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+  gap: 3px;
+  margin: 3px;
+}
+
+.flex-row {
+  display: flex;
+  flex-direction: row; /* Force horizontal layout */
+  justify-content: center;
+  align-items: stretch;
+  gap: 3px;
+  margin: 3px;
+}
+
+/* =================================================================
+   ADMIN_OVERVIEW.HTML STYLES
+   ================================================================= */
+
+/* Compact admin overview styles */
+.admin-compact .card {
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.admin-compact .card-body {
+  padding: 0.5rem !important;
+}
+
+.admin-compact .card-title {
+  font-size: 0.95rem !important;
+  margin-bottom: 0.25rem !important;
+  font-weight: 600;
+}
+
+.admin-compact .btn {
+  padding: 0.25rem 0.5rem !important;
+  font-size: 0.85rem !important;
+}
+
+.admin-compact .table {
+  font-size: 0.85rem !important;
+}
+
+.admin-compact .progress {
+  height: 18px !important;
+}
+
+.admin-compact p {
+  margin-bottom: 0.25rem !important;
+  font-size: 0.9rem;
+}
+
+.admin-compact .row {
+  margin-bottom: 0.5rem !important;
+}

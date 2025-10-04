@@ -102,6 +102,23 @@ def parse_table_schema(create_sql):
 
     return columns, primary_keys, foreign_keys
 
+def get_table_dict(db_path):
+    cursor = runSql("SELECT name, sql FROM sqlite_master WHERE sql IS NOT NULL AND type='table' AND NOT name LIKE 'sqlite_%'",db_path)
+    result = cursor.fetchall()
+
+    table_dict = {}
+    for name, sql in result:
+        cols, pks, fks = parse_table_schema(sql)
+        table_dict[name] = {}
+
+        for col, type in cols:
+            table_dict[name][col] = {
+                'type': type,
+                'primary_key': col in pks,
+                'is_foreign_key': col in fks
+            }
+    return table_dict
+
 def generate_html_table(name, columns, pks, fks):
     col_strs = []
     for col, dtype in columns:

@@ -16,52 +16,18 @@
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css" integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
    
  
-    <script>window.javaOnlineDir = "";</script>
-
-    <link rel="preload" href="/static/sql-ide/lib/monaco-editor/dev/vs/editor/editor.main.js" as="script">
-    <link rel="preload" href="/static/sql-ide/lib/monaco-editor/dev/vs/editor/editor.main.nls.de.js" as="script">
- 
-    <link rel='stylesheet' type='text/css' media='screen' href='/static/sql-ide/assets/fonts/fonts.css'>
-
-    <script src="/static/sql-ide/lib/jquery/jquery-3.3.1.js"></script>
-    <script src="/static/sql-ide/lib/pako/pako.js"></script>
-    <script src="/static/sql-ide/lib/zip.js/zip.min.js"></script>
-    <script src="/static/sql-ide/lib/markdownit/markdownit.min.js"></script>
-    
-    <script defer="defer" src="/static/apollon/vendors.js"></script>
-    <script defer="defer" src="/static/apollon/main.js"></script>
- 
     <!-- Falls sich die Programmdateien relativ zur Html-Datei in einem Unterverzeichnis befinden: -->
     <script>window.javaOnlineDir = "/static/sql-ide/";</script>
- 
-  <link rel="stylesheet" href="/static/sql-ide/sql-ide-embedded.css">
+  
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   
   <!-- Theme Switcher CSS Files -->
 
 
-  <link rel="stylesheet" href="{% static 'lightmode.css' %}">
-  <link rel="stylesheet" href="{% static 'darkmode.css' %}">
+  <link rel="stylesheet" href="{% static 'style_lightmode.css' %}">
+  <link rel="stylesheet" href="{% static 'style_darkmode.css' %}">
   <link rel="stylesheet" href="{% static 'theme-switcher.css' %}">
-
-  <style>
-    html, body {
-      height: 100%;
-      overflow: hidden;
-    }
-    .main-content {
-      height: calc(100vh - 56px - 30px); /* viewport height minus navbar and footer */
-      overflow-y: auto;
-      background-color: var(--bg-primary);
-    }
-    .navbar {
-      flex-shrink: 0;
-    }
-    footer {
-      flex-shrink: 0;
-      height: 30px;
-    }
-  </style>
+  <link rel="stylesheet" href="{% static 'stylesheet.css' %}">
 
 
 
@@ -231,7 +197,6 @@
             <div id="theme-toggle-btn">
               <!-- Fallback content in case JS doesn't load -->
               <noscript>
-                <style>.theme-toggle-fallback { cursor: not-allowed; opacity: 0.5; }</style>
                 <div class="theme-toggle-fallback">JS Required</div>
               </noscript>
             </div>

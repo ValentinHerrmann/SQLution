@@ -5,56 +5,31 @@ SQLution - SQL IDE
 {% block content %}
 {% load static %}
 
-  <script type="module" crossorigin src="/static/sql-ide/sql-ide-embedded.js"></script>
-<script src="/static/sql-ide/lib/monaco-editor/dev/vs/loader.js"></script>
-<style>
-    html, body, .main-flex-container {
-        height: 100%;
-        min-height: 88vh;
-        margin: 0;
-        padding: 0;
-    }
-    .main-flex-container {
-        display: flex;
-        flex-direction: column;
-        height: 88vh;
-        min-height: 88vh;
-    }
-    .top-bar {
-        flex: 0 0 auto;
-        margin-bottom: 0.5rem;
-    }
-    .sql-flex-grow {
-        flex: 1 1 0;
-        min-height: 0;
-        display: flex;
-        flex-direction: column;
-    }
-    .sql-online {
-        flex: 1 1 0;
-        min-height: 0;
-        height: 100%;
-        margin-left: 5px;
-        width: calc(100% - 10px);
-    }
-    
-    /* Style for expanded details elements */
-    /* Top-level details get --bg-secondary */
-    details[open]:not(details details) {
-        background-color: var(--bg-secondary) !important;
-        padding: 0.5rem;
-        border-radius: 0.25rem;
-        box-shadow: 0 0px 5px var(--shadow-light);
-    }
-    
-    /* Nested details elements get --bg-tertiary */
-    details details[open] {
-        background-color: var(--bg-tertiary) !important;
-        padding: 0.5rem;
-        border-radius: 0.25rem;
-        margin-top: 0.5rem;
-    }
-</style>
+
+    <link rel='stylesheet' type='text/css' media='screen' href='/static/sql-ide/assets/fonts/fonts.css'>
+{% comment %} <script src="lib/pako/pako.js"></script>
+<script src="lib/zip.js/zip.min.js"></script>
+<script src="lib/markdownit/markdownit.min.js"></script>
+<script src="/static/sql-ide/lib/monaco-editor/dev/vs/loader.js"></script> {% endcomment %}
+
+<script type="module" crossorigin src="/static/sql-ide/sql-ide-embedded.js"></script>
+<link rel="modulepreload" crossorigin href="/static/sql-ide/assets/js/jquery.js">
+<link rel="modulepreload" crossorigin href="/static/sql-ide/assets/js/pako.js">
+<link rel="modulepreload" crossorigin href="/static/sql-ide/assets/js/sql.js.js">
+<link rel="modulepreload" crossorigin href="/static/sql-ide/assets/js/zip.js.js">
+<link rel="modulepreload" crossorigin href="/static/sql-ide/assets/js/mdurl.js">
+<link rel="modulepreload" crossorigin href="/static/sql-ide/assets/js/uc.micro.js">
+<link rel="modulepreload" crossorigin href="/static/sql-ide/assets/js/entities.js">
+<link rel="modulepreload" crossorigin href="/static/sql-ide/assets/js/linkify-it.js">
+<link rel="modulepreload" crossorigin href="/static/sql-ide/assets/js/punycode.js.js">
+<link rel="modulepreload" crossorigin href="/static/sql-ide/assets/js/markdown-it.js">
+<link rel="modulepreload" crossorigin href="/static/sql-ide/sql-ide-embedded.js">
+<link rel="modulepreload" crossorigin href="/static/sql-ide/assets/js/monaco-editor.js">
+<link rel="stylesheet" crossorigin href="/static/sql-ide/sql-ide-embedded.css">
+
+
+
+
 <div class="main-flex-container">
     <div class="top-bar" style="display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
         <div>
@@ -158,8 +133,7 @@ SQLution - SQL IDE
             </details>
         </div>
         <div style="display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; height: 100%;  margin: 5px;">
-            <button id="save-sql-btn" class="btn btn-primary" style="margin: 3px; width: 130px;">SQL-Abfragen speichern</button>
-            <button id="save-db-btn" class="btn btn-primary" style="margin: 3px; width: 130px;">Datenbank speichern</button>
+            <button id="save-sql-btn" class="btn btn-primary" style="margin: 10px; font-size: 1.5em;"><i class="fas fa-save"></i></button>
         </div>
     </div>
     <div class="sql-flex-grow">
@@ -204,15 +178,17 @@ SQLution - SQL IDE
     document.getElementById('save-sql-btn').addEventListener('click', function() {
         saveSQLFiles();
     });
-    document.getElementById('save-db-btn').addEventListener('click', function() {
-        saveDB();
-    });
 </script>
 <script>
-function saveSQLFiles() {
-    if (!window.confirm("Das Speichern überschreibt alle Daten auf dem Server. Das kann nicht rückgängig gemacht werden!")) {
-        return;
-    }
+async function saveSQLFiles() {
+    const confirmed = await showConfirmDialog(
+        "Das Speichern überschreibt alle SQL-Abfragen auf dem Server. Das kann nicht rückgängig gemacht werden!",
+        "fas fa-save"
+      );
+      
+      if (!confirmed) {
+          return;
+      }
     let ide = window.sql_ide_access.getIDE('{{ user_name }}');
     const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
     sql_files = [];
@@ -229,36 +205,10 @@ function saveSQLFiles() {
         body: JSON.stringify({ files: sql_files })
     })
     .then(response => {
-        if (response.ok) { console.log("Files saved successfully:\n" + sql_files); } 
-        else { console.log("Fehler beim Speichern der Dateien."); }
+        if (response.ok) { console.debug("Files saved successfully:\n" + sql_files); } 
+        else { console.error("Fehler beim Speichern der Dateien."); }
     });
 }
-
-function saveDB() {
-    if (!window.confirm("Das Speichern überschreibt alle Daten auf dem Server. Das kann nicht rückgängig gemacht werden!")) {
-        return;
-    }
-    
-    let ide = window.sql_ide_access.getIDE('{{ user_name }}');
-    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-    ide.getDatabase().then((blob) => {        
-        return fetch("/api/upload_db/", {
-            method: "POST",
-            headers: { "Content-Type": "application/octet-stream",  "X-CSRFToken": csrftoken },
-            body: blob
-        });
-    })
-    .then((response) => {
-        if (!response.ok) {
-            console.error(response)
-            
-        }
-    })
-    .catch((error) => {
-        console.error("Error:", error.message);
-    });
-    
-    }
 </script>
 
 <script>
