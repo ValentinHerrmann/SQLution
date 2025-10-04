@@ -212,50 +212,6 @@ SQLution - Klassendiagramm
   loadJsonFromServer();
 </script>
 
-<style>
-  .form-flex-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: center;
-      align-items: flex-start;
-  }
-  .form-flex-item {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      min-width: 140px;
-      margin-bottom: 10px;
-  }
-  @media (max-width: 600px) {
-      .form-flex-container {
-          flex-direction: column;
-          align-items: stretch;
-      }
-      .form-flex-item {
-          min-width: unset;
-          align-items: center;
-      }
-  }
-
-  .flex-col {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: stretch;
-    gap: 3px;
-    margin: 3px;
-  }
-  .flex-row {
-    display: flex;
-    flex-direction: row; /* Force horizontal layout */
-    justify-content: center;
-    align-items: stretch;
-    gap: 3px;
-    margin: 3px;
-  }
-  </style>
-
 {% endblock %} 
 
 {% block powered_by %}

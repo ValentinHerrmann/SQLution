@@ -30,54 +30,6 @@ SQLution - SQL IDE
 
 
 
-<style>
-    html, body, .main-flex-container {
-        height: 100%;
-        min-height: 88vh;
-        margin: 0;
-        padding: 0;
-    }
-    .main-flex-container {
-        display: flex;
-        flex-direction: column;
-        height: 88vh;
-        min-height: 88vh;
-    }
-    .top-bar {
-        flex: 0 0 auto;
-        margin-bottom: 0.5rem;
-    }
-    .sql-flex-grow {
-        flex: 1 1 0;
-        min-height: 0;
-        display: flex;
-        flex-direction: column;
-    }
-    .sql-online {
-        flex: 1 1 0;
-        min-height: 0;
-        height: 100%;
-        margin-left: 5px;
-        width: calc(100% - 10px);
-    }
-    
-    /* Style for expanded details elements */
-    /* Top-level details get --bg-secondary */
-    details[open]:not(details details) {
-        background-color: var(--bg-secondary) !important;
-        padding: 0.5rem;
-        border-radius: 0.25rem;
-        box-shadow: 0 0px 5px var(--shadow-light);
-    }
-    
-    /* Nested details elements get --bg-tertiary */
-    details details[open] {
-        background-color: var(--bg-tertiary) !important;
-        padding: 0.5rem;
-        border-radius: 0.25rem;
-        margin-top: 0.5rem;
-    }
-</style>
 <div class="main-flex-container">
     <div class="top-bar" style="display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
         <div>

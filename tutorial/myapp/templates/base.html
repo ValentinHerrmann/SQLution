@@ -24,28 +24,10 @@
   <!-- Theme Switcher CSS Files -->
 
 
-  <link rel="stylesheet" href="{% static 'lightmode.css' %}">
-  <link rel="stylesheet" href="{% static 'darkmode.css' %}">
+  <link rel="stylesheet" href="{% static 'style_lightmode.css' %}">
+  <link rel="stylesheet" href="{% static 'style_darkmode.css' %}">
   <link rel="stylesheet" href="{% static 'theme-switcher.css' %}">
-
-  <style>
-    html, body {
-      height: 100%;
-      overflow: hidden;
-    }
-    .main-content {
-      height: calc(100vh - 56px - 30px); /* viewport height minus navbar and footer */
-      overflow-y: auto;
-      background-color: var(--bg-primary);
-    }
-    .navbar {
-      flex-shrink: 0;
-    }
-    footer {
-      flex-shrink: 0;
-      height: 30px;
-    }
-  </style>
+  <link rel="stylesheet" href="{% static 'stylesheet.css' %}">
 
 
 
@@ -215,7 +197,6 @@
             <div id="theme-toggle-btn">
               <!-- Fallback content in case JS doesn't load -->
               <noscript>
-                <style>.theme-toggle-fallback { cursor: not-allowed; opacity: 0.5; }</style>
                 <div class="theme-toggle-fallback">JS Required</div>
               </noscript>
             </div>
