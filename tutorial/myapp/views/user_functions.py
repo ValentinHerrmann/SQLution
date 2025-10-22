@@ -82,27 +82,40 @@ def user_functions_execute(request):
 
         if request.method == 'POST' or len(inputs)+len(dropdowns) == 0:
             try:
+                # inpVals: raw submitted values for repopulating the form
+                # sqlVals: processed values to insert into the SQL
                 inpVals = {}
+                sqlVals = {}
                 for inp in inputs:
-                    inpVals[inp] = request.POST.get(f'input_{inp}')
+                    val = request.POST.get(f'input_{inp}', '')
+                    inpVals[inp] = val
+                    sqlVals[inp] = val
                 for drop in dropdowns:
                     n = drop['name']
-                    v = request.POST.get(f'dropdown_{n}')
-                    # v = v.replace("(", "").replace(")", "")
-                    v = v.split(",")
-                    if len(v) > 1:
-                        # Remove leading and trailing single quotes if both exist
-                        if v[0].startswith("'") and v[0].endswith("'"):
-                            inpVals[n] = v[0][1:-1]
-                        else:
-                            inpVals[n] = v[0]
+                    raw = request.POST.get(f'dropdown_{n}', '')
+                    inpVals[n] = raw
+
+                    # Try to extract a primary value for SQL substitution.
+                    # If the dropdown option contains commas (e.g. "1, 'name'") take the first segment.
+                    # Otherwise use the raw value directly.
+                    if raw is None:
+                        raise Exception("Fehler bei der Dropdown-Auswahl. Keine Auswahl übermittelt.")
+                    parts = [p.strip() for p in raw.split(',')]
+                    if len(parts) >= 1 and parts[0] != '':
+                        first = parts[0]
+                        # strip surrounding single or double quotes
+                        if (first.startswith("'") and first.endswith("'")) or (first.startswith('"') and first.endswith('"')):
+                            first = first[1:-1]
+                        sqlVals[n] = first
                     else:
-                        raise Exception("Fehler bei der Dropdown-Auswahl. Kein Primärschlüssel gefunden.")
+                        # fallback
+                        sqlVals[n] = raw
             
                 sql = re.sub(r'\[[^\]]+\]', '',sql)
                 #sql = re.replace(r'\[[^\]]+\]', '', sql)
-                for key, value in inpVals.items():
-                    sql = sql.replace('{' + key + '}', value)
+                # Use processed sqlVals for substitution so SQL gets the correct primary values
+                for key, value in sqlVals.items():
+                    sql = sql.replace('{' + key + '}', str(value))
                 
                 
                 cursor = runSql(sql, request.user.username)
@@ -113,12 +126,12 @@ def user_functions_execute(request):
             except Exception as e:
                 error = str(e)
         sql = sql.replace("\n", "<br>")
-        return render_user_fun_exec(request, sql, inputs, sqlfile, result, error, columns, dropdowns)
+    return render_user_fun_exec(request, sql, inputs, sqlfile, result, error, columns, dropdowns, inpVals if 'inpVals' in locals() else {})
     
     return render_user_fun_exec(request, '', [], '', [], 'Keine SQL Datei gefunden.', [], [])
 
 
-def render_user_fun_exec(request, sql, inputs, sqlfile, result, error, columns, dropdowns):
+def render_user_fun_exec(request, sql, inputs, sqlfile, result, error, columns, dropdowns, inpVals=None):
     result = remove_nones_from_sqlresult(result)
     return render(request, 'user_functions_execute.html', {
         'inputs': inputs,
@@ -128,4 +141,5 @@ def render_user_fun_exec(request, sql, inputs, sqlfile, result, error, columns, 
         'result': result,
         'error': error,
         'columns': columns,
+        'inpVals': inpVals or {},
     })

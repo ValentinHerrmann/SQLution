@@ -9,17 +9,14 @@ def delete_db(username:str):
     dbname = get_db_name(username)
     if os.path.exists(dbname):
         os.remove(dbname)
-        #print(f"Database {dbname} deleted.")
-    #else:
-        #print(f"Database {dbname} does not exist.")
 
 def get_db_name(username:str):
 
     if username is None or username == '':
         return ""
-    dir = get_user_directory(username)
-    os.makedirs(dir, exist_ok=True)
-    dbname = dir + "/datenbank.db"
+    userdir = get_user_directory(username)
+    os.makedirs(userdir, exist_ok=True)
+    dbname = userdir + "/datenbank.db"
     return dbname
 
 def create_db(sql:str, username:str):
@@ -46,7 +43,6 @@ def create_db(sql:str, username:str):
 def runSql(sql:str, username:str):
     dbname = get_db_name(username)
     if dbname is None:
-        #print("No database name provided.")
         raise Exception('No database name provided')
     with sqlite3.connect(dbname,autocommit=True) as con:
         cur = con.cursor()

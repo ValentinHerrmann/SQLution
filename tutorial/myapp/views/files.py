@@ -29,6 +29,8 @@ def download_db(request):
 @login_required
 @user_passes_test(is_db_admin)
 def upload_db(request):
+    print("Upload DB")
+    print(request.FILES)
     if request.method == "POST" and request.FILES.get('db_file'):
         db_file = request.FILES['db_file']
         with open(get_db_name(request.user.username), "wb+") as destination:
