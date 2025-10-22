@@ -30,7 +30,6 @@
             "django": true,
             "program": "${workspaceFolder}/tutorial/manage.py",
             "console": "internalConsole",
-            //"preLaunchTask": "PreLaunchRoutine_simple",
             "serverReadyAction": {
                 "pattern": "Starting development server at http://localhost:([0-9]+)/",
                 "action": "startDebugging",
@@ -61,7 +60,19 @@
             "reAttach": true,
             "name": "Launch Firefox Session",
             "url": "http://localhost:8000",
-            "webRoot": "${workspaceFolder}/tutorial/"
+            "webRoot": "${workspaceFolder}/tutorial/",
+            "pathMappings": [
+                {
+                    "url": "http://localhost:8000/static/sql-ide/",
+                    "path": "${workspaceFolder}/../DataSpark_SQL-IDE/dist-embedded/"
+                }
+            ],
+            "skipFiles": [
+                "**/node_modules/**"
+            ],
+            "firefoxArgs": [
+                "-start-debugger-server"
+            ]
         }
     ]
 }

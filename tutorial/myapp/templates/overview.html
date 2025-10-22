@@ -5,7 +5,12 @@ SQLution - Übersicht
 {% block content %}
 
 
-<h4 style="text-align: center;"> Datenbank verwalten</h4>
+<h3  style="text-align: center; margin: 20px; color: var(--text-secondary)">Übersicht</h3>
+
+<details>
+<summary style="text-align: center; cursor: pointer; list-style: none; margin: 20px;" onclick="toggleIcon(this)">
+    <h5><i class="far fa-caret-square-right" id="detailsIcon"></i> Datenbank und Projekt verwalten</h5>
+</summary>
 
 <div style="display: flex; justify-content: space-between; align-items: center; gap: 20px; width: 100%;">
     <div style="flex: 1; text-align: center;">
@@ -38,6 +43,7 @@ SQLution - Übersicht
         <a href="{% url 'download_zip' %}" class="btn btn-primary" style="margin-bottom: 10px; ">Projekt herunterladen</a>
     </div>
 </div>
+</details>
 
 
 <script>
@@ -61,10 +67,28 @@ SQLution - Übersicht
   </script>
 
 
-<br/>
-<br/>
+<script>
+function toggleIcon(summary) {
+    const details = summary.parentElement;
+    const icon = summary.querySelector('#detailsIcon');
+    
+    // Toggle happens after click, so check the future state
+    setTimeout(() => {
+        if (details.open) {
+            icon.className = 'far fa-caret-square-down';
+        } else {
+            icon.className = 'far fa-caret-square-right';
+        }
+    }, 0);
+}
+</script>
 
-<h4 style="text-align: center;">Nutzerfunktionen / gespeicherte SQL-Abfragen</h4>
+
+<details>
+<summary style="text-align: center; cursor: pointer; list-style: none;  margin: 20px;" onclick="toggleIcon(this)">
+    <h5><i class="far fa-caret-square-right" id="detailsIcon"></i> Nutzerfunktionen / gespeicherte SQL-Abfragen</h5>
+</summary>
+
 
 <table border="1" style="width: 100%; border-color: var(--border-color);">
     {% for fkt in functions %}
@@ -74,10 +98,14 @@ SQLution - Übersicht
         </tr>
     {% endfor %}
 </table>
+</details>
 
-<br>
 
-<h4 style="text-align: center;">Tabellen (max. 10 Zeilen pro Tabelle)</h4>
+<details>
+<summary style="text-align: center; cursor: pointer; list-style: none; margin: 20px;" onclick="toggleIcon(this)">
+    <h5><i class="far fa-caret-square-right" id="detailsIcon"></i> Tabellen (max. 5 Zeilen pro Tabelle)</h5>
+</summary>
+<h5 style="text-align: center;"></h5>
 <table border="1">
     {% for mod in models %}
         <b>{{ mod.name }}</b>
@@ -96,6 +124,7 @@ SQLution - Übersicht
             {% endfor %}
         </table>
     {% endfor %}
+</details>
 
 <br>  
 {% endblock %}

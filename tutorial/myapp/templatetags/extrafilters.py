@@ -11,6 +11,17 @@ def endswith(value, suffix, autoescape=True):
 def add_class(field, css_class):
     return field.as_widget(attrs={"class": css_class})
 
+
+@register.filter(name='dict_get')
+def dict_get(d, key):
+    """Return d.get(key, '') in templates (safe for missing keys)."""
+    try:
+        if d is None:
+            return ''
+        return d.get(key, '')
+    except Exception:
+        return ''
+
 @register.simple_tag
 def get_version():
     """Read version from VERSION file"""

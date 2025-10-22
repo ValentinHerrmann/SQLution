@@ -6,9 +6,7 @@ class ThemeSwitcher {
         this.init();
     }
 
-    init() {
-        console.log('ThemeSwitcher init() called'); // Debug log
-        
+    init() {        
         // Apply saved theme immediately
         this.applyTheme(this.currentTheme);
         
@@ -23,8 +21,6 @@ class ThemeSwitcher {
         
         // Apply theme to dynamically loaded content
         this.setupMutationObserver();
-        
-        console.log('ThemeSwitcher init() completed'); // Debug log
     }
 
     applyTheme(theme) {
@@ -40,7 +36,7 @@ class ThemeSwitcher {
                     iframe.contentDocument.body.setAttribute('data-theme', theme);
                 }
             } catch (e) {
-                console.log('Cannot access iframe content:', e);
+                console.error('Cannot access iframe content:', e);
             }
         });
         
@@ -61,9 +57,7 @@ class ThemeSwitcher {
     }
 
     toggleTheme() {
-        console.log('toggleTheme called, current theme:', this.currentTheme); // Debug log
         const newTheme = this.currentTheme === 'light' ? 'dark' : 'light';
-        console.log('Switching to theme:', newTheme); // Debug log
         this.applyTheme(newTheme);
     }
 
@@ -74,12 +68,8 @@ class ThemeSwitcher {
             // Replace existing container with new toggle switch design
             const toggleSwitch = this.createToggleSwitchHTML();
             existingContainer.outerHTML = toggleSwitch;
-            console.log('Theme container replaced with toggle switch'); // Debug log
             return;
         }
-
-        console.warn('No theme toggle container found in template'); // Debug log
-        
         // Create toggle switch as fallback if not in template
         const toggleSwitchHTML = this.createToggleSwitchHTML();
         
@@ -87,7 +77,6 @@ class ThemeSwitcher {
         const navbar = document.querySelector('.navbar-nav .nav-item');
         if (navbar) {
             navbar.insertAdjacentHTML('afterbegin', toggleSwitchHTML);
-            console.log('Theme toggle added to navbar as fallback'); // Debug log
         } else {
             // Try to add to any navbar
             const anyNavbar = document.querySelector('.navbar-nav');
@@ -96,7 +85,6 @@ class ThemeSwitcher {
                 li.className = 'nav-item d-flex align-items-center';
                 li.innerHTML = toggleSwitchHTML;
                 anyNavbar.appendChild(li);
-                console.log('Theme toggle added to navbar with new li element'); // Debug log
             } else {
                 // Last resort: add to body
                 document.body.insertAdjacentHTML('beforeend', `
@@ -104,7 +92,6 @@ class ThemeSwitcher {
                         ${toggleSwitchHTML}
                     </div>
                 `);
-                console.log('Theme toggle added to body as floating element'); // Debug log
             }
         }
     }
@@ -151,7 +138,6 @@ class ThemeSwitcher {
             if (themeSwitch) {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('Theme toggle clicked'); // Debug log
                 this.toggleTheme();
             }
         });
@@ -243,41 +229,32 @@ class ThemeSwitcher {
 
 // Auto-initialize theme switcher when DOM is ready
 function initThemeSwitcher() {
-    console.log('Initializing theme switcher...'); // Debug log
     
     // Apply saved theme immediately, even if container is not found yet
     const savedTheme = localStorage.getItem('theme') || 'light';
     document.documentElement.setAttribute('data-theme', savedTheme);
     document.body.setAttribute('data-theme', savedTheme);
-    console.log('Applied saved theme:', savedTheme); // Debug log
     
     const container = document.getElementById('theme-toggle-btn');
-    console.log('Theme toggle container found:', container); // Debug log
     
     if (container) {
         window.themeSwitcher = new ThemeSwitcher();
-        console.log('Theme switcher initialized successfully'); // Debug log
     } else {
-        console.warn('Theme toggle container not found, retrying...'); // Debug log
         // Try multiple times with increasing delays
         let retryCount = 0;
         const maxRetries = 5;
         
         const retryInit = () => {
             retryCount++;
-            console.log(`Retry attempt ${retryCount}/${maxRetries}...`); // Debug log
             
             const retryContainer = document.getElementById('theme-toggle-btn');
             if (retryContainer) {
                 window.themeSwitcher = new ThemeSwitcher();
-                console.log('Theme switcher initialized on retry'); // Debug log
             } else if (retryCount < maxRetries) {
                 setTimeout(retryInit, retryCount * 200); // Increasing delay
             } else {
-                console.error('Theme toggle container still not found after all retries!'); // Debug log
                 // Initialize without UI, at least theme switching will work
                 window.themeSwitcher = new ThemeSwitcher();
-                console.log('Theme switcher initialized without UI container'); // Debug log
             }
         };
         

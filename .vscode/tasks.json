@@ -4,12 +4,20 @@
         {
             "label": "build sql ide",
             "type": "shell",
-            "command": "cd '${workspaceFolder}/../DataSpark_SQL-IDE' ; npm run build",
+            "command": "cd '${workspaceFolder}/../DataSpark_SQL-IDE'; Remove-Item -Path dist, dist-embedded -Recurse -Force -ErrorAction SilentlyContinue; npm run build",
+            "dependsOn": [
+                "remove old sql ide"
+            ]
+        },
+        {
+            "label": "remove old sql ide",
+            "type": "shell",
+            "command": "Remove-Item '${workspaceFolder}/tutorial/myapp/staticfiles/sql-ide/*' -Recurse -Force -ErrorAction SilentlyContinue"
         },
         {
             "label": "copy sql ide",
             "type": "shell",
-            "command": "cd '${workspaceFolder}/../DataSpark_SQL-IDE/dist' ; copy-Item * -Destination '${workspaceFolder}/tutorial/myapp/staticfiles/sql-ide' -Recurse -force",
+            "command": "cd '${workspaceFolder}/../DataSpark_SQL-IDE/dist-embedded' ; copy-Item * -Destination '${workspaceFolder}/tutorial/myapp/staticfiles/sql-ide' -Recurse -force",
             "dependsOn": [
                 "build sql ide"
             ]
