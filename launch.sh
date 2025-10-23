@@ -1,3 +1,5 @@
+#!/bin/bash
+
 pkill gunicorn
 source ../../bin/activate
 pip install -r requirements.txt
