@@ -9,17 +9,14 @@ def delete_db(username:str):
     dbname = get_db_name(username)
     if os.path.exists(dbname):
         os.remove(dbname)
-        #print(f"Database {dbname} deleted.")
-    #else:
-        #print(f"Database {dbname} does not exist.")
 
 def get_db_name(username:str):
 
     if username is None or username == '':
         return ""
-    dir = get_user_directory(username)
-    os.makedirs(dir, exist_ok=True)
-    dbname = dir + "/datenbank.db"
+    userdir = get_user_directory(username)
+    os.makedirs(userdir, exist_ok=True)
+    dbname = userdir + "/datenbank.db"
     return dbname
 
 def create_db(sql:str, username:str):
@@ -46,7 +43,6 @@ def create_db(sql:str, username:str):
 def runSql(sql:str, username:str):
     dbname = get_db_name(username)
     if dbname is None:
-        #print("No database name provided.")
         raise Exception('No database name provided')
     with sqlite3.connect(dbname,autocommit=True) as con:
         cur = con.cursor()
@@ -101,6 +97,23 @@ def parse_table_schema(create_sql):
                 foreign_keys.update(fk_cols)
 
     return columns, primary_keys, foreign_keys
+
+def get_table_dict(db_path):
+    cursor = runSql("SELECT name, sql FROM sqlite_master WHERE sql IS NOT NULL AND type='table' AND NOT name LIKE 'sqlite_%'",db_path)
+    result = cursor.fetchall()
+
+    table_dict = {}
+    for name, sql in result:
+        cols, pks, fks = parse_table_schema(sql)
+        table_dict[name] = {}
+
+        for col, type in cols:
+            table_dict[name][col] = {
+                'type': type,
+                'primary_key': col in pks,
+                'is_foreign_key': col in fks
+            }
+    return table_dict
 
 def generate_html_table(name, columns, pks, fks):
     col_strs = []
