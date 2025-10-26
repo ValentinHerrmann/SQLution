@@ -1,0 +1,2 @@
+tutorial/myapp/staticfiles/** linguist-vendored
+tutorial/myapp/migrations/** linguist-vendored
