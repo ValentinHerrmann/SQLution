@@ -6,232 +6,76 @@ SQLution - SQL IDE
 {% load static %}
 
 
-    <link rel='stylesheet' type='text/css' media='screen' href='/static/sql-ide/assets/fonts/fonts.css'>
-{% comment %} <script src="lib/pako/pako.js"></script>
-<script src="lib/zip.js/zip.min.js"></script>
-<script src="lib/markdownit/markdownit.min.js"></script>
-<script src="/static/sql-ide/lib/monaco-editor/dev/vs/loader.js"></script> {% endcomment %}
 
-<script type="module" crossorigin src="/static/sql-ide/sql-ide-embedded.js"></script>
-<link rel="modulepreload" crossorigin href="/static/sql-ide/assets/js/jquery.js">
-<link rel="modulepreload" crossorigin href="/static/sql-ide/assets/js/pako.js">
-<link rel="modulepreload" crossorigin href="/static/sql-ide/assets/js/sql.js.js">
-<link rel="modulepreload" crossorigin href="/static/sql-ide/assets/js/zip.js.js">
-<link rel="modulepreload" crossorigin href="/static/sql-ide/assets/js/mdurl.js">
-<link rel="modulepreload" crossorigin href="/static/sql-ide/assets/js/uc.micro.js">
-<link rel="modulepreload" crossorigin href="/static/sql-ide/assets/js/entities.js">
-<link rel="modulepreload" crossorigin href="/static/sql-ide/assets/js/linkify-it.js">
-<link rel="modulepreload" crossorigin href="/static/sql-ide/assets/js/punycode.js.js">
-<link rel="modulepreload" crossorigin href="/static/sql-ide/assets/js/markdown-it.js">
-<link rel="modulepreload" crossorigin href="/static/sql-ide/sql-ide-embedded.js">
-<link rel="modulepreload" crossorigin href="/static/sql-ide/assets/js/monaco-editor.js">
-<link rel="stylesheet" crossorigin href="/static/sql-ide/sql-ide-embedded.css">
-
-
-
+</head>
 
 <div class="main-flex-container">
     <div class="top-bar" style="display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
-        <div>
-            <details class="single-details" style="margin-bottom: 1.2em;">
-                <summary style="cursor: pointer">
-                    <b style="font-size: 1.2em;">Tabellenschema (aufklappen/zuklappen)</b>
-                </summary>
-                <div style="margin-left: 1.2em;">
-                    <p style="color: var(--text-secondary);">{{ tablescheme|safe }}</p>
-                </div>
-            </details>
-            <details style="">
-                <summary style="cursor: pointer">
-                    <b style="font-size: 1.2em;">Tutorial (aufklappen/zuklappen)</b>
-                </summary>
-
-                <details class="single-details" style="margin-left: 1.2em">
-                        <summary style="cursor: pointer">
-                            <i>SQL-Abfrage für Nutzer speichern</i>
-                        </summary>
-                        <div style="display: flex; align-items: flex-start; gap: 1.5em; margin-left: 1.2em;">
-                            <div>
-                                <br>
-                                Im Code-Editor kannst du Dateien anlegen und benennen. 
-                                Diese werden dem Nutzer dann mit dem Namen angezeigt, den du eingegeben hast.<br>
-                                <b> Änderungen werden erst gespeichert, wenn du auf "Änderungen speichern" klickst!</b> 
-                                Das Speichern kann außerdem nicht rückgängig gemacht werden!<br>
-                            </div>
-                            <img src="{% static 'NewQuery.png' %}" alt="SQL Variablen Beispiel" style="max-width: 270px; height: auto; border: 1px solid #ccc; border-radius: 6px; box-shadow: 1px 1px 6px #eee;">
-                            <img src="{% static 'QueriesUser.png' %}" alt="SQL Variablen Beispiel" style="max-width: 230px; height: auto; border: 1px solid #ccc; border-radius: 6px; box-shadow: 1px 1px 6px #eee;">
-                        </div>
-                    </details>
-
-                    <details class="single-details" style="margin-left: 1.2em">
-                        <summary style="cursor: pointer">
-                            <i>Mehrere Nutzer mit unterschiedlichen Rechten</i>
-                        </summary>
-                        <div style="display: flex; align-items: flex-start; gap: 1.5em; margin-left: 1.2em;">
-                            <div>
-                                Deine Datenbank hat immer einen Admin-Account (mit dem bist du gerade eingeloggt), um die Datenbank mit SQL-Abfragen zu erstellen und einen Nutzer-Account, der nur auf die fertigen SQL-Abfragen zugreifen kann. Diese beiden Accounts können immer auf alle gespeicherten SQL-Abfragen zugreifen.
-                                <br><br>
-                                Zusätzlich kannst du von deiner Lehrkraft weitere Nutzeraccounts mit eingeschränkten Rechten bekommen. Diese können dann nur auf die SQL-Abfragen zugreifen, die du für sie freigegeben hast. Das eignet sich zum Beispiel gut, wenn verschiedene Mitarbeiter:innen einer Firma auf unterschiedliche Daten zugreifen sollen. Beispielsweise die Finanzabteilung auf die Gehaltsdaten, die Personalabteilung auf die Adressdaten der Mitarbeiter:innen und den Schichtplan dürfen alle ansehen.
-                                <br><br>
-                                Die Accounts könnten dann z.B. so heißen: <i>'firma_finanz'</i> und <i>'firma_personal'</i>. Nennst du eine SQL-Abfrage dann z.B.  <i>'finanz_Gehälter'</i>, kann nur der Nutzer firma_finanz diese Abfrage sehen und ausführen, eine SQL-Abfrage namens  <i>'Schichtplan'</i> können alle Nutzer sehen und ausführen.
-                            </div>
-                        </div>
-                    </details>
-                        
-                    <details class="single-details" style="margin-left: 1.2em;">
-                        <summary style="cursor: pointer">
-                            <i>Variablen</i>
-                        </summary>
-                        <div style="display: flex; align-items: flex-start; gap: 1.5em; margin-left: 1.2em;">
-                            <div>
-                                <br>In gespeicherten SQL-Abfragen kannst du mit geschweiften Klammern <i>{Variablen}</i> verwenden. 
-                                Führt der Nutzer die Abfrage aus, muss er für jede Variable einen Wert eingeben und diese werden dann 1:1 eingesetzt. 
-                                <br>
-                                <br>
-                                <b>Beispiel:</b> 
-                                <i style="color: var(--text-secondary);">SELECT * FROM Schueler WHERE vorname="{Name}"</i> 
-                                <br> ➔ Nutzer gibt Max ein 
-                                <br> ➔ <i style="color: var(--text-secondary);">SELECT * FROM Schueler WHERE vorname="Max"</i> wird ausgeführt
-                            </div>
-                            <img src="{% static 'Variable_Example.png' %}" alt="SQL Variablen Beispiel" style="max-width: 230px; height: auto; border: 1px solid #ccc; border-radius: 6px; box-shadow: 1px 1px 6px #eee;">
-                        </div>
-                    </details>
-
-                    <details class="single-details" style="margin-left: 1.2em;">
-                        <summary style="cursor: pointer">
-                            <i>Dropdown Menü</i>
-                        </summary>
-                        <div style="display: flex; align-items: flex-start; gap: 1.5em; margin: 1.2em;">
-                        <div>
-                            Statt einer freien Texteingabe für Variablen kannst du auch ein Dropdown-Menü mit 
-                            vorgegebenen Optionen verwenden.
-
-                            Die Optionen werden als SQL-Abfrage in eckigen Klammern nach der Variable angegeben 
-                            <i style="color: var(--text-secondary);">{Variable}[SQL-Abfrage]</i> angegeben.
-
-                            Der Wert in der <b>ersten Spalte der gewählten Option</b> wird dann als <b>Wert für die Variable</b> verwendet.
-
-                            <br>
-                            <br>
-                            <b>Beispiel:</b> 
-                            <i style="color: var(--text-secondary);">SELECT * FROM Lehrer WHERE schule={Dropdown Schule}[SELECT * FROM Schule]</i> 
-                            <br> ➔ Nutzer wählt Dante Gymnasium aus
-                            <br> ➔ <i style="color: var(--text-secondary);">SELECT * FROM Lehrer WHERE schule=2</i> wird ausgeführt
-                            
-                            <br><br>
-                            Beim Ausführen auf dieser Seite, wird statt eines Dropdowns ein Textfeld angezeigt.
-                    </div>
-                    <img src="{% static 'Dropdown_Example.png' %}" alt="SQL Variablen Beispiel" style="max-width: 230px; height: auto; border: 1px solid #ccc; border-radius: 6px; box-shadow: 1px 1px 6px #eee;">
-                </div>
-                
-                </details>
-
-
-
-
-
-            </details>
-        </div>
+        {% include 'sql_tutorial.html' %}
         <div style="display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; height: 100%;  margin: 5px;">
-            <button id="save-sql-btn" class="btn btn-primary" style="margin: 10px; font-size: 1.5em;"><i class="fas fa-save"></i></button>
+            
         </div>
     </div>
     <div class="sql-flex-grow">
-        <div class="sql-online" data-sql-online="{
-            'id': '{{ user_name }}',
-            'databaseURL': '{{ user_url }}',
-            'enableFileAccess': true,
-            'withFileList': true,
-            'withOutput': true,
-            'withErrorList': true,
-            'withBottomPanel': true
-        }" style="box-shadow: 0 0px 10px var(--shadow-light);">
-            {% for f in sql_files %}
-                <script type="text/plain" title="{{ f.filename }}" data-type="sql">
-                    {{ f.content }}
-                </script>
-            {% endfor %}
-            {% if sql_files|length == 0 %}
-                <script type="text/plain" title="Neue Abfrage" data-type="sql">
-                    SELECT * FROM {Tabelle}
-                </script>
-            {% endif %}
+        <div style="display: flex; justify-content: space-between; align-items: top; gap: 20px; width: 100%; margin-top: 15px; padding: 5px; background-color: var(--bg-secondary);">
+            <div id="file-explorer" style="width:260px; min-width:200px;">
+                <div style="display:flex; align-items:center; ">
+                    <button id="save-sql-btn" class="btn btn-primary" style="margin: 2px; font-size: 1em;"><i class="fas fa-save"></i></button>
+                    <button id="sync-sql-btn" class="btn btn-primary" style="margin: 2px; font-size: 1em;"><i class="fas fa-sync"></i></button>
+                    <button id="add-sql-btn" class="btn btn-primary" style="margin: 2px; font-size: 1em;"><i class="fas fa-plus"></i></button>
+                    <button id="run-sql-btn" class="btn btn-primary" style="margin: 2px; font-size: 1em;"><i class="fas fa-play"></i></button>
+                </div>
+                <div style="display:flex; align-items:center; justify-content:space-between;">
+                    <h3 style="margin:5px; font-size:1rem;">SQL Dateien</h3>
+                </div>
+                <div style="margin-top:0.5rem;">
+                    <ul id="file-list" style="list-style:none; padding:0; margin:0; max-height:620px; overflow:auto; border:1px solid var(--border); border-radius:6px;">
+                        <li style="padding:0.8rem; color:var(--text-secondary);">Lade Dateien…</li>
+                    </ul>
+                </div>
+            </div>
+            <div id="editor" data-user="{{ user_name }}" style="width:100%; height:560px; border:1px solid var(--border); border-radius:6px; box-shadow: 0 1px 4px rgba(0,0,0,0.06);">
+            </div>
+            <script src="/static/ace-min-noconflict/ace.js" type="text/javascript"></script>
+            <script src="/static/ace-min-noconflict/ext-language_tools.js"></script>
+            <script src="{% static 'sql_ide.js' %}"></script>
         </div>
+        <!-- Container for AJAX-run results -->
+        <div id="sql-results" style="width:100%; margin-top:12px;"></div>
     </div>
+
+
+
+    <!-- Result Table Template -->
+    {% if error %}
+        <p style="color:var(--accent-danger);">Fehler: {{ error }}</p>
+    {% endif %}
+    <br>
+
+    {% if columns %}
+        <table border="1" style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+            <tr>
+                {% for col in columns %}
+                    <th style="padding-left: 4px;">{{ col }}</th>
+                {% endfor %}
+            </tr>
+            {% for row in result %}
+                <tr>
+                    {% for cell in row %}
+                        <td style="border-color: var(--border-color); padding-left: 4px;">{{ cell }}</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </table>
+    {% endif %}
+
 </div>
-
-<script>
-    let isDirty = true;
-
-    let lastSave = Date.now();
-
-    document.addEventListener('DOMContentLoaded', function() {
-        document.getElementById('save-sql-btn').addEventListener('click', function() {
-            lastSave = Date.now();
-        });
-
-        window.addEventListener('beforeunload', function (e) {
-        });
-    });
-</script>
-<script>
-    document.getElementById('save-sql-btn').addEventListener('click', function() {
-        saveSQLFiles();
-    });
-</script>
-<script>
-async function saveSQLFiles() {
-    const confirmed = await showConfirmDialog(
-        "Das Speichern überschreibt alle SQL-Abfragen auf dem Server. Das kann nicht rückgängig gemacht werden!",
-        "fas fa-save"
-      );
-      
-      if (!confirmed) {
-          return;
-      }
-    let ide = window.sql_ide_access.getIDE('{{ user_name }}');
-    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-    sql_files = [];
-    let files = ide.getFiles();
-    for(let i = 0; i < files.length; i++){
-        let file = files[i];
-        let filename = file.getName();
-        let content = file.getText();
-        sql_files.push({ 'filename': filename, 'sql': content });
-    }
-    fetch("/api/sql/all", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "X-CSRFToken": csrftoken },
-        body: JSON.stringify({ files: sql_files })
-    })
-    .then(response => {
-        if (response.ok) { console.debug("Files saved successfully:\n" + sql_files); } 
-        else { console.error("Fehler beim Speichern der Dateien."); }
-    });
-}
-</script>
-
-<script>
-// Only one <details> can be open at once
-const allDetails = document.querySelectorAll('.single-details');
-allDetails.forEach((details, idx) => {
-    details.addEventListener('toggle', function() {
-        if (details.open) {
-            allDetails.forEach((other, i) => {
-                if (other !== details) other.open = false;
-            });
-        }
-    });
-});
-if(window.sql_ide_access && window.sql_ide_access.getIDE()){
-    window.sql_ide_access.getIDE().forceReload();
-}
-</script>
 
 {% endblock %}
 
+
 {% block powered_by %}
-<a href="https://github.com/martin-pabst/SQL-IDE/" target="_blank" style="color: #888; text-decoration: underline;">
-      Powered by Martin Pabst's SQL-IDE
+<a href="https://github.com/ajaxorg/ace" target="_blank" style="color: #888; text-decoration: underline;">
+      Powered by ACE Editor
     </a>
 {% endblock %}
