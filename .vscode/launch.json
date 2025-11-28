@@ -61,12 +61,6 @@
             "name": "Launch Firefox Session",
             "url": "http://localhost:8000",
             "webRoot": "${workspaceFolder}/tutorial/",
-            "pathMappings": [
-                {
-                    "url": "http://localhost:8000/static/sql-ide/",
-                    "path": "${workspaceFolder}/../DataSpark_SQL-IDE/dist-embedded/"
-                }
-            ],
             "skipFiles": [
                 "**/node_modules/**"
             ],
