@@ -1,4 +1,5 @@
 import json
+from sqlite3 import OperationalError
 from django.http import HttpResponse, JsonResponse
 import psutil
 from myapp.utils.decorators import *
@@ -7,6 +8,9 @@ from myapp.utils.directories import *
 from myapp.utils.diagram import load_json
 from myapp.utils.utils import *
 from myapp.utils.users import *
+from myapp.models import *
+from myapp.utils.utils import *
+from myapp.utils.sqlite_connector import *
 
 # Import functions from views_user.py
 from .. import views_user
@@ -14,14 +18,23 @@ from .. import views_user
 @login_required
 @user_passes_test(is_db_admin)
 def api_sql(request, filename:str):
+    user_dir = get_user_directory(request.user.username)
     try:
         filename = filename.replace('.sql.sql', '.sql')
 
         if(not filename.endswith('.sql')):
             filename += '.sql'
 
-        dir = get_user_directory(request.user.username)
+        if(request.method == "PUT"):
 
+            body_unicode = request.body.decode('utf-8')
+            body = json.loads(body_unicode)
+            sql = body['sql']
+
+            with open(fullpath(user_dir,f"{filename}"), 'w') as f:
+                f.write(sql)
+            sqllock_release(user_dir)
+            return HttpResponse("File saved successfully", status=200)
 
         if(request.method == "POST"):
 
@@ -29,41 +42,41 @@ def api_sql(request, filename:str):
             body = json.loads(body_unicode)
             sql = body['sql']
 
-            with open(fullpath(dir,f"{filename}"), 'w') as f:
+            with open(fullpath(user_dir,f"{filename}"), 'w') as f:
                 f.write(sql)
-            sqllock_release(dir)
+            sqllock_release(user_dir)
             return HttpResponse("File saved successfully", status=200)
 
         if(request.method == "GET"):
-            with open(fullpath(dir,f"{filename}"), 'r') as f:
+            with open(fullpath(user_dir,f"{filename}"), 'r') as f:
                 file_content = f.read()
-                sqllock_release(dir)
-                return HttpResponse(file_content, content_type="text/sql")
+                sqllock_release(user_dir)
+                return HttpResponse(file_content, content_type="text/sql", status=200)
         
         if(request.method == "DELETE"):
-            if os.path.exists(fullpath(dir,f"{filename}")):
-                os.remove(fullpath(dir,f"{filename}"))
-                sqllock_release(dir)
+            if os.path.exists(fullpath(user_dir,f"{filename}")):
+                os.remove(fullpath(user_dir,f"{filename}"))
+                sqllock_release(user_dir)
                 return HttpResponse("File deleted successfully", status=200)
     except Exception as e:
         print(f"Error: {e}")
-    finally:
-        sqllock_release(dir)
         return HttpResponse("Unknown request", status=500)
+    finally:
+        sqllock_release(user_dir)
 
 @login_required
 @user_passes_test(is_db_admin)
 def api_sql_all(request):
+    user_dir = get_user_directory(request.user.username)
     try:
-        dir = get_user_directory(request.user.username)
-        sqllock_get(dir)
+        sqllock_get(user_dir)
 
         if(request.method == "POST"):
 
             # delete all files in folder dir
-            for file in os.listdir(dir):
+            for file in os.listdir(user_dir):
                 if file.endswith('.sql'):
-                    os.remove(os.path.join(dir, file))
+                    os.remove(os.path.join(user_dir, file))
 
             body_unicode = request.body.decode('utf-8')
             body = json.loads(body_unicode)
@@ -77,12 +90,12 @@ def api_sql_all(request):
                 filename = filename.replace('.sql.sql', '.sql')
                 if(not filename.endswith('.sql')):
                     filename += '.sql'
-                dir = get_user_directory(request.user.username)
+                user_dir = get_user_directory(request.user.username)
 
-                with open(fullpath(dir,f"{filename}"), 'w') as f:
+                with open(fullpath(user_dir,f"{filename}"), 'w') as f:
                     f.write(sql)
 
-            sqllock_release(dir)
+            sqllock_release(user_dir)
             return HttpResponse("Files saved successfully", status=200)
         
         return HttpResponse("Unknown request", status=404)
@@ -90,14 +103,68 @@ def api_sql_all(request):
         print(f"Error: {e}")
         return HttpResponse("Internal Error", status=500)
     finally:
-        sqllock_release(dir)
+        sqllock_release(user_dir)
+
+
+@login_required
+@user_passes_test(is_db_admin)
+def api_sql_list(request):
+    """Return a JSON list of SQL filenames for the current user's directory."""
+    user_dir = get_user_directory(request.user.username)
+    try:
+        sqllock_get(user_dir)
+        if request.method == "GET":
+            files = [f for f in os.listdir(user_dir) if f.endswith('.sql')]
+            # Sort for predictable order
+            files.sort()
+            return JsonResponse({'files': files})
+        else:
+            return HttpResponse("Method not allowed", status=405)
+    except Exception as e:
+        print(f"Error in api_sql_list: {e}")
+        return HttpResponse("Internal Error", status=500)
+    finally:
+        sqllock_release(user_dir)
+
+
+@login_required
+@user_passes_test(is_db_admin)
+def api_run_sql(request):
+    """Execute provided SQL and return JSON with columns/result or error."""
+    user_dir = get_user_directory(request.user.username)
+    try:
+        if request.method != 'POST':
+            return HttpResponse("Method not allowed", status=405)
+
+        body_unicode = request.body.decode('utf-8')
+        body = json.loads(body_unicode)
+        sql = body.get('sql', '')
+        if not sql:
+            return JsonResponse({'error': 'No SQL provided'}, status=400)
+
+        # execute using runSql helper
+        cursor = runSql(sql, request.user.username)
+        if cursor and cursor.description:
+            columns = [col[0] for col in cursor.description]
+            result = cursor.fetchall()
+            # convert rows to lists for JSON
+            result_list = [list(r) for r in result]
+            return JsonResponse({'columns': columns, 'result': result_list, 'error': None})
+        else:
+            return JsonResponse({'columns': [], 'result': [], 'error': None})
+    except OperationalError as oe:
+        print(f"OperationalError in api_run_sql: {oe}")
+        return JsonResponse({'columns': [], 'result': [], 'error': str(oe)}, status=400)
+    except Exception as e:
+        print(f"Error in api_run_sql: {e}")
+        return JsonResponse({'columns': [], 'result': [], 'error': str(e)}, status=500)
 
 @login_required
 @user_passes_test(is_db_admin)
 def api_upload_db(request):
+    user_dir = get_user_directory(request.user.username)
     try:
-        dir = get_user_directory(request.user.username)
-        file_path = os.path.join(dir, "datenbank.db")
+        file_path = os.path.join(user_dir, "datenbank.db")
 
         if(request.method == "POST"):                
             with open(file_path, 'wb+') as destination:
@@ -110,12 +177,12 @@ def api_upload_db(request):
 @login_required
 @user_passes_test(is_db_admin)
 def api_diagram_json(request):
-    dir = get_user_directory(request.user.username)
+    user_dir = get_user_directory(request.user.username)
     try:
-        sqllock_get(dir)
+        sqllock_get(user_dir)
         print(request.method)
         if(request.method == "GET"):
-            with open(f'{dir}/model.json', 'rb') as f:
+            with open(f'{user_dir}/model.json', 'rb') as f:
                 file_content = f.read()
             return HttpResponse(file_content, content_type="application/json")
         elif(request.method == "POST"):
@@ -129,7 +196,7 @@ def api_diagram_json(request):
         print(f"Error: {e}")
         return HttpResponse("Internal Error", status=500)
     finally:
-        sqllock_release(dir)
+        sqllock_release(user_dir)
 
 @login_required
 @user_passes_test(is_global_admin)
