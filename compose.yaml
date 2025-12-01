@@ -1,0 +1,21 @@
+services:
+  sqlution:
+    image: sqlution
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    ports:
+      - 8000:8000
+    # Persist app data and cap memory usage
+    volumes:
+      - sqlution-db:/app/tutorial
+      - sqlution-userdata:/app/user_databases
+    mem_limit: 1g
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+volumes:
+  sqlution-db:
+  sqlution-userdata:

@@ -1,0 +1,28 @@
+services:
+  sqlution-dev:
+    image: sqlution
+    container_name: sqlution-dev
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    environment:
+      - WAIT_FOR_DEBUGGER=0
+    command: ["sh", "-c", "pip install debugpy -t /tmp && if [ \"$WAIT_FOR_DEBUGGER\" = \"1\" ]; then python -m debugpy --wait-for-client --listen 0.0.0.0:5678 manage.py runserver 0.0.0.0:8000 --nothreading --noreload; else python manage.py runserver 0.0.0.0:8000 --nothreading --noreload; fi"]
+    ports:
+      - 8000:8000
+      - 5678:5678
+    # Limit container memory usage to 1GiB
+    mem_limit: 1g
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    volumes:
+      # Persist the SQLite database by mounting the whole project subfolder that contains db.sqlite3
+      # Note: Docker named volumes cannot target single files; mount the parent directory instead.
+      - sqlution-db:/app/tutorial
+      - sqlution-userdata:/app/user_databases
+
+volumes:
+  sqlution-db:
+  sqlution-userdata:
