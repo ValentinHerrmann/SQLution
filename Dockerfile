@@ -14,7 +14,11 @@ COPY requirements.txt ./requirements.txt
 RUN python -m pip install --no-cache-dir -r requirements.txt
 
 WORKDIR /app
-COPY . /app
+# Copy only the source directories needed at runtime to avoid bringing
+# along tooling artifacts or secrets.
+COPY tutorial /app/tutorial
+COPY user_databases /app/user_databases
+COPY VERSION ./VERSION
 
 # Creates a non-root user with an explicit UID and adds permission to access the /app folder
 # For more info, please refer to https://aka.ms/vscode-docker-python-configure-containers
