@@ -1,14 +1,20 @@
 services:
   sqlution:
     image: sqlution
+    container_name: sqlution-app
     build:
       context: .
       dockerfile: ./Dockerfile
     ports:
       - 8000:8000
+    environment:
+      SECRET_KEY: "${SECRET_KEY:-change-me-in-prod}"
+      SQLUTION_DB_DIR: /data
+      DJANGO_ALLOWED_HOSTS: "${DJANGO_ALLOWED_HOSTS:-sqlution.de,localhost,127.0.0.1}"
+    restart: unless-stopped
     # Persist app data and cap memory usage
     volumes:
-      - sqlution-db:/app/tutorial
+      - sqlution-db:/data
       - sqlution-userdata:/app/user_databases
     mem_limit: 1g
     deploy:
