@@ -13,6 +13,8 @@ on:
 jobs:
   deploy:
     name: Deploy to sqlution.de
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     environment:
       name: production
