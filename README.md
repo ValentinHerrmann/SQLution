@@ -3,8 +3,17 @@ More information about SQLution can be found at:
 
 The latest(minor) release is hosted at: [sqlution.de](https://sqlution.de/).
 
-#### Deployment
-The application is developed to be hosted via an Ubuntu server with nginx. For deployment, the steps described at [github.com/TheProtonGuy/Django_Ubuntu_Server_Deployment](https://github.com/TheProtonGuy/Django_Ubuntu_Server_Deployment) can be followed. The resource requirements are very low and for most use cases a small server (1vCPU, 1GB RAM, 10GB Disk) is sufficient. When logging in as admin into the WebApp the resource usage is displayed monitored, logged and can be downloaded as csv file.
+#### Deployment (containerized)
+SQLution now ships with a Docker/Compose stack that is used both locally and on production (sqlution.de).
+
+1. Copy `.env.example` to `.env` and adjust at least `SECRET_KEY` and `DJANGO_ALLOWED_HOSTS`.
+2. (Optional) Adjust the Compose resources/volumes in `compose.yaml` to match your server.
+3. Launch or redeploy using Docker Compose:
+	```bash
+	docker compose -f compose.yaml up -d --build
+	```
+
+The container entrypoint automatically applies migrations and collects static files before starting gunicorn. A helper script (`update_and_launch.sh`) plus the GitHub release workflow automate the same steps on the production server. Resource requirements remain modest (≈1 vCPU, 1 GB RAM, 10 GB disk). Admins can monitor resource usage from inside the UI.
 
 #### Versioning
 The version number is stored in the VERSION file. The versioning follows the semantic versioning scheme (**major.intermediate.minor**). The minor number is incremented for small changes like aesthetics, small bug fixes or performance improvements. After merging a PR the minor version will usually be increased to make improvements available as fast as possible. The intermediate number is incremented for bigger features or several smaller features/bugfixes. The major number is incremented for breaking changes, disrupting features or major changes to the UI/UX. If backwards compatibility is broken it is mentioned in the release notes.

@@ -1,22 +1,22 @@
 # Docker User Management Guide
 
 ## Overview
-User accounts are stored in the SQLite database (`db.sqlite3`), which is now persisted using Docker volumes. This means accounts will persist between container restarts and rebuilds.
+User accounts are stored in the SQLite database (`db.sqlite3`), which lives under `/data` inside the container and is persisted via the `sqlution-db` Docker volume. This means accounts will persist between container restarts and rebuilds.
 
 ## Persistent Storage
 The following data is persisted across container runs:
-- **Database**: `/app/tutorial/db.sqlite3` → Docker volume `sqlution-db`
+- **Database**: `/data/db.sqlite3` → Docker volume `sqlution-db`
 - **User Databases**: `/app/user_databases` → Docker volume `sqlution-userdata`
 
 ## Creating Admin/Superuser Accounts
 
 ### Method 1: Using the Helper Script (Easiest)
 ```bash
-# For debug container (default)
+# Auto-detects sqlution-dev (debug) or sqlution-app (production)
 ./create_admin.sh
 
-# For production container
-./create_admin.sh sqlution
+# Explicit container name (optional)
+./create_admin.sh sqlution-app
 ```
 
 ### Method 2: Using Docker Exec Directly
@@ -74,13 +74,13 @@ docker volume ls | grep sqlution
 
 ### Backup database
 ```bash
-docker cp sqlution-dev:/app/tutorial/db.sqlite3 ./backup_db.sqlite3
+docker cp sqlution-dev:/data/db.sqlite3 ./backup_db.sqlite3
 ```
 
 ### Restore database
 ```bash
-docker cp ./backup_db.sqlite3 sqlution-dev:/app/tutorial/db.sqlite3
-docker exec sqlution-dev chown appuser:appuser /app/tutorial/db.sqlite3
+docker cp ./backup_db.sqlite3 sqlution-dev:/data/db.sqlite3
+docker exec sqlution-dev chown appuser:appuser /data/db.sqlite3
 ```
 
 ### Remove volumes (WARNING: This deletes all data!)
