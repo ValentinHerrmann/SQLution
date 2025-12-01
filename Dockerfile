@@ -9,9 +9,6 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # Turns off buffering for easier container logging
 ENV PYTHONUNBUFFERED=1
 
-# Set a default SECRET_KEY for Django (should be overridden in production)
-ENV SECRET_KEY='django-insecure-docker-default-key-change-in-production'
-
 # Install pip requirements
 COPY requirements.txt ./requirements.txt
 RUN python -m pip install --no-cache-dir -r requirements.txt
