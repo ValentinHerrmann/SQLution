@@ -17,7 +17,7 @@ from .. import views_user
 
 @login_required
 @user_passes_test(is_db_admin)
-def api_sql(request, filename:str):
+def api_sql(request, filename:str) -> HttpResponse:
     user_dir = get_user_directory(request.user.username)
     try:
         filename = filename.replace('.sql.sql', '.sql')
@@ -58,6 +58,7 @@ def api_sql(request, filename:str):
                 os.remove(fullpath(user_dir,f"{filename}"))
                 sqllock_release(user_dir)
                 return HttpResponse("File deleted successfully", status=200)
+        return HttpResponse("Internal Server Error", status=500)
     except Exception as e:
         print(f"Error: {e}")
         return HttpResponse("Unknown request", status=500)
@@ -66,7 +67,7 @@ def api_sql(request, filename:str):
 
 @login_required
 @user_passes_test(is_db_admin)
-def api_sql_all(request):
+def api_sql_all(request) -> HttpResponse:
     user_dir = get_user_directory(request.user.username)
     try:
         sqllock_get(user_dir)
@@ -108,7 +109,7 @@ def api_sql_all(request):
 
 @login_required
 @user_passes_test(is_db_admin)
-def api_sql_list(request):
+def api_sql_list(request) -> HttpResponse:
     """Return a JSON list of SQL filenames for the current user's directory."""
     user_dir = get_user_directory(request.user.username)
     try:
@@ -129,7 +130,7 @@ def api_sql_list(request):
 
 @login_required
 @user_passes_test(is_db_admin)
-def api_run_sql(request):
+def api_run_sql(request) -> HttpResponse:
     """Execute provided SQL and return JSON with columns/result or error."""
     user_dir = get_user_directory(request.user.username)
     try:
@@ -161,7 +162,7 @@ def api_run_sql(request):
 
 @login_required
 @user_passes_test(is_db_admin)
-def api_upload_db(request):
+def api_upload_db(request) -> HttpResponse:
     user_dir = get_user_directory(request.user.username)
     try:
         file_path = os.path.join(user_dir, "datenbank.db")
@@ -200,7 +201,7 @@ def api_diagram_json(request):
 
 @login_required
 @user_passes_test(is_global_admin)
-def get_system_data(request):
+def get_system_data(request) -> HttpResponse:
     print(f"{timestamp()}get_system_data endpoint called by {request.user.username}")
 
     # Get user databases directory information
