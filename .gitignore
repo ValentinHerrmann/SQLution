@@ -172,7 +172,7 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 tutorial/myapp/static/
-user_databases/
+user_databases/*
 tutorial/static/
 last_launched.txt
 

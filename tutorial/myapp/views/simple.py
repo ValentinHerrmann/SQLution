@@ -1,4 +1,5 @@
 
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render, redirect
 from myapp.models import *
 from myapp.utils.utils import *
@@ -26,3 +27,16 @@ def home(request):
 def apollon(request):
     return render(request, 'apollon.html')
     
+
+def actuator_gateway_routes(request):
+    """Compatibility endpoint for platform probes expecting Spring Boot actuator."""
+    if request.method != 'GET':
+        return JsonResponse({'detail': 'Method not allowed'}, status=405)
+
+    return JsonResponse({
+        'application': 'sqlution',
+        'component': 'gateway',
+        'routes': [],
+        'status': 'ok'
+    })
+

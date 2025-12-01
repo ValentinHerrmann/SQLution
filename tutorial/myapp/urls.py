@@ -6,6 +6,7 @@ favicon_view = RedirectView.as_view(url='/static/favicon.ico', permanent=True)
 
 urlpatterns = [
     re_path(r'^favicon\.ico$', favicon_view),
+    re_path(r'^actuator/gateway/routes/?$', simple.actuator_gateway_routes, name='actuator_gateway_routes'),
     path('', simple.home, name='home'),
     path('apollon/', simple.apollon, name='apollon'),
     path('user_functions/', user_functions.user_functions, name='user_functions'),
