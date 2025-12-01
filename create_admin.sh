@@ -1,7 +1,7 @@
 #!/bin/bash
 # Script to create a superuser in the running SQLution container
 
-if [ -n "${1:-}" ]; then
+if [[ -n "${1:-}" ]]; then
 	CONTAINER_NAME="$1"
 else
 	if docker ps --format '{{.Names}}' | grep -q '^sqlution-dev$'; then
