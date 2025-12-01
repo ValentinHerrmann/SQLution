@@ -9,4 +9,4 @@ TARGET_TAG="${DEPLOY_TAG:-$(git describe --tags $(git rev-list --tags --max-coun
 git checkout "$TARGET_TAG" --force
 git reset --hard "$TARGET_TAG"
 
-./launch.sh
+bash launch.sh
