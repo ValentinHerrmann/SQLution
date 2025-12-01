@@ -67,6 +67,22 @@
             "firefoxArgs": [
                 "-start-debugger-server"
             ]
+        },
+        {
+            "name": "Containers: Python - Django",
+            "type": "docker",
+            "request": "launch",
+            "preLaunchTask": "docker-run: debug",
+            "postDebugTask": "docker-stop: debug",
+            "python": {
+                "pathMappings": [
+                    {
+                        "localRoot": "${workspaceFolder}/tutorial",
+                        "remoteRoot": "/app/tutorial"
+                    }
+                ],
+                "projectType": "django"
+            }
         }
     ]
 }

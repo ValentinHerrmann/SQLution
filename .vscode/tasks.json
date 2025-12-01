@@ -54,7 +54,6 @@
             "dependsOn": [
                 "venv"
             ]
-            
         },
         {
             "label": "migrate",
@@ -71,7 +70,7 @@
             "dependsOn": [
                 "migrate"
             ]
-        },    
+        },
         {
             "label": "PreLaunchRoutine",
             "dependsOn": [
@@ -82,8 +81,7 @@
             "label": "venv_simple",
             "type": "shell",
             "command": "source ${workspaceFolder}/.venv/bin/activate ; pip install -r ${workspaceFolder}/requirements.txt",
-            "dependsOn": [
-            ]
+            "dependsOn": []
         },
         {
             "label": "makemigrations_simple",
@@ -92,7 +90,6 @@
             "dependsOn": [
                 "venv_simple"
             ]
-            
         },
         {
             "label": "migrate_simple",
@@ -109,11 +106,56 @@
             "dependsOn": [
                 "migrate_simple"
             ]
-        },    
+        },
         {
             "label": "PreLaunchRoutine_simple",
             "type": "shell",
             "command": "source ${workspaceFolder}/.venv/bin/activate ; pip install -r ${workspaceFolder}/requirements.txt ; python3 ${workspaceFolder}/tutorial/manage.py makemigrations  ; python3 ${workspaceFolder}/tutorial/manage.py migrate ; python3 '${workspaceFolder}/tutorial/manage.py' collectstatic --noinput"
+        },
+        {
+            "type": "docker-build",
+            "label": "docker-build",
+            "platform": "python",
+            "dockerBuild": {
+                "tag": "sqlution:latest",
+                "dockerfile": "${workspaceFolder}/Dockerfile",
+                "context": "${workspaceFolder}",
+                "pull": true
+            }
+        },
+        {
+            "type": "docker-run",
+            "label": "docker-run: debug",
+            "dependsOn": [
+                "docker-build"
+            ],
+            "dockerRun": {
+                "ports": [
+                    {
+                        "containerPort": 8000,
+                        "hostPort": 8000
+                    },
+                    {
+                        "containerPort": 5678,
+                        "hostPort": 5678
+                    }
+                ],
+                "customOptions": "--memory=1g"
+            },
+            "python": {
+                "args": [
+                    "runserver",
+                    "0.0.0.0:8000",
+                    "--nothreading",
+                    "--noreload"
+                ],
+                "file": "manage.py"
+            }
+        },
+        {
+            "label": "docker-stop: debug",
+            "type": "shell",
+            "command": "docker rm -f sqlution-dev >/dev/null 2>&1 || true"
         }
     ]
 }

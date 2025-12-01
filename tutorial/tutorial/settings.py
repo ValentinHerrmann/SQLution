@@ -30,10 +30,11 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['www.sqlution.de', 'sqlution.de','127.0.0.1','localhost', '217.154.94.239']
+ALLOWED_HOSTS = [host.strip() for host in os.getenv(
+    'DJANGO_ALLOWED_HOSTS',
+    'www.sqlution.de,sqlution.de,127.0.0.1,localhost,217.154.94.239'
+).split(',') if host.strip()]
 
-#SESSION_COOKIE_SECURE = True
-#CSRF_COOKIE_SECURE = True
 
 # Application definition
 
@@ -54,6 +55,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -105,10 +107,18 @@ CSRF_TRUSTED_ORIGINS = ['https://sqlution.de',
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
 
+SQLUTION_DB_PATH = os.getenv('SQLUTION_DB_PATH')
+if not SQLUTION_DB_PATH:
+    db_dir = os.getenv('SQLUTION_DB_DIR')
+    if db_dir:
+        SQLUTION_DB_PATH = os.path.join(db_dir, 'db.sqlite3')
+    else:
+        SQLUTION_DB_PATH = os.path.join(BASE_DIR, 'db.sqlite3')
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'NAME': SQLUTION_DB_PATH,
     }
 }
 
@@ -168,7 +178,6 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 SECURE_CONTENT_NOSNIFF = False
 
-#SESSION_SECURITY_INSECURE = True
 
 SESSION_SECURITY_WARN_AFTER = 1740
 

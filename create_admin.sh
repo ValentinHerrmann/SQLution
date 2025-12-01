@@ -1,0 +1,18 @@
+#!/bin/bash
+# Script to create a superuser in the running SQLution container
+
+if [[ -n "${1:-}" ]]; then
+	CONTAINER_NAME="$1"
+else
+	if docker ps --format '{{.Names}}' | grep -q '^sqlution-dev$'; then
+		CONTAINER_NAME="sqlution-dev"
+	else
+		CONTAINER_NAME="sqlution-app"
+	fi
+fi
+
+echo "Creating superuser in container: $CONTAINER_NAME"
+echo "You will be prompted for username, email, and password"
+echo ""
+
+docker exec -it "$CONTAINER_NAME" python manage.py createsuperuser
