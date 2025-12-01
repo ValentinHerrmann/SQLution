@@ -18,3 +18,4 @@ requests>=2.32.3
 pytz>=2025.2
 django-axes[ipware]>=8.0.0
 python-dotenv>=1.0.1
+gunicorn>=23.0.0

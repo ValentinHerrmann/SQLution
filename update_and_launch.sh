@@ -1,7 +1,12 @@
-pkill gunicorn
+set -euo pipefail
+
+pkill gunicorn || true
 source ../../bin/activate
 git fetch --tags
-git checkout $(git describe --tags `git rev-list --tags --max-count=1`)
+
+TARGET_TAG="${DEPLOY_TAG:-$(git describe --tags `git rev-list --tags --max-count=1`)}"
+git checkout "$TARGET_TAG"
+
 pip install -r requirements.txt
 cd tutorial
 python3 manage.py makemigrations --merge
