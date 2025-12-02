@@ -77,7 +77,7 @@ jobs:
 
   stop:
     name: Stop running application
-    needs: build_image
+    needs: build_image # Do not stop if build failed to keep server running
     permissions:
       contents: read
     runs-on: ubuntu-latest
@@ -95,15 +95,8 @@ jobs:
           envs: SQLUTION_IMAGE,DEPLOY_SHA
           script: |
             set -euo pipefail
-            cd "${{ secrets.DEPLOY_APP_DIR }}"
-            if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-              git fetch origin --tags --prune
-              git checkout --force "$DEPLOY_SHA"
-            else
-              echo "Deploy directory is not a git repository; skipping sync." >&2
-            fi
-            mkdir -p tutorial/user_databases
-            SQLUTION_IMAGE="$SQLUTION_IMAGE" docker compose -f compose.yaml down
+            docker container stop sqlution-app || true
+            docker container rm sqlution-app || true
             docker image prune -af || true
 
   launch:
