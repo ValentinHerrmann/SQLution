@@ -77,7 +77,7 @@ jobs:
 
   stop:
     name: Stop running application
-    needs: build_image # Do not stop if build failed to keep server running
+    #needs: build_image # Do not stop if build failed to keep server running
     permissions:
       contents: read
     runs-on: ubuntu-latest
