@@ -31,7 +31,7 @@ jobs:
           ref: ${{ env.DEPLOY_REF }}
 
       - name: Create deployment bundle
-        run: tar czf sqlution.tar.gz --exclude='.git' .
+        run: git archive --format=tar HEAD | gzip > sqlution.tar.gz
 
       - name: Upload bundle to server
         uses: appleboy/scp-action@v0.1.7
