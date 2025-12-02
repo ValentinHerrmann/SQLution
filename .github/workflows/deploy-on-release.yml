@@ -29,7 +29,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Deploy over SSH
+      - name: Checkout on Server over SSH
         uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
         with:
           host: ${{ secrets.DEPLOY_HOST }}
@@ -50,7 +50,6 @@ jobs:
             fi
             export DEPLOY_TAG="$DEPLOY_REF"
             git pull origin "$DEPLOY_REF"
-            bash launch.sh
   stop:
     name: Stop running application
     permissions:
