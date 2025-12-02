@@ -25,6 +25,25 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set VERSION file
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          DISPATCH_REF: ${{ inputs.deploy_ref }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "release" ]; then
+            VERSION_VALUE="$REF_NAME"
+          else
+            if [ -n "${DISPATCH_REF:-}" ]; then
+              VERSION_VALUE="$DISPATCH_REF"
+            else
+              VERSION_VALUE="$REF_NAME"
+            fi
+          fi
+          printf '%s\n' "$VERSION_VALUE" > VERSION
+          echo "VERSION file set to $VERSION_VALUE"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
