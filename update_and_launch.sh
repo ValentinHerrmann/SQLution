@@ -3,6 +3,9 @@ set -euo pipefail
 REPO_ROOT=$(cd "$(dirname "$0")" && pwd)
 cd "$REPO_ROOT"
 
+echo "$DEPLOY_TAG"
+echo "$DEPLOY_REF"
+
 git fetch origin --tags --prune
 
 TARGET_IS_BRANCH=false
