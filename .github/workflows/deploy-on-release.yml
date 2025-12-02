@@ -75,7 +75,7 @@ jobs:
           script: |
             set -euo pipefail
             cd "${{ secrets.DEPLOY_APP_DIR }}"
-            mkdir -p user_databases
+            mkdir -p tutorial/user_databases
             docker compose -f compose.yaml down
   build:
     name: Build new container

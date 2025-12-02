@@ -5,7 +5,7 @@ set -euo pipefail
 REPO_ROOT=$(cd "$(dirname "$0")" && pwd)
 cd "$REPO_ROOT"
 
-mkdir -p user_databases
+mkdir -p tutorial/user_databases
 
 docker compose -f compose.yaml down
 docker compose -f compose.yaml build --pull
