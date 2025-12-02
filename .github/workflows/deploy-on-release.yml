@@ -44,4 +44,5 @@ jobs:
             git checkout "$DEPLOY_REF"
             git reset --hard "$DEPLOY_REF"
             export DEPLOY_TAG="$DEPLOY_REF"
-            bash update_and_launch.sh
+            git pull
+            bash launch.sh
