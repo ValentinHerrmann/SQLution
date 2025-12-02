@@ -1,5 +1,15 @@
 name: Deploy Release
 
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      deploy_ref:
+        description: "Git reference (tag or branch) to deploy"
+        default: ""
+        required: false
+
 jobs:
   build_image:
     name: Build and publish container image
