@@ -34,7 +34,7 @@ jobs:
         run: tar czf sqlution.tar.gz --exclude='.git' .
 
       - name: Upload bundle to server
-        uses: appleboy/scp-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
@@ -44,7 +44,7 @@ jobs:
           target: "/tmp"
 
       - name: Deploy over SSH
-        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
+        uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
