@@ -11,94 +11,132 @@ on:
         required: false
 
 jobs:
-  prepare:
-    name: Prepare bundle
-    permissions:
-      contents: read
-    runs-on: ubuntu-latest
-    outputs:
-      deploy_ref: ${{ steps.meta.outputs.deploy_ref }}
-      deploy_tag: ${{ steps.meta.outputs.deploy_tag }}
-    steps:
-      - name: Determine target ref
-        id: meta
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          RELEASE_TAG: ${{ github.event.release.tag_name || '' }}
-          DISPATCH_REF: ${{ inputs.deploy_ref }}
-          DEFAULT_REF: ${{ github.ref_name }}
-        run: |
-          if [ "$EVENT_NAME" = "release" ] && [ -n "$RELEASE_TAG" ]; then
-            ref="$RELEASE_TAG"
-            tag="$RELEASE_TAG"
-          elif [ -n "$DISPATCH_REF" ]; then
-            ref="$DISPATCH_REF"
-            tag=""
-          else
-            ref="$DEFAULT_REF"
-            tag=""
-          fi
-          echo "deploy_ref=$ref" >> "$GITHUB_OUTPUT"
-          echo "deploy_tag=$tag" >> "$GITHUB_OUTPUT"
-
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: ${{ steps.meta.outputs.deploy_ref }}
-
-      - name: Create deployment bundle
-        run: git archive --format=tar HEAD | gzip > sqlution.tar.gz
-
-      - name: Upload bundle
-        uses: actions/upload-artifact@v4
-        with:
-          name: sqlution-bundle
-          path: sqlution.tar.gz
-
-  deploy:
-    name: Deploy to sqlution.de
-    needs: prepare
+  checkout:
+    name: Checkout from Github
     permissions:
       contents: read
     runs-on: ubuntu-latest
     environment:
       name: production
       url: https://sqlution.de
-    steps:
-      - name: Download bundle
-        uses: actions/download-artifact@v4
-        with:
-          name: sqlution-bundle
+    env:
+      DEPLOY_REF: ${{ github.event_name == 'release' && github.event.release.tag_name || (inputs.deploy_ref != '' && inputs.deploy_ref || github.ref_name) }}
+      DEPLOY_TAG: ${{ github.event_name == 'release' && github.event.release.tag_name || '' }}
 
-      - name: Upload bundle to server
-        uses: appleboy/scp-action@v0.1.7
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          port: ${{ secrets.DEPLOY_PORT || '22' }}
-          source: sqlution-bundle/sqlution.tar.gz
-          target: /tmp
+          fetch-depth: 0
 
       - name: Deploy over SSH
-        uses: appleboy/ssh-action@v0.1.7
+        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           port: ${{ secrets.DEPLOY_PORT || '22' }}
+          envs: DEPLOY_REF,DEPLOY_TAG
           script: |
             set -euo pipefail
-            APP_DIR="${{ secrets.DEPLOY_APP_DIR }}"
-            TMP_DIR=$(mktemp -d)
-            tar xzf /tmp/sqlution.tar.gz -C "$TMP_DIR"
-            rsync -a --delete \
-              --exclude '.env' \
-              --exclude 'user_databases' \
-              --exclude '.venv' \
-              --exclude 'last_launched.txt' \
-              "$TMP_DIR/" "$APP_DIR/"
-            rm -rf "$TMP_DIR" /tmp/sqlution.tar.gz
-            cd "$APP_DIR"
+            cd "${{ secrets.DEPLOY_APP_DIR }}"
+            git fetch origin --tags --prune
+            git checkout "$DEPLOY_REF"
+            git reset --hard "$DEPLOY_REF"
+            export DEPLOY_TAG="$DEPLOY_REF"
+            git pull origin "$DEPLOY_REF"
             bash launch.sh
+  stop:
+    name: Stop running application
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://sqlution.de
+    env:
+      DEPLOY_REF: ${{ github.event_name == 'release' && github.event.release.tag_name || (inputs.deploy_ref != '' && inputs.deploy_ref || github.ref_name) }}
+      DEPLOY_TAG: ${{ github.event_name == 'release' && github.event.release.tag_name || '' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Stop application over SSH
+        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || '22' }}
+          envs: DEPLOY_REF,DEPLOY_TAG
+          script: |
+            set -euo pipefail
+            cd "${{ secrets.DEPLOY_APP_DIR }}"
+            mkdir -p user_databases
+            docker compose -f compose.yaml down
+  build:
+    name: Build new container
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://sqlution.de
+    env:
+      DEPLOY_REF: ${{ github.event_name == 'release' && github.event.release.tag_name || (inputs.deploy_ref != '' && inputs.deploy_ref || github.ref_name) }}
+      DEPLOY_TAG: ${{ github.event_name == 'release' && github.event.release.tag_name || '' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build container via SSH
+        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || '22' }}
+          envs: DEPLOY_REF,DEPLOY_TAG
+          script: |
+            set -euo pipefail
+            cd "${{ secrets.DEPLOY_APP_DIR }}"
+            docker compose -f compose.yaml build --pull
+  launch:
+    name: Build new container
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://sqlution.de
+    env:
+      DEPLOY_REF: ${{ github.event_name == 'release' && github.event.release.tag_name || (inputs.deploy_ref != '' && inputs.deploy_ref || github.ref_name) }}
+      DEPLOY_TAG: ${{ github.event_name == 'release' && github.event.release.tag_name || '' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Launch container via SSH
+        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || '22' }}
+          envs: DEPLOY_REF,DEPLOY_TAG
+          script: |
+            set -euo pipefail
+            cd "${{ secrets.DEPLOY_APP_DIR }}"
+            docker compose -f compose.yaml up -d --remove-orphans
+            rm -f ./last_launched.txt
+            TZ=Europe/Berlin date '+%Y-%m-%d %H:%M:%S TZ=Eu/Ber' > ./last_launched.txt
+            
