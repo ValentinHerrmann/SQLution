@@ -110,7 +110,9 @@ jobs:
             docker compose -f compose.yaml build --pull
   launch:
     name: Launch new container
-    needs: build,stop
+    needs:
+      - build
+      - stop
     permissions:
       contents: read
     runs-on: ubuntu-latest
