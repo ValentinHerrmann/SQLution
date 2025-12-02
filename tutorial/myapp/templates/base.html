@@ -143,14 +143,14 @@
       </script>
     {% endif %}
     <nav class="navbar navbar-expand-lg navbar-light bg-light" style="height: 58px;">
-      <a class="navbar-brand d-flex flex-column align-items-start" href="{% url 'home' %}" style="gap: 2px;">
-        <div class="d-flex align-items-center">
-          <img src="{% static 'SQLution.svg' %}" alt="Logo" style="height: 40px; margin-right: 6px;">
-          <div class="d-flex align-items-center h-100">
-            <b style="color: var(--text-tertiary); font-size: 1.5em; margin-left: 0; margin-top: 0; margin-bottom: 0;">Lution</b>
-          </div>
+      <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
+        <div class="ml-2 d-flex flex-column justify-content-center" style="height: 41px;">
+        <img src="{% static 'SQLution.svg' %}" alt="Logo" style="height: 40px;">
+          <span style="color: #bbbbbb; font-size: 0.5em; margin-top: -7px;">{% get_version %}</span> <!-- SOFTWARE VERSION -->
         </div>
-        <span style="color: #bbbbbb; font-size: 0.55em; line-height: 1.1; word-break: break-word; max-width: 150px;">{% get_version %}</span>
+          <div class="d-flex align-items-center h-100" style="height: 100%;">
+            <b style="color: var(--text-tertiary); font-size: 1.5em; margin-left: 0px; margin-top: 0px; margin-bottom: 1px;">Lution</b>
+          </div>
       </a>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
       <div class="collapse navbar-collapse" id="navbarNav">
