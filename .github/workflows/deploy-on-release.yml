@@ -118,28 +118,4 @@ jobs:
             docker compose -f compose.yaml up -d --no-build --remove-orphans
             rm -f ./last_launched.txt
             TZ=Europe/Berlin date '+%Y-%m-%d %H:%M:%S TZ=Eu/Ber' > ./last_launched.txt
-    env:
-      DEPLOY_REF: ${{ github.event_name == 'release' && github.event.release.tag_name || (inputs.deploy_ref != '' && inputs.deploy_ref || github.ref_name) }}
-      DEPLOY_TAG: ${{ github.event_name == 'release' && github.event.release.tag_name || '' }}
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Launch container via SSH
-        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          port: ${{ secrets.DEPLOY_PORT || '22' }}
-          envs: DEPLOY_REF,DEPLOY_TAG
-          script: |
-            set -euo pipefail
-            cd "${{ secrets.DEPLOY_APP_DIR }}"
-            docker compose -f compose.yaml up -d --remove-orphans
-            rm -f ./last_launched.txt
-            TZ=Europe/Berlin date '+%Y-%m-%d %H:%M:%S TZ=Eu/Ber' > ./last_launched.txt
             
