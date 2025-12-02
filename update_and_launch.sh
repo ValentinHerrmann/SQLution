@@ -8,8 +8,9 @@ git fetch origin --tags --prune
 if [ -n "${DEPLOY_TAG:-}" ]; then
 	TARGET_REF="$DEPLOY_TAG"
 elif [ -n "${DEPLOY_REF:-}" ]; then
-	git fetch origin "${DEPLOY_REF}" --depth=1 || git fetch origin "${DEPLOY_REF%/*}" --depth=1 || true
-	TARGET_REF="$DEPLOY_REF"
+	TARGET_BRANCH="${DEPLOY_REF#origin/}"
+	git fetch origin "${TARGET_BRANCH}" --depth=1
+	TARGET_REF="origin/${TARGET_BRANCH}"
 else
 	if [ -t 0 ]; then
 		read -rp "Enter tag to deploy (leave empty to choose a branch): " MANUAL_TAG || true
@@ -20,8 +21,20 @@ else
 	if [ -n "$MANUAL_TAG" ]; then
 		TARGET_REF="$MANUAL_TAG"
 	else
-		CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-		TARGET_REF="origin/${CURRENT_BRANCH}"
+		if [ -t 0 ]; then
+			read -rp "Enter branch to deploy (leave empty for current branch): " MANUAL_BRANCH || true
+		else
+			MANUAL_BRANCH=""
+		fi
+
+		if [ -n "$MANUAL_BRANCH" ]; then
+			TARGET_BRANCH="$MANUAL_BRANCH"
+		else
+			TARGET_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+		fi
+
+		git fetch origin "${TARGET_BRANCH}" --depth=1
+		TARGET_REF="origin/${TARGET_BRANCH}"
 	fi
 fi
 
