@@ -8,6 +8,7 @@ git fetch origin --tags --prune
 if [ -n "${DEPLOY_TAG:-}" ]; then
 	TARGET_REF="$DEPLOY_TAG"
 elif [ -n "${DEPLOY_REF:-}" ]; then
+	git fetch origin "${DEPLOY_REF}" --depth=1 || git fetch origin "${DEPLOY_REF%/*}" --depth=1 || true
 	TARGET_REF="$DEPLOY_REF"
 else
 	if [ -t 0 ]; then
