@@ -17,7 +17,7 @@ WORKDIR /app
 # Copy only the source directories needed at runtime to avoid bringing
 # along tooling artifacts or secrets.
 COPY tutorial /app/tutorial
-RUN mkdir -p /app/tutorial/user_databases
+#RUN mkdir -p /app/tutorial/user_databases
 COPY VERSION ./VERSION
 
 # Creates a non-root user with an explicit UID and adds permission to access the /app folder

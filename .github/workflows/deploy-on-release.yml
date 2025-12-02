@@ -81,9 +81,23 @@ jobs:
             cd "${{ secrets.DEPLOY_APP_DIR }}"
             mkdir -p tutorial/user_databases
             docker compose -f compose.yaml down
+      - name: Remove old images
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || '22' }}
+          envs: DEPLOY_REF,DEPLOY_TAG
+          script: |
+            set -euo pipefail
+            cd "${{ secrets.DEPLOY_APP_DIR }}"
+            docker image prune -f
   build:
     name: Build new container
-    needs: checkout
+    needs: 
+      - checkout
+      - stop
     permissions:
       contents: read
     runs-on: ubuntu-latest
