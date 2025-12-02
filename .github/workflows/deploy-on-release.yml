@@ -48,7 +48,6 @@ jobs:
             bash launch.sh
   stop:
     name: Stop running application
-    needs: checkout
     permissions:
       contents: read
     runs-on: ubuntu-latest
@@ -80,7 +79,7 @@ jobs:
             docker compose -f compose.yaml down
   build:
     name: Build new container
-    needs: stop
+    needs: checkout
     permissions:
       contents: read
     runs-on: ubuntu-latest
@@ -110,8 +109,8 @@ jobs:
             cd "${{ secrets.DEPLOY_APP_DIR }}"
             docker compose -f compose.yaml build --pull
   launch:
-    name: Build new container
-    needs: build
+    name: Launch new container
+    needs: build,stop
     permissions:
       contents: read
     runs-on: ubuntu-latest
