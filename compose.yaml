@@ -1,10 +1,7 @@
 services:
   sqlution:
-    image: sqlution
+    image: ${SQLUTION_IMAGE:-sqlution:local}
     container_name: sqlution-app
-    build:
-      context: .
-      dockerfile: ./Dockerfile
     ports:
       - 8000:8000
     environment:
