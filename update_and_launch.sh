@@ -5,8 +5,26 @@ cd "$REPO_ROOT"
 
 git fetch origin --tags --prune
 
-TARGET_TAG="${DEPLOY_TAG:-$(git describe --tags $(git rev-list --tags --max-count=1))}"
-git checkout "$TARGET_TAG" --force
-git reset --hard "$TARGET_TAG"
+if [ -n "${DEPLOY_TAG:-}" ]; then
+	TARGET_REF="$DEPLOY_TAG"
+elif [ -n "${DEPLOY_REF:-}" ]; then
+	TARGET_REF="$DEPLOY_REF"
+else
+	if [ -t 0 ]; then
+		read -rp "Enter tag to deploy (leave empty to choose a branch): " MANUAL_TAG || true
+	else
+		MANUAL_TAG=""
+	fi
+
+	if [ -n "$MANUAL_TAG" ]; then
+		TARGET_REF="$MANUAL_TAG"
+	else
+		CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+		TARGET_REF="origin/${CURRENT_BRANCH}"
+	fi
+fi
+
+git checkout "$TARGET_REF" --force
+git reset --hard "$TARGET_REF"
 
 bash launch.sh
