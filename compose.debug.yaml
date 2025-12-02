@@ -22,8 +22,7 @@ services:
           memory: 1G
     volumes:
       - sqlution-db:/data
-      - sqlution-userdata:/app/user_databases
+      - ${USER_DATABASES_PATH:-./user_databases}:/app/user_databases
 
 volumes:
   sqlution-db:
-  sqlution-userdata:

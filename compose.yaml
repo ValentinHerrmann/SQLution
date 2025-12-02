@@ -15,7 +15,7 @@ services:
     # Persist app data and cap memory usage
     volumes:
       - sqlution-db:/data
-      - sqlution-userdata:/app/user_databases
+      - ${USER_DATABASES_PATH:-./user_databases}:/app/user_databases
     mem_limit: 1g
     deploy:
       resources:
@@ -24,4 +24,3 @@ services:
 
 volumes:
   sqlution-db:
-  sqlution-userdata:
