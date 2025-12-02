@@ -5,6 +5,8 @@ set -euo pipefail
 REPO_ROOT=$(cd "$(dirname "$0")" && pwd)
 cd "$REPO_ROOT"
 
+
+docker compose -f compose.yaml down
 docker compose -f compose.yaml build --pull
 docker compose -f compose.yaml up -d --remove-orphans
 
