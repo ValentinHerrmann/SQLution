@@ -17,7 +17,7 @@ WORKDIR /app
 # Copy only the source directories needed at runtime to avoid bringing
 # along tooling artifacts or secrets.
 COPY tutorial /app/tutorial
-COPY tutorial/user_databases /app/user_databases
+#COPY tutorial/tutorial/user_databases /app/user_databases
 COPY VERSION ./VERSION
 
 # Creates a non-root user with an explicit UID and adds permission to access the /app folder
@@ -27,7 +27,7 @@ COPY VERSION ./VERSION
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-USER appuser
+#USER appuser
 
 # Set working directory to the Django project directory
 WORKDIR /app/tutorial
