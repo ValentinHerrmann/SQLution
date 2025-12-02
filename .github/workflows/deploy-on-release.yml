@@ -28,6 +28,20 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ env.DEPLOY_REF }}
+
+      - name: Create deployment bundle
+        run: tar czf sqlution.tar.gz --exclude='.git' .
+
+      - name: Upload bundle to server
+        uses: appleboy/scp-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || '22' }}
+          source: "sqlution.tar.gz"
+          target: "/tmp"
 
       - name: Deploy over SSH
         uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
@@ -36,12 +50,17 @@ jobs:
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           port: ${{ secrets.DEPLOY_PORT || '22' }}
-          envs: DEPLOY_REF,DEPLOY_TAG
           script: |
             set -euo pipefail
-            cd "${{ secrets.DEPLOY_APP_DIR }}"
-            git fetch origin --tags --prune
-            git checkout "$DEPLOY_REF"
-            git reset --hard "$DEPLOY_REF"
-            export DEPLOY_TAG="$DEPLOY_REF"
-            bash update_and_launch.sh
+            APP_DIR="${{ secrets.DEPLOY_APP_DIR }}"
+            TMP_DIR=$(mktemp -d)
+            tar xzf /tmp/sqlution.tar.gz -C "$TMP_DIR"
+            rsync -a --delete \
+              --exclude '.env' \
+              --exclude 'user_databases' \
+              --exclude '.venv' \
+              --exclude 'last_launched.txt' \
+              "$TMP_DIR/" "$APP_DIR/"
+            rm -rf "$TMP_DIR" /tmp/sqlution.tar.gz
+            cd "$APP_DIR"
+            bash launch.sh
