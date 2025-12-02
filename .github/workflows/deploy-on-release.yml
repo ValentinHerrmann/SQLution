@@ -77,7 +77,7 @@ jobs:
             set -euo pipefail
             cd "${{ secrets.DEPLOY_APP_DIR }}"
             mkdir -p tutorial/user_databases
-            docker compose -f compose.yaml down
+            SQLUTION_IMAGE="$SQLUTION_IMAGE" docker compose -f compose.yaml down
             docker image prune -af || true
 
   launch:
@@ -115,7 +115,7 @@ jobs:
             echo "$REGISTRY_TOKEN" | docker login ghcr.io -u "$REGISTRY_USER" --password-stdin
             docker pull "$SQLUTION_IMAGE"
             export SQLUTION_IMAGE
-            docker compose -f compose.yaml up -d --no-build --remove-orphans
+            SQLUTION_IMAGE="$SQLUTION_IMAGE" docker compose -f compose.yaml up -d --no-build --remove-orphans
             rm -f ./last_launched.txt
             TZ=Europe/Berlin date '+%Y-%m-%d %H:%M:%S TZ=Eu/Ber' > ./last_launched.txt
             
