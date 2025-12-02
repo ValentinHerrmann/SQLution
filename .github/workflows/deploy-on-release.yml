@@ -64,6 +64,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SQLUTION_IMAGE: ${{ needs.build_image.outputs.image_ref }}
+      DEPLOY_SHA: ${{ github.sha }}
     steps:
       - name: Stop application over SSH
         uses: appleboy/ssh-action@v0.1.7
@@ -72,10 +73,16 @@ jobs:
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           port: ${{ secrets.DEPLOY_PORT || '22' }}
-          envs: SQLUTION_IMAGE
+          envs: SQLUTION_IMAGE,DEPLOY_SHA
           script: |
             set -euo pipefail
             cd "${{ secrets.DEPLOY_APP_DIR }}"
+            if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+              git fetch origin --tags --prune
+              git checkout --force "$DEPLOY_SHA"
+            else
+              echo "Deploy directory is not a git repository; skipping sync." >&2
+            fi
             mkdir -p tutorial/user_databases
             SQLUTION_IMAGE="$SQLUTION_IMAGE" docker compose -f compose.yaml down
             docker image prune -af || true
@@ -95,6 +102,7 @@ jobs:
       SQLUTION_IMAGE: ${{ needs.build_image.outputs.image_ref }}
       REGISTRY_USER: ${{ secrets.DEPLOY_REGISTRY_USER }}
       REGISTRY_TOKEN: ${{ secrets.DEPLOY_REGISTRY_TOKEN }}
+      DEPLOY_SHA: ${{ github.sha }}
     steps:
       - name: Deploy over SSH
         uses: appleboy/ssh-action@v0.1.7
@@ -103,7 +111,7 @@ jobs:
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           port: ${{ secrets.DEPLOY_PORT || '22' }}
-          envs: SQLUTION_IMAGE,REGISTRY_USER,REGISTRY_TOKEN
+          envs: SQLUTION_IMAGE,REGISTRY_USER,REGISTRY_TOKEN,DEPLOY_SHA
           script: |
             set -euo pipefail
             if [ -z "${REGISTRY_USER:-}" ] || [ -z "${REGISTRY_TOKEN:-}" ]; then
@@ -111,6 +119,12 @@ jobs:
               exit 1
             fi
             cd "${{ secrets.DEPLOY_APP_DIR }}"
+            if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+              git fetch origin --tags --prune
+              git checkout --force "$DEPLOY_SHA"
+            else
+              echo "Deploy directory is not a git repository; skipping sync." >&2
+            fi
             echo "Logging into GHCR and pulling ${SQLUTION_IMAGE}"
             echo "$REGISTRY_TOKEN" | docker login ghcr.io -u "$REGISTRY_USER" --password-stdin
             docker pull "$SQLUTION_IMAGE"
