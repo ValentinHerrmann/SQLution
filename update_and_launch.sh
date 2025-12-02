@@ -6,12 +6,12 @@ cd "$REPO_ROOT"
 git fetch origin --tags --prune
 
 TARGET_IS_BRANCH=false
-
 if [ -n "${DEPLOY_TAG:-}" ]; then
 	TARGET_REF="$DEPLOY_TAG"
 elif [ -n "${DEPLOY_REF:-}" ]; then
 	TARGET_BRANCH="${DEPLOY_REF#origin/}"
-	git fetch origin "$TARGET_BRANCH"
+	git fetch origin "${TARGET_BRANCH}" --depth=1
+	TARGET_REF="origin/${TARGET_BRANCH}"
 	TARGET_IS_BRANCH=true
 else
 	if [ -t 0 ]; then
@@ -35,7 +35,8 @@ else
 			TARGET_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 		fi
 
-		git fetch origin "$TARGET_BRANCH"
+		git fetch origin "${TARGET_BRANCH}" --depth=1
+		TARGET_REF="origin/${TARGET_BRANCH}"
 		TARGET_IS_BRANCH=true
 	fi
 fi
@@ -46,10 +47,11 @@ if [ "$TARGET_IS_BRANCH" = true ]; then
 	else
 		git checkout -b "$TARGET_BRANCH"
 	fi
+	git pull --ff-only origin "$TARGET_BRANCH"
 	git reset --hard "origin/$TARGET_BRANCH"
 else
 	git checkout "$TARGET_REF" --force
-	git reset --hard "$TARGET_REF"
+ 	git reset --hard "$TARGET_REF"
 fi
 
 bash launch.sh
