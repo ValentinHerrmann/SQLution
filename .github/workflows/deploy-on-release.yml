@@ -43,6 +43,11 @@ jobs:
             git fetch origin --tags --prune
             git checkout "$DEPLOY_REF"
             git reset --hard "$DEPLOY_REF"
+            if [ -z "${DEPLOY_TAG:-}" ] && [ -f VERSION ]; then
+              BRANCH_NAME="${DEPLOY_REF##*/}"
+              VERSION_VALUE=$(cat VERSION)
+              echo "${VERSION_VALUE}-${BRANCH_NAME}" > VERSION
+            fi
             export DEPLOY_TAG="$DEPLOY_REF"
             git pull origin "$DEPLOY_REF"
             bash launch.sh
