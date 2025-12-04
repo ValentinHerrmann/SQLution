@@ -16,7 +16,7 @@ services:
       - 5678:5678
     volumes:
       - sqlution-db:/data
-      - ${USER_DATABASES_PATH:-./user_databases}:/app/user_databases
+      - ${USER_DATABASES_PATH:-./tutorial/user_databases}:/app/tutorial/user_databases
 
 volumes:
   sqlution-db:
