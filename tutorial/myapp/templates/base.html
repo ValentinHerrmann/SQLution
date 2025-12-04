@@ -14,10 +14,11 @@
     </title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"  rel="stylesheet" />
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css" integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
-   
+ 
  
     <!-- Falls sich die Programmdateien relativ zur Html-Datei in einem Unterverzeichnis befinden: -->
-    <script>window.javaOnlineDir = "/static/sql-ide/";</script>
+    {% get_static_prefix as static_prefix %}
+    <script>window.javaOnlineDir = "{{ static_prefix }}sql-ide/";</script>
   
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   
