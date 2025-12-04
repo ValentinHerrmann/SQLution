@@ -1,4 +1,4 @@
-name: Deploy Release
+name: Deploy
 
 on:
   release:
@@ -10,9 +10,11 @@ on:
         default: ""
         required: false
 
+run-name: "${{ github.event_name == 'release' && format('Deploy Release {0}', github.ref_name) || (inputs.deploy_ref != '' && format('Deploy Branch {0}:{1}', github.ref_name, inputs.deploy_ref) || format('Deploy Branch {0}', github.ref_name)) }}"
+
 jobs:
   build_image:
-    name: Build and publish container image
+    name: Build and publish container image on GHCR
     permissions:
       contents: read
       packages: write
@@ -22,8 +24,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Set VERSION file
         env:
@@ -77,27 +77,26 @@ jobs:
 
   stop:
     name: Stop running application
-    #needs: build_image # Do not stop if build failed to keep server running
+    needs: build_image # Do not stop if build failed to keep server running
     permissions:
       contents: read
     runs-on: ubuntu-latest
     env:
       SQLUTION_IMAGE: ${{ needs.build_image.outputs.image_ref }}
-      DEPLOY_SHA: ${{ github.sha }}
     steps:
       - name: Stop application over SSH
         uses: appleboy/ssh-action@v0.1.7
         with:
-          host: ${{ secrets.DEPLOY_HOST }}
+          host: ${{ vars.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           port: ${{ secrets.DEPLOY_PORT || '22' }}
-          envs: SQLUTION_IMAGE,DEPLOY_SHA
+          envs: SQLUTION_IMAGE
           script: |
             set -euo pipefail
             docker container stop sqlution-app || true
             docker container rm sqlution-app || true
-            docker image prune -af || true
+            docker images 'ghcr.io/*/sqlution' --format '{{.ID}}' | xargs -r docker rmi || true
 
   launch:
     name: Launch new container
@@ -114,34 +113,28 @@ jobs:
       SQLUTION_IMAGE: ${{ needs.build_image.outputs.image_ref }}
       REGISTRY_USER: ${{ secrets.DEPLOY_REGISTRY_USER }}
       REGISTRY_TOKEN: ${{ secrets.DEPLOY_REGISTRY_TOKEN }}
-      DEPLOY_SHA: ${{ github.sha }}
     steps:
       - name: Deploy over SSH
         uses: appleboy/ssh-action@v0.1.7
         with:
-          host: ${{ secrets.DEPLOY_HOST }}
+          host: ${{ vars.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           port: ${{ secrets.DEPLOY_PORT || '22' }}
-          envs: SQLUTION_IMAGE,REGISTRY_USER,REGISTRY_TOKEN,DEPLOY_SHA
+          envs: SQLUTION_IMAGE,REGISTRY_USER,REGISTRY_TOKEN
           script: |
             set -euo pipefail
             if [ -z "${REGISTRY_USER:-}" ] || [ -z "${REGISTRY_TOKEN:-}" ]; then
               echo "Missing registry credentials (DEPLOY_REGISTRY_USER / DEPLOY_REGISTRY_TOKEN)." >&2
               exit 1
             fi
-            cd "${{ secrets.DEPLOY_APP_DIR }}"
-            if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-              git fetch origin --tags --prune
-              git checkout --force "$DEPLOY_SHA"
-            else
-              echo "Deploy directory is not a git repository; skipping sync." >&2
-            fi
-            echo "Logging into GHCR and pulling ${SQLUTION_IMAGE}"
-            echo "$REGISTRY_TOKEN" | docker login ghcr.io -u "$REGISTRY_USER" --password-stdin
-            docker pull "$SQLUTION_IMAGE"
-            export SQLUTION_IMAGE
-            SQLUTION_IMAGE="$SQLUTION_IMAGE" docker compose -f compose.yaml up -d --no-build --remove-orphans
-            rm -f ./last_launched.txt
-            TZ=Europe/Berlin date '+%Y-%m-%d %H:%M:%S TZ=Eu/Ber' > ./last_launched.txt
-            
+            cd "${{ vars.DEPLOY_APP_DIR }}"
+            echo "Pulling and launching from GHCR ${SQLUTION_IMAGE}"
+            docker run -d --name sqlution-app \
+              -p 8000:8000 \
+              -e SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }} \
+              -e DJANGO_ALLOWED_HOSTS=${{ vars.DJANGO_ALLOWED_HOSTS || 'sqlution.de,www.sqlution.de,localhost,127.0.0.1' }} \
+              -e SQLUTION_DB_DIR='/data' \
+              -v sqlution-db:/data \
+              -v "${{ vars.DEPLOY_APP_DIR }}/user_databases:/app/tutorial/user_databases" \
+              "$SQLUTION_IMAGE"
