@@ -80,6 +80,9 @@ jobs:
     needs: build_image # Do not stop if build failed to keep server running
     permissions:
       contents: read
+    environment:
+      name: production
+      url: https://sqlution.de
     runs-on: ubuntu-latest
     env:
       SQLUTION_IMAGE: ${{ needs.build_image.outputs.image_ref }}
