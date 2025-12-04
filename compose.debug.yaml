@@ -14,12 +14,6 @@ services:
     ports:
       - 8000:8000
       - 5678:5678
-    # Limit container memory usage to 1GiB
-    mem_limit: 1g
-    deploy:
-      resources:
-        limits:
-          memory: 1G
     volumes:
       - sqlution-db:/data
       - ${USER_DATABASES_PATH:-./user_databases}:/app/user_databases
