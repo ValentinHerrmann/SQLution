@@ -119,25 +119,29 @@ jobs:
     steps:
       - name: Deploy over SSH
         uses: appleboy/ssh-action@v0.1.7
+        env:
+          DJANGO_ALLOWED_HOSTS: ${{ vars.DJANGO_ALLOWED_HOSTS || 'sqlution.de,www.sqlution.de,localhost,127.0.0.1' }}
+          DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+          DEPLOY_APP_DIR: ${{ vars.DEPLOY_APP_DIR }}
         with:
           host: ${{ vars.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           port: ${{ secrets.DEPLOY_PORT || '22' }}
-          envs: SQLUTION_IMAGE,REGISTRY_USER,REGISTRY_TOKEN
+          envs: SQLUTION_IMAGE,REGISTRY_USER,REGISTRY_TOKEN,DJANGO_ALLOWED_HOSTS,DJANGO_SECRET_KEY,DEPLOY_APP_DIR
           script: |
             set -euo pipefail
             if [ -z "${REGISTRY_USER:-}" ] || [ -z "${REGISTRY_TOKEN:-}" ]; then
               echo "Missing registry credentials (DEPLOY_REGISTRY_USER / DEPLOY_REGISTRY_TOKEN)." >&2
               exit 1
             fi
-            cd "${{ vars.DEPLOY_APP_DIR }}"
+            cd "${DEPLOY_APP_DIR}"
             echo "Pulling and launching from GHCR ${SQLUTION_IMAGE}"
             docker run -d --name sqlution-app \
               -p 8000:8000 \
-              -e SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }} \
-              -e DJANGO_ALLOWED_HOSTS=${{ vars.DJANGO_ALLOWED_HOSTS || 'sqlution.de,www.sqlution.de,localhost,127.0.0.1' }} \
+              -e SECRET_KEY="${DJANGO_SECRET_KEY}" \
+              -e DJANGO_ALLOWED_HOSTS="${DJANGO_ALLOWED_HOSTS}" \
               -e SQLUTION_DB_DIR='/data' \
               -v sqlution-db:/data \
-              -v "${{ vars.DEPLOY_APP_DIR }}/user_databases:/app/tutorial/user_databases" \
-              "$SQLUTION_IMAGE"
+              -v "${DEPLOY_APP_DIR}/user_databases:/app/tutorial/user_databases" \
+              "${SQLUTION_IMAGE}"
