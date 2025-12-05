@@ -139,7 +139,9 @@ jobs:
             fi
             cd "${DEPLOY_APP_DIR}"
             echo "Pulling and launching from GHCR ${SQLUTION_IMAGE}"
-            docker run -d --name sqlution-app \
+            docker run -d \
+              --restart unless-stopped \
+              --name sqlution-app \
               -p 8000:8000 \
               -e SECRET_KEY="${DJANGO_SECRET_KEY}" \
               -e DJANGO_ALLOWED_HOSTS="${DJANGO_ALLOWED_HOSTS}" \
