@@ -60,7 +60,7 @@ class ThemeSwitcher {
         this.updateToggleButton();
         
         // Dispatch custom event for other components
-        window.dispatchEvent(new CustomEvent('themeChanged', { 
+        globalThis.dispatchEvent(new CustomEvent('themeChanged', { 
             detail: { theme: theme } 
         }));
     }
@@ -162,8 +162,8 @@ class ThemeSwitcher {
 
     setupSystemThemeListener() {
         // Listen for system theme changes
-        if (window.matchMedia) {
-            const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        if (globalThis.matchMedia) {
+            const mediaQuery = globalThis.matchMedia('(prefers-color-scheme: dark)');
             mediaQuery.addEventListener('change', (e) => {
                 // Only auto-switch if user hasn't manually set a preference
                 if (!localStorage.getItem('theme-manually-set')) {
@@ -226,7 +226,7 @@ class ThemeSwitcher {
         localStorage.removeItem('theme-manually-set');
         localStorage.removeItem('theme');
         
-        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        if (globalThis.matchMedia && globalThis.matchMedia('(prefers-color-scheme: dark)').matches) {
             this.applyTheme('dark');
         } else {
             this.applyTheme('light');
@@ -245,7 +245,7 @@ function initThemeSwitcher() {
     const container = document.getElementById('theme-toggle-btn');
     
     if (container) {
-        window.themeSwitcher = new ThemeSwitcher();
+        globalThis.themeSwitcher = new ThemeSwitcher();
     } else {
         // Try multiple times with increasing delays
         let retryCount = 0;
@@ -256,12 +256,12 @@ function initThemeSwitcher() {
             
             const retryContainer = document.getElementById('theme-toggle-btn');
             if (retryContainer) {
-                window.themeSwitcher = new ThemeSwitcher();
+                globalThis.themeSwitcher = new ThemeSwitcher();
             } else if (retryCount < maxRetries) {
                 setTimeout(retryInit, retryCount * 200); // Increasing delay
             } else {
                 // Initialize without UI, at least theme switching will work
-                window.themeSwitcher = new ThemeSwitcher();
+                globalThis.themeSwitcher = new ThemeSwitcher();
             }
         };
         
@@ -277,24 +277,24 @@ if (document.readyState === 'loading') {
 }
 
 // Expose theme switcher globally
-window.ThemeSwitcher = ThemeSwitcher;
+globalThis.ThemeSwitcher = ThemeSwitcher;
 
 // Helper functions for manual integration
-window.toggleTheme = function() {
-    if (window.themeSwitcher) {
-        window.themeSwitcher.toggleTheme();
+globalThis.toggleTheme = function() {
+    if (globalThis.themeSwitcher) {
+        globalThis.themeSwitcher.toggleTheme();
     }
 };
 
-window.setTheme = function(theme) {
-    if (window.themeSwitcher) {
-        window.themeSwitcher.setTheme(theme);
+globalThis.setTheme = function(theme) {
+    if (globalThis.themeSwitcher) {
+        globalThis.themeSwitcher.setTheme(theme);
     }
 };
 
-window.getTheme = function() {
-    if (window.themeSwitcher) {
-        return window.themeSwitcher.getTheme();
+globalThis.getTheme = function() {
+    if (globalThis.themeSwitcher) {
+        return globalThis.themeSwitcher.getTheme();
     }
     return 'light';
 };
