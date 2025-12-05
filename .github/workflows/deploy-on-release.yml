@@ -36,8 +36,10 @@ jobs:
           SHA_TAG="${IMAGE}:${GITHUB_SHA}"
           SAFE_REF=$(echo "${REF_BASIS}" | tr '[:upper:]' '[:lower:]' | tr '/ ' '--')
           BRANCH_TAG="${IMAGE}:${SAFE_REF}"
+          TMP_TAG="${IMAGE}:${SAFE_REF}-tmp"
           echo "image_ref=${SHA_TAG}" >> "$GITHUB_OUTPUT"
           echo "branch_tag=${BRANCH_TAG}" >> "$GITHUB_OUTPUT"
+          echo "tmp_tag=${TMP_TAG}" >> "$GITHUB_OUTPUT"
         env:
           INPUT_DEPLOY_REF: ${{ inputs.deploy_ref }}
 
@@ -101,18 +103,31 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           tags: |
-            ${{ steps.meta.outputs.image_ref }}
-            ${{ steps.meta.outputs.branch_tag }}
+            ${{ github.event_name == 'pull_request' && steps.meta.outputs.tmp_tag || steps.meta.outputs.image_ref }}
+            ${{ github.event_name == 'pull_request' && steps.meta.outputs.tmp_tag || steps.meta.outputs.branch_tag }}
 
       - name: Select image to use
         id: choose-image
+        env:
+          INPUT_DEPLOY_REF: ${{ inputs.deploy_ref }}
         run: |
-          # Prefer commit-specific image; only fall back to ref tag when we skipped build on dispatch because it already exists
-          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ] && [ "${{ steps.check-image.outputs.exists }}" = "true" ]; then
-            echo "image=${{ steps.meta.outputs.branch_tag }}" >> "$GITHUB_OUTPUT"
-          else
+          # Releases: use commit-specific image
+          if [ "${GITHUB_EVENT_NAME}" = "release" ]; then
             echo "image=${{ steps.meta.outputs.image_ref }}" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+          # Branch deployments (dispatch without tag): prefer latest -tmp tag
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ] && [ -n "${INPUT_DEPLOY_REF}" ]; then
+            echo "image=${{ steps.meta.outputs.tmp_tag }}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # PR builds already tagged as -tmp
+          if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
+            echo "image=${{ steps.meta.outputs.tmp_tag }}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Fallback
+          echo "image=${{ steps.meta.outputs.branch_tag }}" >> "$GITHUB_OUTPUT"
 
   stop:
     name: Stop running application
