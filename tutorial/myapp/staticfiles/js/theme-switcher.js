@@ -6,8 +6,6 @@ const setThemeDataAttribute = (node, theme) => {
     }
     if (node.dataset) {
         node.dataset.theme = theme;
-    } else if (node.setAttribute) {
-        node.setAttribute('data-theme', theme);
     }
 };
 
