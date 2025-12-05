@@ -187,6 +187,34 @@ body:not([data-theme]) .btn-inactive {
   box-shadow: 0 4px 6px var(--shadow-dark);
 }
 
+/* Cards & layout containers */
+[data-theme="dark"] .card {
+  background-color: var(--bg-secondary);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+  box-shadow: 0 2px 4px var(--shadow-medium);
+}
+
+[data-theme="dark"] .card-header,
+[data-theme="dark"] .card-footer {
+  background-color: var(--bg-tertiary);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .card-title,
+[data-theme="dark"] .card-text,
+[data-theme="dark"] .card-body {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .progress {
+  background-color: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .progress-bar {
+  background-color: var(--accent-primary);
+}
+
 /* Tables */
 [data-theme="dark"] .table {
   color: var(--text-primary);
