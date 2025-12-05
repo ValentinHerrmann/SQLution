@@ -104,7 +104,6 @@ jobs:
 
   stop:
     name: Stop running application
-    needs: build_image # Do not stop if build failed to keep server running
     if: github.event_name != 'pull_request'
     permissions:
       contents: read
