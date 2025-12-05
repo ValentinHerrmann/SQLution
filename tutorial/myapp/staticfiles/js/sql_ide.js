@@ -1,7 +1,6 @@
 // SQL IDE client-side logic: Ace initialization, file explorer and save handlers
 (function () {
   let isDirty = true;
-  let lastSave = Date.now();
   let filenameOnLoad = "";
   let contentOnLoad = "";
   let prevEditorHeight = null;
@@ -274,12 +273,14 @@
     loadFileList();
   }
 
-  // Run SQL from editor and render results into #sql-results
-  async function runSqlFromEditor() {
+
     function escapeHtml(str) {
       if (str === null || str === undefined) return '';
       return String(str).replaceAll(/&/g, '&amp;').replaceAll(/</g, '&lt;').replaceAll(/>/g, '&gt;').replaceAll(/"/g, '&quot;').replaceAll(/'/g, '&#39;');
     }
+
+  // Run SQL from editor and render results into #sql-results
+  async function runSqlFromEditor() {
 
     const editor = globalThis.sqlAceEditor;
     if (!editor) return;

@@ -258,63 +258,63 @@ body:not([data-theme]) footer a:hover {
 }
 
 /* Login Page Specific Styles */
-[data-theme="light"] body,
-body:not([data-theme]) {
+[data-theme="light"] body.login-page,
+body.login-page:not([data-theme]) {
   background-color: var(--bg-secondary) !important;
 }
 
-[data-theme="light"] .card,
-body:not([data-theme]) .card {
+[data-theme="light"] .login-page .card,
+body.login-page:not([data-theme]) .card {
   background-color: var(--bg-primary) !important;
   border: 1px solid var(--border-color) !important;
   color: var(--text-primary) !important;
 }
 
-[data-theme="light"] .alert-danger,
-body:not([data-theme]) .alert-danger {
+[data-theme="light"] .login-page .alert-danger,
+body.login-page:not([data-theme]) .alert-danger {
   background-color: #f8d7da !important;
   border-color: #f5c6cb !important;
   color: #721c24 !important;
 }
 
-[data-theme="light"] .alert-warning,
-body:not([data-theme]) .alert-warning {
+[data-theme="light"] .login-page .alert-warning,
+body.login-page:not([data-theme]) .alert-warning {
   background-color: #fff3cd !important;
   border-color: #ffecb5 !important;
   color: #856404 !important;
 }
 
-[data-theme="light"] .alert-info,
-body:not([data-theme]) .alert-info {
+[data-theme="light"] .login-page .alert-info,
+body.login-page:not([data-theme]) .alert-info {
   background-color: #d1ecf1 !important;
   border-color: #bee5eb !important;
   color: #0c5460 !important;
 }
 
-[data-theme="light"] .form-control,
-body:not([data-theme]) .form-control {
+[data-theme="light"] .login-page .form-control,
+body.login-page:not([data-theme]) .form-control {
   background-color: var(--bg-primary) !important;
   border: 1px solid var(--border-color) !important;
   color: var(--text-primary) !important;
 }
 
-[data-theme="light"] .form-control:focus,
-body:not([data-theme]) .form-control:focus {
+[data-theme="light"] .login-page .form-control:focus,
+body.login-page:not([data-theme]) .form-control:focus {
   background-color: var(--bg-primary) !important;
   border-color: var(--accent-primary) !important;
   color: var(--text-primary) !important;
   box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
 }
 
-[data-theme="light"] .btn-primary,
-body:not([data-theme]) .btn-primary {
+[data-theme="light"] .login-page .btn-primary,
+body.login-page:not([data-theme]) .btn-primary {
   background-color: var(--accent-primary) !important;
   border-color: var(--accent-primary) !important;
   color: #ffffff !important;
 }
 
-[data-theme="light"] .btn-primary:hover,
-body:not([data-theme]) .btn-primary:hover {
+[data-theme="light"] .login-page .btn-primary:hover,
+body.login-page:not([data-theme]) .btn-primary:hover {
   background-color: var(--text-secondary) !important;
   border-color: var(--text-secondary) !important;
 }

@@ -226,7 +226,7 @@ class ThemeSwitcher {
         localStorage.removeItem('theme-manually-set');
         localStorage.removeItem('theme');
         
-        if (globalThis.matchMedia && globalThis.matchMedia('(prefers-color-scheme: dark)').matches) {
+        if (globalThis.matchMedia?.('(prefers-color-scheme: dark)').matches) {
             this.applyTheme('dark');
         } else {
             this.applyTheme('light');
