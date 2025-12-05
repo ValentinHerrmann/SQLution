@@ -77,7 +77,7 @@
           );
           if (!ok) return;
           try {
-            const base = f.replace(/\.sql$/i, '');
+            const base = f.replaceAll(/\.sql$/i, '');
             const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
             const resp = await fetch(`/api/sql/${encodeURIComponent(base)}.sql`, { method: 'DELETE', headers: csrftoken ? { 'X-CSRFToken': csrftoken } : {} });
             if (resp.ok) {
@@ -116,7 +116,7 @@
   async function saveFile(filename, content) {
     try {
       console.log("Saving file: " + filename);
-      const base = filename.replace(/\.sql$/i, '');
+      const base = filename.replaceAll(/\.sql$/i, '');
       const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
       const url = `/api/sql/${encodeURIComponent(base)}.sql`;
       const headers = { "Content-Type": "application/json" };
@@ -194,7 +194,7 @@
         if (btn) btn.style.display = 'inline-block';
       }
 
-      const base = filename.replace(/\.sql$/i, '');
+      const base = filename.replaceAll(/\.sql$/i, '');
       const resp = await fetch(`/api/sql/${encodeURIComponent(base)}.sql`);
       if (!resp.ok) throw new Error('Could not load file content');
       const content = await resp.text();
@@ -248,7 +248,7 @@
     if (!filename) return;
     if (!filename.toLowerCase().endsWith('.sql')) filename += '.sql';
     try {
-      const base = filename.replace(/\.sql$/i, '');
+      const base = filename.replaceAll(/\.sql$/i, '');
       const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
       const url = `/api/sql/${encodeURIComponent(base)}.sql`;
       const headers = { "Content-Type": "application/json" };
@@ -278,7 +278,7 @@
   async function runSqlFromEditor() {
     function escapeHtml(str) {
       if (str === null || str === undefined) return '';
-      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      return String(str).replaceAll(/&/g, '&amp;').replaceAll(/</g, '&lt;').replaceAll(/>/g, '&gt;').replaceAll(/"/g, '&quot;').replaceAll(/'/g, '&#39;');
     }
 
     const editor = globalThis.sqlAceEditor;
