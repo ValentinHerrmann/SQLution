@@ -31,11 +31,15 @@ jobs:
         run: |
           OWNER=$(echo "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')
           IMAGE="ghcr.io/${OWNER}/sqlution"
+          # Use dispatch ref if provided, else event ref name
+          REF_BASIS="${INPUT_DEPLOY_REF:-${GITHUB_REF_NAME}}"
           SHA_TAG="${IMAGE}:${GITHUB_SHA}"
-          SAFE_REF=$(echo "${GITHUB_REF_NAME}" | tr '[:upper:]' '[:lower:]' | tr '/ ' '--')
+          SAFE_REF=$(echo "${REF_BASIS}" | tr '[:upper:]' '[:lower:]' | tr '/ ' '--')
           BRANCH_TAG="${IMAGE}:${SAFE_REF}"
           echo "image_ref=${SHA_TAG}" >> "$GITHUB_OUTPUT"
           echo "branch_tag=${BRANCH_TAG}" >> "$GITHUB_OUTPUT"
+        env:
+          INPUT_DEPLOY_REF: ${{ inputs.deploy_ref }}
 
       - name: Log in to GitHub Container Registry
         # Push every built image; allow PRs from same repo to push, skip fork PRs automatically
@@ -61,6 +65,8 @@ jobs:
       - name: Checkout repository
         if: github.event_name == 'release' || github.event_name == 'pull_request' || steps.check-image.outputs.exists != 'true'
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.deploy_ref || github.ref }}
 
       - name: Set VERSION file
         if: github.event_name == 'release' || github.event_name == 'pull_request' || steps.check-image.outputs.exists != 'true'
@@ -70,15 +76,14 @@ jobs:
           DISPATCH_REF: ${{ inputs.deploy_ref }}
         run: |
           set -euo pipefail
-          if [ "$EVENT_NAME" = "release" ]; then
-            VERSION_VALUE="$REF_NAME"
-          else
-            if [ -n "${DISPATCH_REF:-}" ]; then
-              VERSION_VALUE="$DISPATCH_REF"
-            else
-              VERSION_VALUE="$REF_NAME"
-            fi
+          TARGET_REF="$REF_NAME"
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ -n "${DISPATCH_REF:-}" ]; then
+            TARGET_REF="$DISPATCH_REF"
           fi
+          if [ "$EVENT_NAME" = "release" ]; then
+            TARGET_REF="$REF_NAME"
+          fi
+          VERSION_VALUE="$TARGET_REF"
           printf '%s\n' "$VERSION_VALUE" > VERSION
           echo "VERSION file set to $VERSION_VALUE"
 
