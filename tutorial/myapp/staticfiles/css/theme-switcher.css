@@ -75,11 +75,6 @@
   color: #ffffff;
 }
 
-/* Slider position for dark mode */
-[data-theme="dark"] .toggle-slider {
-  transform: translateY(-50%) translateX(30px); /* 60px track width - 28px slider width - 2px padding */
-}
-
 /* Hover Effects */
 .theme-toggle-switch:hover .toggle-track {
   border-color: #007bff;

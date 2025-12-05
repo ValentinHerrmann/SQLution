@@ -276,12 +276,71 @@
 
     function escapeHtml(str) {
       if (str === null || str === undefined) return '';
-      return String(str).replaceAll(/&/g, '&amp;').replaceAll(/</g, '&lt;').replaceAll(/>/g, '&gt;').replaceAll(/"/g, '&quot;').replaceAll(/'/g, '&#39;');
+      return String(str).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
     }
+
+  async function parseErrorResponse(resp) {
+    let errorMsg = `HTTP ${resp.status}`;
+    try {
+      const ct = resp.headers.get('content-type') || '';
+      const bodyText = await resp.text();
+      if (ct.includes('application/json')) {
+        try {
+          const jb = JSON.parse(bodyText);
+          if (jb?.error) errorMsg = jb.error;
+          else if (jb?.message) errorMsg = jb.message;
+          else errorMsg = JSON.stringify(jb);
+        } catch (e) {
+          errorMsg = bodyText || errorMsg;
+          console.error('Error parsing JSON error body', e);
+        }
+      } else {
+        errorMsg = bodyText || errorMsg;
+      }
+    } catch (e) {
+      console.error('Error reading error body', e);
+    }
+    return errorMsg;
+  }
+
+  function renderResultsTable(columns, rows, resultsContainer) {
+    const table = document.createElement('table');
+    table.setAttribute('border', '1');
+    table.style.width = '100%';
+    table.style.borderCollapse = 'collapse';
+    table.style.marginBottom = '20px';
+
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+    for (const col of columns) {
+      const th = document.createElement('th');
+      th.style.paddingLeft = '4px';
+      th.textContent = col;
+      headerRow.appendChild(th);
+    }
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+    for (const r of rows) {
+      const tr = document.createElement('tr');
+      for (const cell of r) {
+        const td = document.createElement('td');
+        td.style.borderColor = 'var(--border-color)';
+        td.style.paddingLeft = '4px';
+        td.textContent = cell === null || cell === undefined ? '' : String(cell);
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+    table.appendChild(tbody);
+
+    resultsContainer.innerHTML = '';
+    resultsContainer.appendChild(table);
+  }
 
   // Run SQL from editor and render results into #sql-results
   async function runSqlFromEditor() {
-
     const editor = globalThis.sqlAceEditor;
     if (!editor) return;
     const sql = editor.getValue();
@@ -298,28 +357,9 @@
         body: JSON.stringify({ sql: sql })
       });
       if (!resp.ok) {
-        let errorMsg = `HTTP ${resp.status}`;
-        try {
-          const ct = resp.headers.get('content-type') || '';
-          const bodyText = await resp.text();
-          if (ct.includes('application/json')) {
-            try {
-              const jb = JSON.parse(bodyText);
-              if (jb && jb.error) errorMsg = jb.error;
-              else if (jb && jb.message) errorMsg = jb.message;
-              else errorMsg = JSON.stringify(jb);
-            } catch (e) {
-              errorMsg = bodyText || errorMsg;
-            }
-          } else {
-            errorMsg = bodyText || errorMsg;
-          }
-        } catch (e) {
-          console.error('Error reading error body', e);
-        }
+        const errorMsg = await parseErrorResponse(resp);
         resultsContainer.innerHTML = `<div style="padding:8px;color:var(--text-danger);">Fehler beim Ausführen der Abfrage: ${escapeHtml(errorMsg)}</div>`;
         console.error('Run SQL HTTP error', resp.status, errorMsg);
-        // shrink editor because results/error are shown
         setEditorHalf();
         return;
       }
@@ -331,43 +371,7 @@
       }
       const columns = data.columns || [];
       const rows = data.result || [];
-
-      // build table using the same format as Result Table Template
-      const table = document.createElement('table');
-      table.setAttribute('border', '1');
-      table.style.width = '100%';
-      table.style.borderCollapse = 'collapse';
-      table.style.marginBottom = '20px';
-
-      const thead = document.createElement('thead');
-      const headerRow = document.createElement('tr');
-      for (const col of columns) {
-        const th = document.createElement('th');
-        th.style.paddingLeft = '4px';
-        th.textContent = col;
-        headerRow.appendChild(th);
-      }
-      thead.appendChild(headerRow);
-      table.appendChild(thead);
-
-      const tbody = document.createElement('tbody');
-      for (const r of rows) {
-        const tr = document.createElement('tr');
-        for (const cell of r) {
-          const td = document.createElement('td');
-          td.style.borderColor = 'var(--border-color)';
-          td.style.paddingLeft = '4px';
-          td.textContent = cell === null || cell === undefined ? '' : String(cell);
-          tr.appendChild(td);
-        }
-        tbody.appendChild(tr);
-      }
-      table.appendChild(tbody);
-
-      // replace contents
-      resultsContainer.innerHTML = '';
-      resultsContainer.appendChild(table);
-      // shrink editor because results are shown
+      renderResultsTable(columns, rows, resultsContainer);
       setEditorHalf();
     } catch (err) {
       console.error('Run SQL error', err);
@@ -381,7 +385,7 @@
     try {
       const editorElem = document.getElementById('editor');
       if (!editorElem) return;
-      if (prevEditorHeight === null) prevEditorHeight = editorElem.style.height || window.getComputedStyle(editorElem).height || '';
+      if (prevEditorHeight === null) prevEditorHeight = editorElem.style.height || globalThis.getComputedStyle(editorElem).height || '';
       editorElem.style.height = '50vh';
       const editor = globalThis.sqlAceEditor;
       if (editor && typeof editor.resize === 'function') editor.resize();
