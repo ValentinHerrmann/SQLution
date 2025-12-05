@@ -83,18 +83,6 @@ jobs:
         if: github.event_name == 'pull_request' || steps.check-image.outputs.exists != 'true'
         uses: docker/setup-buildx-action@v3
 
-      - name: Check if ref image exists
-        id: check-image
-        if: github.event_name != 'pull_request'
-        run: |
-          set -euo pipefail
-          TARGET="${{ steps.meta.outputs.branch_tag }}"
-          if docker manifest inspect "$TARGET" > /dev/null 2>&1; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Build and push image
         uses: docker/build-push-action@v5
         if: github.event_name == 'pull_request' || steps.check-image.outputs.exists != 'true'
