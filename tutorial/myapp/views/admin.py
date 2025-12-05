@@ -142,14 +142,11 @@ def qr_generator(request):
 @user_passes_test(is_global_admin)
 @csrf_protect  
 def admin_overview(request):  
-    restart = request.POST.get("restart") or request.GET.get("restart")
-    if restart == 'true':
-        if request.user.is_authenticated:
-            logout(request)
-        request.session.flush()
-        os.system("cd .. && ./update_and_launch.sh")
-
-    rate = os.getenv('RESOURCES_REFRESH', default=5000)
+    axes_reset = request.POST.get("axes_reset") or request.GET.get("axes_reset")
+    if axes_reset == 'true':
+        from axes.utils import reset
+        reset()
+    rate = os.getenv('RESOURCES_REFRESH', default=2000)
 
     last_launched = ""
     try:
@@ -163,10 +160,7 @@ def admin_overview(request):
 
     return render(request, 'admin_overview.html', {
         'refresh_rate': rate,
-        'commit': os.popen('git log -1 --pretty=%B').read().strip(),
-        'commit_hash': os.popen('git log -1 --pretty=%H').read().strip(),
         'last_launched': last_launched,
-        'wdir': os.getcwd(),
         'logged_in_users': views_user.get_logged_in_users_count(),  # Add initial logged-in users count
         'session_info': views_user.get_session_details(),  # Add initial session details
         'resource_log_size': views_user.get_resource_log_file_size(),  # Add resource log file size

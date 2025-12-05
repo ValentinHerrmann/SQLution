@@ -54,9 +54,9 @@ SQLution - Resource Overview
           </form>
           <form method="post" style="display: inline;">
             {% csrf_token %}
-            <input type="hidden" name="restart" value="true">
-            <button type="submit" class="btn btn-danger" style="margin: 2px;" onclick="return confirm('Are you sure you want to restart the server?')">
-              <i class="fas fa-sync-alt"></i> Update and Restart
+            <input type="hidden" name="axes_reset" value="true">
+            <button type="submit" class="btn btn-danger" style="margin: 2px;" onclick="return confirm('Are you sure you want to reset brute-force protection?')">
+              <i class="fas fa-trash-alt"></i> Reset Brute-Force Protection
             </button>
           </form>
         </div>
@@ -66,9 +66,7 @@ SQLution - Resource Overview
       <div class="card mb-2">
         <div class="card-body py-2">
           <h6 class="card-title mb-1">System Information</h6>
-          <p class="mb-1">Last commit: <a href="https://github.com/ValentinHerrmann/DataSpark/commit/{{ commit_hash }}" target="_blank" rel="noopener noreferrer"><i>{{ commit }}</i></a></p>
           <p class="mb-1">Last launched: <i>{{ last_launched }}</i></p>
-          <p class="mb-1">Working dir: <i>{{ wdir }}</i></p>
         </div>
       </div>
 
