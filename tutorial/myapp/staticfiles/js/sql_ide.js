@@ -1,6 +1,5 @@
 // SQL IDE client-side logic: Ace initialization, file explorer and save handlers
 (function () {
-  let isDirty = true;
   let filenameOnLoad = "";
   let contentOnLoad = "";
   let prevEditorHeight = null;

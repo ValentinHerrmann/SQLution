@@ -149,24 +149,6 @@ details details[open] {
   flex-wrap: wrap;
 }
 
-.btn-download {
-  background-color: #28a745;
-  border-color: #28a745;
-  color: white;
-  padding: 8px 16px;
-  border-radius: 4px;
-  text-decoration: none;
-  display: inline-block;
-  cursor: pointer;
-  margin-right: 10px;
-}
-
-.btn-download:hover {
-  background-color: #218838;
-  color: white;
-  text-decoration: none;
-}
-
 .form-group {
   margin-bottom: 20px;
 }
