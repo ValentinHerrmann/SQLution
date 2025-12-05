@@ -24,10 +24,10 @@
   <!-- Theme Switcher CSS Files -->
 
 
-  <link rel="stylesheet" href="{% static 'style_lightmode.css' %}">
-  <link rel="stylesheet" href="{% static 'style_darkmode.css' %}">
-  <link rel="stylesheet" href="{% static 'theme-switcher.css' %}">
-  <link rel="stylesheet" href="{% static 'stylesheet.css' %}">
+  <link rel="stylesheet" href="{% static 'css/style_lightmode.css' %}">
+  <link rel="stylesheet" href="{% static 'css/style_darkmode.css' %}">
+  <link rel="stylesheet" href="{% static 'css/theme-switcher.css' %}">
+  <link rel="stylesheet" href="{% static 'css/stylesheet.css' %}">
 
 
 
@@ -145,7 +145,7 @@
     <nav class="navbar navbar-expand-lg navbar-light bg-light" style="height: 58px;">
       <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
         <div class="ml-2 d-flex flex-column justify-content-center" style="height: 41px;">
-        <img src="{% static 'SQLution.svg' %}" alt="Logo" style="height: 40px;">
+        <img src="{% static 'img/SQLution.svg' %}" alt="Logo" style="height: 40px;">
           <span style="color: #bbbbbb; font-size: 0.5em; margin-top: -7px;">{% get_version %}</span> <!-- SOFTWARE VERSION -->
         </div>
           <div class="d-flex align-items-center h-100" style="height: 100%;">
@@ -247,6 +247,6 @@
     
     <!-- Theme Switcher JavaScript -->
       <!-- Theme Switcher JS -->
-  <script src="{% static 'theme-switcher.js' %}"></script>
+  <script src="{% static 'js/theme-switcher.js' %}"></script>
   </body>
 </html>
