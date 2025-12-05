@@ -116,6 +116,7 @@ jobs:
       SQLUTION_IMAGE: ${{ needs.build_image.outputs.image_ref }}
       REGISTRY_USER: ${{ secrets.DEPLOY_REGISTRY_USER }}
       REGISTRY_TOKEN: ${{ secrets.DEPLOY_REGISTRY_TOKEN }}
+      DJANGO_STATIC_URL: ${{ vars.DJANGO_STATIC_URL || '/app-static/' }}
     steps:
       - name: Deploy over SSH
         uses: appleboy/ssh-action@v0.1.7
@@ -123,12 +124,13 @@ jobs:
           DJANGO_ALLOWED_HOSTS: ${{ vars.DJANGO_ALLOWED_HOSTS || 'sqlution.de,www.sqlution.de,localhost,127.0.0.1' }}
           DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
           DEPLOY_APP_DIR: ${{ vars.DEPLOY_APP_DIR }}
+          DJANGO_STATIC_URL: ${{ vars.DJANGO_STATIC_URL || '/app-static/' }}
         with:
           host: ${{ vars.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           port: ${{ secrets.DEPLOY_PORT || '22' }}
-          envs: SQLUTION_IMAGE,REGISTRY_USER,REGISTRY_TOKEN,DJANGO_ALLOWED_HOSTS,DJANGO_SECRET_KEY,DEPLOY_APP_DIR
+          envs: SQLUTION_IMAGE,REGISTRY_USER,REGISTRY_TOKEN,DJANGO_ALLOWED_HOSTS,DJANGO_SECRET_KEY,DEPLOY_APP_DIR,DJANGO_STATIC_URL
           script: |
             set -euo pipefail
             if [ -z "${REGISTRY_USER:-}" ] || [ -z "${REGISTRY_TOKEN:-}" ]; then
@@ -141,6 +143,7 @@ jobs:
               -p 8000:8000 \
               -e SECRET_KEY="${DJANGO_SECRET_KEY}" \
               -e DJANGO_ALLOWED_HOSTS="${DJANGO_ALLOWED_HOSTS}" \
+              -e DJANGO_STATIC_URL="${DJANGO_STATIC_URL}" \
               -e SQLUTION_DB_DIR='/data' \
               -v sqlution-db:/data \
               -v "${DEPLOY_APP_DIR}/user_databases:/app/tutorial/user_databases" \
