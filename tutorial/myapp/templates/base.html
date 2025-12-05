@@ -5,7 +5,7 @@
     <meta charset="UTF-8" />
     <meta
       name="viewport"
-      content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0"
+      content="width=device-width", initial-scale=1.0
     />
     <title>
       {% block title %}
@@ -14,22 +14,21 @@
     </title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"  rel="stylesheet" />
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css" integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
-   
+ 
  
     <!-- Falls sich die Programmdateien relativ zur Html-Datei in einem Unterverzeichnis befinden: -->
-    <script>window.javaOnlineDir = "/static/sql-ide/";</script>
+    {% get_static_prefix as static_prefix %}
   
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   
   <!-- Theme Switcher CSS Files -->
 
 
-  <link rel="stylesheet" href="{% static 'style_lightmode.css' %}">
-  <link rel="stylesheet" href="{% static 'style_darkmode.css' %}">
-  <link rel="stylesheet" href="{% static 'theme-switcher.css' %}">
-  <link rel="stylesheet" href="{% static 'stylesheet.css' %}">
-
-
+  <link rel="stylesheet" href="{% static 'css/style_lightmode.css' %}">
+  <link rel="stylesheet" href="{% static 'css/style_darkmode.css' %}">
+  <link rel="stylesheet" href="{% static 'css/theme-switcher.css' %}">
+  <link rel="stylesheet" href="{% static 'css/stylesheet.css' %}">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 
    </head>
 
@@ -139,13 +138,13 @@
     {% load extrafilters %}    
     {% if not user.is_authenticated %}
       <script>
-        window.location.href = "{% url 'login' %}";
+        globalThis.location.href = "{% url 'login' %}";
       </script>
     {% endif %}
     <nav class="navbar navbar-expand-lg navbar-light bg-light" style="height: 58px;">
       <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
         <div class="ml-2 d-flex flex-column justify-content-center" style="height: 41px;">
-        <img src="{% static 'SQLution.svg' %}" alt="Logo" style="height: 40px;">
+        <img src="{% static 'img/SQLution.svg' %}" alt="Logo" style="height: 40px;">
           <span style="color: #bbbbbb; font-size: 0.5em; margin-top: -7px;">{% get_version %}</span> <!-- SOFTWARE VERSION -->
         </div>
           <div class="d-flex align-items-center h-100" style="height: 100%;">
@@ -247,6 +246,6 @@
     
     <!-- Theme Switcher JavaScript -->
       <!-- Theme Switcher JS -->
-  <script src="{% static 'theme-switcher.js' %}"></script>
+  <script src="{% static 'js/theme-switcher.js' %}"></script>
   </body>
 </html>

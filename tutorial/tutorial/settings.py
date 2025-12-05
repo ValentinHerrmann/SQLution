@@ -23,7 +23,9 @@ load_dotenv()
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY')
+# Provide a sane default so management commands can run during container builds where
+# sensitive environment variables are not injected yet. Override via SECRET_KEY env var.
+SECRET_KEY = os.getenv('SECRET_KEY') or 'sqlution-insecure-placeholder'
 
 
 
@@ -159,14 +161,19 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
-STATIC_URL = '/static/'
+STATIC_URL = os.getenv('DJANGO_STATIC_URL', '/app-static/').rstrip('/') + '/'
 
+STATIC_ROOT = os.getenv('DJANGO_STATIC_ROOT', os.path.join(BASE_DIR, 'staticfiles'))
 
-STATIC_ROOT=os.path.join(BASE_DIR, 'static')
-
+# Include shared project assets and generated frontend bundles during collectstatic.
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'myapp/staticfiles/'),
+    path for path in (
+        os.path.join(BASE_DIR, 'static'),
+        os.path.join(BASE_DIR, 'myapp/staticfiles'),
+    ) if os.path.isdir(path)
 ]
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 LOGIN_REDIRECT_URL = '/logged_in/'
 
@@ -191,6 +198,6 @@ RESOURCES_REFRESH = 500
 LOG_ROTATION_MAX_SIZE_MB = 10  # Maximum log file size in MB before rotation
 LOG_ROTATION_MAX_FILES = 4     # Maximum number of old log files to keep
 
-AXES_FAILURE_LIMIT = 5
+AXES_FAILURE_LIMIT = 10
 
 AXES_COOLOFF_TIME = 2

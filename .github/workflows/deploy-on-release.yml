@@ -3,6 +3,9 @@ name: Deploy
 on:
   release:
     types: [published]
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches-ignore: []
   workflow_dispatch:
     inputs:
       deploy_ref:
@@ -19,67 +22,121 @@ jobs:
       contents: read
       packages: write
     runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     outputs:
-      image_ref: ${{ steps.meta.outputs.image_ref }}
+      image_ref: ${{ steps.choose-image.outputs.image }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set VERSION file
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          REF_NAME: ${{ github.ref_name }}
-          DISPATCH_REF: ${{ inputs.deploy_ref }}
-        run: |
-          set -euo pipefail
-          if [ "$EVENT_NAME" = "release" ]; then
-            VERSION_VALUE="$REF_NAME"
-          else
-            if [ -n "${DISPATCH_REF:-}" ]; then
-              VERSION_VALUE="$DISPATCH_REF"
-            else
-              VERSION_VALUE="$REF_NAME"
-            fi
-          fi
-          printf '%s\n' "$VERSION_VALUE" > VERSION
-          echo "VERSION file set to $VERSION_VALUE"
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
       - name: Compute image metadata
         id: meta
         run: |
           OWNER=$(echo "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')
           IMAGE="ghcr.io/${OWNER}/sqlution"
+          # Use dispatch ref if provided, else event ref name
+          REF_BASIS="${INPUT_DEPLOY_REF:-${GITHUB_REF_NAME}}"
           SHA_TAG="${IMAGE}:${GITHUB_SHA}"
-          SAFE_REF=$(echo "${GITHUB_REF_NAME}" | tr '[:upper:]' '[:lower:]' | tr '/ ' '--')
+          SAFE_REF=$(echo "${REF_BASIS}" | tr '[:upper:]' '[:lower:]' | tr '/ ' '--')
           BRANCH_TAG="${IMAGE}:${SAFE_REF}"
+          TMP_TAG="${IMAGE}:tmp"
           echo "image_ref=${SHA_TAG}" >> "$GITHUB_OUTPUT"
           echo "branch_tag=${BRANCH_TAG}" >> "$GITHUB_OUTPUT"
+          echo "tmp_tag=${TMP_TAG}" >> "$GITHUB_OUTPUT"
+        env:
+          INPUT_DEPLOY_REF: ${{ inputs.deploy_ref }}
 
       - name: Log in to GitHub Container Registry
+        # Push every built image; allow PRs from same repo to push, skip fork PRs automatically
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Check if ref image exists
+        id: check-image
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          set -euo pipefail
+          TARGET="${{ steps.meta.outputs.branch_tag }}"
+          if docker manifest inspect "$TARGET" > /dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout repository
+        if: github.event_name == 'release' || github.event_name == 'pull_request' || steps.check-image.outputs.exists != 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.deploy_ref || github.ref }}
+
+      - name: Set VERSION file
+        if: github.event_name == 'release' || github.event_name == 'pull_request' || steps.check-image.outputs.exists != 'true'
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          DISPATCH_REF: ${{ inputs.deploy_ref }}
+        run: |
+          set -euo pipefail
+          TARGET_REF="$REF_NAME"
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ -n "${DISPATCH_REF:-}" ]; then
+            TARGET_REF="$DISPATCH_REF"
+          fi
+          if [ "$EVENT_NAME" = "release" ]; then
+            TARGET_REF="$REF_NAME"
+          fi
+          VERSION_VALUE="$TARGET_REF"
+          printf '%s\n' "$VERSION_VALUE" > VERSION
+          echo "VERSION file set to $VERSION_VALUE"
+
+      - name: Set up Docker Buildx
+        if: github.event_name == 'release' || github.event_name == 'pull_request' || steps.check-image.outputs.exists != 'true'
+        uses: docker/setup-buildx-action@v3
+
       - name: Build and push image
         uses: docker/build-push-action@v5
+        if: github.event_name == 'release' || github.event_name == 'pull_request' || steps.check-image.outputs.exists != 'true'
         with:
           context: .
           file: Dockerfile
           push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           tags: |
-            ${{ steps.meta.outputs.image_ref }}
-            ${{ steps.meta.outputs.branch_tag }}
+            ${{ github.event_name == 'pull_request' && steps.meta.outputs.tmp_tag || steps.meta.outputs.image_ref }}
+            ${{ github.event_name == 'pull_request' && steps.meta.outputs.tmp_tag || steps.meta.outputs.branch_tag }}
+
+      - name: Select image to use
+        id: choose-image
+        env:
+          INPUT_DEPLOY_REF: ${{ inputs.deploy_ref }}
+        run: |
+          # Releases: use commit-specific image
+          if [ "${GITHUB_EVENT_NAME}" = "release" ]; then
+            echo "image=${{ steps.meta.outputs.image_ref }}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Branch deployments (dispatch without tag): prefer latest -tmp tag
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
+            echo "image=${{ steps.meta.outputs.tmp_tag }}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # PR builds already tagged as -tmp
+          if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
+            echo "image=${{ steps.meta.outputs.tmp_tag }}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Fallback
+          echo "image=${{ steps.meta.outputs.branch_tag }}" >> "$GITHUB_OUTPUT"
 
   stop:
     name: Stop running application
-    needs: build_image # Do not stop if build failed to keep server running
+    if: github.event_name != 'pull_request'
     permissions:
       contents: read
+    environment:
+      name: production
+      url: https://sqlution.de
     runs-on: ubuntu-latest
     env:
       SQLUTION_IMAGE: ${{ needs.build_image.outputs.image_ref }}
@@ -103,6 +160,7 @@ jobs:
     needs:
       - build_image
       - stop
+    if: github.event_name != 'pull_request'
     permissions:
       contents: read
     runs-on: ubuntu-latest
@@ -113,8 +171,9 @@ jobs:
       SQLUTION_IMAGE: ${{ needs.build_image.outputs.image_ref }}
       REGISTRY_USER: ${{ secrets.DEPLOY_REGISTRY_USER }}
       REGISTRY_TOKEN: ${{ secrets.DEPLOY_REGISTRY_TOKEN }}
+      DJANGO_STATIC_URL: ${{ vars.DJANGO_STATIC_URL || '/app-static/' }}
     steps:
-      - name: Deploy over SSH
+      - name: Pull image on server
         uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ vars.DEPLOY_HOST }}
@@ -128,13 +187,35 @@ jobs:
               echo "Missing registry credentials (DEPLOY_REGISTRY_USER / DEPLOY_REGISTRY_TOKEN)." >&2
               exit 1
             fi
-            cd "${{ vars.DEPLOY_APP_DIR }}"
-            echo "Pulling and launching from GHCR ${SQLUTION_IMAGE}"
-            docker run -d --name sqlution-app \
+            echo "Pulling ${SQLUTION_IMAGE} on server"
+            echo "${REGISTRY_TOKEN}" | docker login ghcr.io -u "${REGISTRY_USER}" --password-stdin
+            docker pull "${SQLUTION_IMAGE}"
+
+      - name: Run container on server
+        uses: appleboy/ssh-action@v0.1.7
+        env:
+          DJANGO_ALLOWED_HOSTS: ${{ vars.DJANGO_ALLOWED_HOSTS || 'sqlution.de,www.sqlution.de,localhost,127.0.0.1' }}
+          DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+          DEPLOY_APP_DIR: ${{ vars.DEPLOY_APP_DIR }}
+          DJANGO_STATIC_URL: ${{ vars.DJANGO_STATIC_URL || '/app-static/' }}
+        with:
+          host: ${{ vars.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || '22' }}
+          envs: SQLUTION_IMAGE,DJANGO_ALLOWED_HOSTS,DJANGO_SECRET_KEY,DEPLOY_APP_DIR,DJANGO_STATIC_URL
+          script: |
+            set -euo pipefail
+            cd "${DEPLOY_APP_DIR}"
+            echo "Launching ${SQLUTION_IMAGE}"
+            docker run -d \
+              --restart unless-stopped \
+              --name sqlution-app \
               -p 8000:8000 \
-              -e SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }} \
-              -e DJANGO_ALLOWED_HOSTS=${{ vars.DJANGO_ALLOWED_HOSTS || 'sqlution.de,www.sqlution.de,localhost,127.0.0.1' }} \
+              -e SECRET_KEY="${DJANGO_SECRET_KEY}" \
+              -e DJANGO_ALLOWED_HOSTS="${DJANGO_ALLOWED_HOSTS}" \
+              -e DJANGO_STATIC_URL="${DJANGO_STATIC_URL}" \
               -e SQLUTION_DB_DIR='/data' \
               -v sqlution-db:/data \
-              -v "${{ vars.DEPLOY_APP_DIR }}/user_databases:/app/tutorial/user_databases" \
-              "$SQLUTION_IMAGE"
+              -v "${DEPLOY_APP_DIR}/user_databases:/app/tutorial/user_databases" \
+              "${SQLUTION_IMAGE}"

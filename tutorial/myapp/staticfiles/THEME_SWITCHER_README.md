@@ -53,13 +53,13 @@ setTheme('dark');  // or 'light'
 const currentTheme = getTheme(); // returns 'light' or 'dark'
 
 // Reset to system preference
-window.themeSwitcher.resetToSystemTheme();
+globalThis.themeSwitcher.resetToSystemTheme();
 ```
 
 ### Events
 Listen for theme changes:
 ```javascript
-window.addEventListener('themeChanged', (event) => {
+globalThis.addEventListener('themeChanged', (event) => {
     console.log('Theme changed to:', event.detail.theme);
 });
 ```

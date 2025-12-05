@@ -11,12 +11,12 @@
     {% load static %}
         
     <!-- Theme Switcher CSS Files -->
-    <link rel="stylesheet" href="{% static 'style_lightmode.css' %}">
-    <link rel="stylesheet" href="{% static 'style_darkmode.css' %}">
-    <link rel="stylesheet" href="{% static 'theme-switcher.css' %}">
+    <link rel="stylesheet" href="{% static 'css/style_lightmode.css' %}">
+    <link rel="stylesheet" href="{% static 'css/style_darkmode.css' %}">
+    <link rel="stylesheet" href="{% static 'css/theme-switcher.css' %}">
 
   </head>
-  <body>
+  <body class="login-page">
     {% load extrafilters %}
         
     <!-- Theme Toggle Switch -->
@@ -28,7 +28,7 @@
       <div class="card shadow-lg p-4" style="width: 400px;">
         <div class="text-center mb-4">
           <div class="d-flex flex-column align-items-center">
-            <img src="{% static 'SQLution.svg' %}" alt="SQLution Logo" style="width: 150px;">
+            <img src="{% static 'img/SQLution.svg' %}" alt="SQLution Logo" style="width: 150px;">
             <span style="color: #bbbbbb; font-size: 1.1em; margin-top: -14px;">SQLution - {% get_version %}</span> <!-- SOFTWARE VERSION -->
           </div>
         </div>
@@ -54,7 +54,7 @@
             </div>
           {% else %}
             <div class="alert alert-info" role="alert">
-              Bitte anmelden, um diese Seite zu nutzen.
+              Diese App kann nur mit Account genutzt werden.
             </div>
           {% endif %}
         {% endif %}
@@ -78,6 +78,6 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
     
     <!-- Theme Switcher JavaScript -->
-    <script src="{% static 'theme-switcher.js' %}"></script>
+    <script src="{% static 'js/theme-switcher.js' %}"></script>
   </body>
 </html>

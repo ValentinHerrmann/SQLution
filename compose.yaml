@@ -7,6 +7,7 @@ services:
     environment:
       SECRET_KEY: "${SECRET_KEY:?SECRET_KEY must be set}"
       DJANGO_ALLOWED_HOSTS: "${DJANGO_ALLOWED_HOSTS:-sqlution.de,www.sqlution.de,localhost,127.0.0.1}"
+      DJANGO_STATIC_URL: "${DJANGO_STATIC_URL:-/app-static/}"
       SQLUTION_DB_DIR: /data
     restart: unless-stopped
     # Persist app data and cap memory usage

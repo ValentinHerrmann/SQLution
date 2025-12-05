@@ -1,12 +1,13 @@
 {% extends "base.html" %} 
+{% load static %}
 {% block title %}
 SQLution - Klassendiagramm
 {% endblock %}
 
 
 {% block content %} 
-    <script defer="defer" src="/static/apollon/vendors.js"></script>
-    <script defer="defer" src="/static/apollon/main.js"></script>
+    <script defer="defer" src="{% static 'apollon/vendors.js' %}"></script>
+    <script defer="defer" src="{% static 'apollon/main.js' %}"></script>
 
 
 
