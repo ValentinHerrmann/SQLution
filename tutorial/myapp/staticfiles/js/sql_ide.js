@@ -75,7 +75,7 @@
           );
           if (!ok) return;
           try {
-            const base = f.replaceAll(/\.sql$/i, '');
+            const base = f.replace(/\.sql$/i, '');
             const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
             const resp = await fetch(`/api/sql/${encodeURIComponent(base)}.sql`, { method: 'DELETE', headers: csrftoken ? { 'X-CSRFToken': csrftoken } : {} });
             if (resp.ok) {
@@ -114,7 +114,7 @@
   async function saveFile(filename, content) {
     try {
       console.log("Saving file: " + filename);
-      const base = filename.replaceAll(/\.sql$/i, '');
+      const base = filename.replace(/\.sql$/i, '');
       const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
       const url = `/api/sql/${encodeURIComponent(base)}.sql`;
       const headers = { "Content-Type": "application/json" };
@@ -192,7 +192,7 @@
         if (btn) btn.style.display = 'inline-block';
       }
 
-      const base = filename.replaceAll(/\.sql$/i, '');
+      const base = filename.replace(/\.sql$/i, '');
       const resp = await fetch(`/api/sql/${encodeURIComponent(base)}.sql`);
       if (!resp.ok) throw new Error('Could not load file content');
       const content = await resp.text();
@@ -246,7 +246,7 @@
     if (!filename) return;
     if (!filename.toLowerCase().endsWith('.sql')) filename += '.sql';
     try {
-      const base = filename.replaceAll(/\.sql$/i, '');
+      const base = filename.replace(/\.sql$/i, '');
       const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
       const url = `/api/sql/${encodeURIComponent(base)}.sql`;
       const headers = { "Content-Type": "application/json" };
