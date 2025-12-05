@@ -68,7 +68,7 @@
   background: linear-gradient(135deg, #495057 0%, #343a40 100%);
   border-color: #6c757d;
   box-shadow: 0 4px 8px rgba(0,0,0,0.3), 0 2px 4px rgba(0,0,0,0.2);
-  transform: translateY(-50%) translateX(26px);
+  transform: translateY(-50%) translateX(27px);
 }
 
 /* Dark mode slider icon */
