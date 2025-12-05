@@ -36,7 +36,7 @@ jobs:
           SHA_TAG="${IMAGE}:${GITHUB_SHA}"
           SAFE_REF=$(echo "${REF_BASIS}" | tr '[:upper:]' '[:lower:]' | tr '/ ' '--')
           BRANCH_TAG="${IMAGE}:${SAFE_REF}"
-          TMP_TAG="${IMAGE}:tmp"
+          TMP_TAG="${IMAGE}:tmp-dev"
           echo "image_ref=${SHA_TAG}" >> "$GITHUB_OUTPUT"
           echo "branch_tag=${BRANCH_TAG}" >> "$GITHUB_OUTPUT"
           echo "tmp_tag=${TMP_TAG}" >> "$GITHUB_OUTPUT"
