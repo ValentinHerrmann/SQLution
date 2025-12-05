@@ -107,8 +107,12 @@ jobs:
       - name: Select image to use
         id: choose-image
         run: |
-          # For deploys use the ref tag (built or existing); for PRs just build/test
-          echo "image=${{ steps.meta.outputs.branch_tag }}" >> "$GITHUB_OUTPUT"
+          # Prefer commit-specific image; only fall back to ref tag when we skipped build on dispatch because it already exists
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ] && [ "${{ steps.check-image.outputs.exists }}" = "true" ]; then
+            echo "image=${{ steps.meta.outputs.branch_tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "image=${{ steps.meta.outputs.image_ref }}" >> "$GITHUB_OUTPUT"
+          fi
 
   stop:
     name: Stop running application
