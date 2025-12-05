@@ -173,7 +173,7 @@ STATICFILES_DIRS = [
     ) if os.path.isdir(path)
 ]
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 LOGIN_REDIRECT_URL = '/logged_in/'
 
