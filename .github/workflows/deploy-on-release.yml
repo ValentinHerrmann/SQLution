@@ -117,7 +117,7 @@ jobs:
             exit 0
           fi
           # Branch deployments (dispatch without tag): prefer latest -tmp tag
-          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ] && [ -n "${INPUT_DEPLOY_REF}" ]; then
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
             echo "image=${{ steps.meta.outputs.tmp_tag }}" >> "$GITHUB_OUTPUT"
             exit 0
           fi
