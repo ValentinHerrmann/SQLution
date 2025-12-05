@@ -4,7 +4,7 @@
         {
             "label": "build sql ide",
             "type": "shell",
-            "command": "cd '${workspaceFolder}/../DataSpark_SQL-IDE'; Remove-Item -Path dist, dist-embedded -Recurse -Force -ErrorAction SilentlyContinue; npm run build",
+            "command": "SOURCE='${workspaceFolder}/../DataSpark_SQL-IDE'; if [ -d \"$SOURCE\" ]; then cd \"$SOURCE\" && rm -rf dist dist-embedded && npm run build; else echo '[sql-ide] Source repository not found, skipping build'; fi",
             "dependsOn": [
                 "remove old sql ide"
             ]
@@ -12,30 +12,34 @@
         {
             "label": "remove old sql ide",
             "type": "shell",
-            "command": "Remove-Item '${workspaceFolder}/tutorial/myapp/staticfiles/sql-ide/*' -Recurse -Force -ErrorAction SilentlyContinue"
+            "command": "TARGET='${workspaceFolder}/tutorial/myapp/staticfiles/sql-ide'; if [ -d \"$TARGET\" ]; then rm -rf \"$TARGET\"/*; fi"
         },
         {
             "label": "copy sql ide",
             "type": "shell",
-            "command": "cd '${workspaceFolder}/../DataSpark_SQL-IDE/dist-embedded' ; copy-Item * -Destination '${workspaceFolder}/tutorial/myapp/staticfiles/sql-ide' -Recurse -force",
+            "command": "SOURCE='${workspaceFolder}/../DataSpark_SQL-IDE/dist-embedded'; TARGET='${workspaceFolder}/tutorial/myapp/staticfiles/sql-ide'; if [ -d \"$SOURCE\" ]; then mkdir -p \"$TARGET\" && cp -a \"$SOURCE\"/. \"$TARGET\"/; else echo '[sql-ide] Build artifacts not found, skipping copy'; fi",
             "dependsOn": [
                 "build sql ide"
             ]
         },
         {
+            "label": "build apollon",
+            "type": "shell",
+            "command": "SOURCE='${workspaceFolder}/../DataSpark_Apollon'; if [ -d \"$SOURCE\" ]; then cd \"$SOURCE\" && npm run build; else echo '[apollon] Source repository not found, skipping build'; fi"
+        },
+        {
             "label": "copy apollon",
             "type": "shell",
-            "command": "cd '${workspaceFolder}/../DataSpark_Apollon/dist' ; copy-Item * -Destination '${workspaceFolder}/tutorial/myapp/staticfiles/apollon' -Recurse -force",
+            "command": "SOURCE='${workspaceFolder}/../DataSpark_Apollon/dist'; TARGET='${workspaceFolder}/tutorial/myapp/staticfiles/apollon'; if [ -d \"$SOURCE\" ]; then mkdir -p \"$TARGET\" && cp -a \"$SOURCE\"/. \"$TARGET\"/; else echo '[apollon] Build artifacts not found, skipping copy'; fi",
             "dependsOn": [
                 "build apollon"
             ]
         },
         {
-            "label": "copy apollon",
-            "type": "shell",
-            "command": "cd '${workspaceFolder}/../DataSpark_Apollon/dist' ; copy-Item * -Destination '${workspaceFolder}/tutorial/myapp/staticfiles/apollon' -Recurse -force",
+            "label": "sync embedded frontends",
             "dependsOn": [
-                "build apollon"
+                "copy sql ide",
+                "copy apollon"
             ]
         },
         {
@@ -115,6 +119,9 @@
         {
             "type": "docker-build",
             "label": "docker-build",
+            "dependsOn": [
+                "sync embedded frontends"
+            ],
             "platform": "python",
             "dockerBuild": {
                 "tag": "sqlution:latest",
@@ -130,6 +137,7 @@
                 "docker-build"
             ],
             "dockerRun": {
+                "containerName": "sqlution-dev",
                 "ports": [
                     {
                         "containerPort": 8000,

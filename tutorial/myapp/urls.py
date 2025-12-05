@@ -4,10 +4,12 @@ from myapp import views_user
 from django.views.generic import RedirectView
 from django.templatetags.static import static
 
-favicon_view = RedirectView.as_view(url=static('favicon.ico'), permanent=True)
+favicon_view = RedirectView.as_view(url=static('/img/favicon.svg'), permanent=True)
 
 urlpatterns = [
-    path('favicon.ico', favicon_view),
+    
+    path('favicon.svg', favicon_view),
+    #path('favicon.png', favicon_view),
     re_path(r'^actuator/gateway/routes/?$', simple.actuator_gateway_routes, name='actuator_gateway_routes'),
     path('', simple.home, name='home'),
     path('apollon/', simple.apollon, name='apollon'),
