@@ -150,6 +150,43 @@ body:not([data-theme]) .btn-inactive {
   color: var(--text-primary);
 }
 
+/* Forms used outside bootstrap helpers */
+[data-theme="dark"] .form-group label {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .form-group input[type="text"],
+[data-theme="dark"] .form-group input[type="file"],
+[data-theme="dark"] .form-group input[type="color"],
+[data-theme="dark"] .form-group select,
+[data-theme="dark"] .form-group textarea {
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .form-group input[type="text"]:focus,
+[data-theme="dark"] .form-group input[type="file"]:focus,
+[data-theme="dark"] .form-group input[type="color"]:focus,
+[data-theme="dark"] .form-group select:focus,
+[data-theme="dark"] .form-group textarea:focus {
+  background-color: var(--bg-tertiary);
+  border-color: var(--accent-primary);
+  color: var(--text-primary);
+  box-shadow: 0 0 0 0.2rem rgba(77, 171, 247, 0.25);
+  outline: none;
+}
+
+[data-theme="dark"] .help-text {
+  color: var(--text-muted);
+}
+
+[data-theme="dark"] .qr-svg-container {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 6px var(--shadow-dark);
+}
+
 /* Tables */
 [data-theme="dark"] .table {
   color: var(--text-primary);
@@ -246,6 +283,31 @@ body:not([data-theme]) .btn-inactive {
   opacity: 1;
 }
 
+/* Alerts */
+[data-theme="dark"] .alert-info {
+  background-color: #1b2d2e;
+  border-color: #2a3e3f;
+  color: #d1ecf1;
+}
+
+[data-theme="dark"] .alert-warning {
+  background-color: #2d2a1b;
+  border-color: #3e3a2a;
+  color: #fff3cd;
+}
+
+[data-theme="dark"] .alert-danger {
+  background-color: #2d1b1e;
+  border-color: #3e2723;
+  color: #f8d7da;
+}
+
+[data-theme="dark"] .alert-success {
+  background-color: #1f2d1f;
+  border-color: #2c3e2c;
+  color: #d4edda;
+}
+
 /* Dropdowns */
 [data-theme="dark"] .dropdown-menu {
   background-color: var(--bg-secondary);
@@ -334,24 +396,6 @@ body:not([data-theme]) .btn-inactive {
   background-color: var(--bg-primary) !important;
   border: 1px solid var(--border-color) !important;
   color: var(--text-primary) !important;
-}
-
-[data-theme="dark"] .login-page .alert-danger {
-  background-color: #2d1b1e !important;
-  border-color: #3e2723 !important;
-  color: #f8d7da !important;
-}
-
-[data-theme="dark"] .login-page .alert-warning {
-  background-color: #2d2a1b !important;
-  border-color: #3e3a2a !important;
-  color: #fff3cd !important;
-}
-
-[data-theme="dark"] .login-page .alert-info {
-  background-color: #1b2d2e !important;
-  border-color: #2a3e3f !important;
-  color: #d1ecf1 !important;
 }
 
 [data-theme="dark"] .login-page .form-control {
