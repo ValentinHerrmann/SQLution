@@ -164,8 +164,11 @@ jobs:
             
             # If HTTPS block exists, append it (ensure client_max_body_size is present)
             if [ -n "$HTTPS_BLOCK" ]; then
-              # Inject client_max_body_size into each server block if missing
-              printf '%s' "$HTTPS_BLOCK" | awk -v size="$NGINX_CLIENT_MAX_BODY_SIZE" 'BEGIN{RS="\n\n"; ORS="\n\n"} { if ($0 !~ /client_max_body_size/) { sub(/server[ \t]*\{/, "server {\n    client_max_body_size " size ";") } print }' | sudo tee -a /etc/nginx/sites-available/sqlution-prod > /dev/null
+              # Drop existing client_max_body_size directives and insert our configured value once per server block
+              printf '%s' "$HTTPS_BLOCK" \
+                | sed '/client_max_body_size[[:space:]]/d' \
+                | awk -v size="$NGINX_CLIENT_MAX_BODY_SIZE" 'BEGIN{RS="\n\n"; ORS="\n\n"} { sub(/server[ \t]*\{/, "server {\n    client_max_body_size " size ";"); print }' \
+                | sudo tee -a /etc/nginx/sites-available/sqlution-prod > /dev/null
             else
               # No HTTPS config exists, run certbot to obtain SSL certificate
               echo "No HTTPS configuration found, running certbot..."
