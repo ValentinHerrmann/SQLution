@@ -3,7 +3,6 @@ name: Deploy Dev (PR and Manual)
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-    branches-ignore: []
   workflow_dispatch:
     inputs:
       deploy_ref:
@@ -12,19 +11,6 @@ on:
         required: false
 
 jobs:
-  name: Deploy Dev (PR and Manual)
-
-  on:
-    pull_request:
-      types: [opened, synchronize, reopened, ready_for_review]
-    workflow_dispatch:
-      inputs:
-        deploy_ref:
-          description: "Git reference (tag or branch) to deploy as dev"
-          default: ""
-          required: false
-
-  jobs:
     build_image:
       name: Build and publish dev image on GHCR
       permissions:
