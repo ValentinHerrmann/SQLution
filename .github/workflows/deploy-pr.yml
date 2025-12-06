@@ -91,7 +91,6 @@ jobs:
         name: dev
         url: https://dev.sqlution.de
       runs-on: ubuntu-latest
-      needs: stop
       steps:
         - name: Configure nginx with SSL preservation
           uses: appleboy/ssh-action@v0.1.7
@@ -105,13 +104,13 @@ jobs:
               sudo mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled
               sudo find /etc/nginx/sites-enabled -type l ! -exec test -e {} \; -delete
               
-              # Capture existing HTTPS server block if it exists
+              # Capture existing HTTPS server block if it exists (only the 443 block)
               HTTPS_BLOCK=""
               if [ -f /etc/nginx/sites-available/sqlution-dev ]; then
                 # Check if HTTPS config exists by looking for listen 443
                 if sudo grep -q 'listen.*443' /etc/nginx/sites-available/sqlution-dev 2>/dev/null; then
-                  # Extract everything after the first server block (which is HTTP)
-                  HTTPS_BLOCK=$(sudo awk 'BEGIN{block=0; capture=0} /^server \{/{block++; if(block==2) capture=1} capture{print}' /etc/nginx/sites-available/sqlution-dev)
+                  # Extract only the server block containing listen 443
+                  HTTPS_BLOCK=$(sudo awk '/^server \{/{p=1; buf=""} p{buf=buf $0 "\n"; if(/listen.*443/) found=1} /^\}/ && p{if(found) print buf; p=0; found=0; buf=""}' /etc/nginx/sites-available/sqlution-dev)
                 fi
               fi
               
