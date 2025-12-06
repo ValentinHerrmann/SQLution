@@ -251,7 +251,7 @@ jobs:
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           port: ${{ secrets.DEPLOY_PORT || '22' }}
-          envs: SQLUTION_IMAGE,DJANGO_ALLOWED_HOSTS,DJANGO_SECRET_KEY,DJANGO_DEBUG_MODE,DEPLOY_APP_DIR,DJANGO_STATIC_URL
+          envs: SQLUTION_IMAGE,DJANGO_ALLOWED_HOSTS,DJANGO_SECRET_KEY,DJANGO_DEBUG_MODE,DEPLOY_APP_DIR,DJANGO_STATIC_URL,FILE_UPLOAD_MAX_MEMORY_SIZE,DATA_UPLOAD_MAX_MEMORY_SIZE
           script: |
             set -euo pipefail
             cd "${DEPLOY_APP_DIR}"
