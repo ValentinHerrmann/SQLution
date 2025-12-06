@@ -82,46 +82,16 @@ jobs:
           id: choose-image
           run: echo "image=${{ steps.meta.outputs.tmp_tag }}" >> "$GITHUB_OUTPUT"
 
-    stop:
-      name: Stop running dev application
+    configure_nginx:
+      name: Configure nginx for dev
       if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
       permissions:
         contents: read
       environment:
         name: dev
       runs-on: ubuntu-latest
-      env:
-        SQLUTION_IMAGE: ${{ needs.build_image.outputs.image_ref }}
       steps:
-        - name: Stop dev application over SSH
-          uses: appleboy/ssh-action@v0.1.7
-          with:
-            host: ${{ vars.DEPLOY_HOST }}
-            username: ${{ secrets.DEPLOY_USER }}
-            key: ${{ secrets.DEPLOY_SSH_KEY }}
-            port: ${{ secrets.DEPLOY_PORT || '22' }}
-            envs: SQLUTION_IMAGE
-            script: |
-              set -euo pipefail
-              docker container stop sqlution-app-dev || true
-              docker container rm sqlution-app-dev || true
-
-    launch:
-      name: Launch new dev container
-      needs: [build_image, stop]
-      if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
-      permissions:
-        contents: read
-      runs-on: ubuntu-latest
-      environment:
-        name: dev
-      env:
-        SQLUTION_IMAGE: ${{ needs.build_image.outputs.image_ref }}
-        REGISTRY_USER: ${{ secrets.DEPLOY_REGISTRY_USER }}
-        REGISTRY_TOKEN: ${{ secrets.DEPLOY_REGISTRY_TOKEN }}
-        DJANGO_STATIC_URL: ${{ vars.DJANGO_STATIC_URL || '/app-static/' }}
-      steps:
-        - name: Configure nginx (HTTP only)
+        - name: Configure nginx with SSL preservation
           uses: appleboy/ssh-action@v0.1.7
           with:
             host: ${{ vars.DEPLOY_HOST }}
@@ -193,6 +163,42 @@ jobs:
               sudo nginx -t
               sudo systemctl reload nginx
 
+    stop:
+      name: Stop running dev application
+      if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+      permissions:
+        contents: read
+      environment:
+        name: dev
+      runs-on: ubuntu-latest
+      steps:
+        - name: Stop dev application over SSH
+          uses: appleboy/ssh-action@v0.1.7
+          with:
+            host: ${{ vars.DEPLOY_HOST }}
+            username: ${{ secrets.DEPLOY_USER }}
+            key: ${{ secrets.DEPLOY_SSH_KEY }}
+            port: ${{ secrets.DEPLOY_PORT || '22' }}
+            script: |
+              set -euo pipefail
+              docker container stop sqlution-app-dev || true
+              docker container rm sqlution-app-dev || true
+
+    launch:
+      name: Launch new dev container
+      needs: [build_image, configure_nginx, stop]
+      if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+      permissions:
+        contents: read
+      runs-on: ubuntu-latest
+      environment:
+        name: dev
+      env:
+        SQLUTION_IMAGE: ${{ needs.build_image.outputs.image_ref }}
+        REGISTRY_USER: ${{ secrets.DEPLOY_REGISTRY_USER }}
+        REGISTRY_TOKEN: ${{ secrets.DEPLOY_REGISTRY_TOKEN }}
+        DJANGO_STATIC_URL: ${{ vars.DJANGO_STATIC_URL || '/app-static/' }}
+      steps:
         - name: Pull image on server
           uses: appleboy/ssh-action@v0.1.7
           with:
