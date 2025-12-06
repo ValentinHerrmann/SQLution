@@ -137,6 +137,10 @@ jobs:
             # Create nginx config directory if it doesn't exist
             sudo mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled
             
+            # Disable default site and any conflicting sites
+            sudo rm -f /etc/nginx/sites-enabled/default
+            sudo rm -f /etc/nginx/sites-enabled/sqlution*
+            
             # Create/update production site config (preserves certbot SSL)
             cat <<'EOF' | sudo tee /etc/nginx/sites-available/sqlution-prod > /dev/null
             upstream sqlution_prod {
@@ -145,6 +149,7 @@ jobs:
             
             server {
               server_name sqlution.de www.sqlution.de;
+              listen 80;
               
               # Route to production container on port 8000
               location / {
@@ -160,12 +165,6 @@ jobs:
               # SSL configuration will be auto-managed by certbot
               # listen 443 ssl; and ssl_certificate directives added by certbot
             }
-            
-            server {
-              listen 80;
-              server_name sqlution.de www.sqlution.de;
-              # Redirect HTTP to HTTPS (certbot managed)
-            }
             EOF
             
             # Create/update dev site config
@@ -176,6 +175,7 @@ jobs:
             
             server {
               server_name dev.sqlution.de;
+              listen 80;
               
               # Route to dev container on port 8001
               location / {
@@ -191,17 +191,11 @@ jobs:
               # SSL configuration will be auto-managed by certbot
               # listen 443 ssl; and ssl_certificate directives added by certbot
             }
-            
-            server {
-              listen 80;
-              server_name dev.sqlution.de;
-              # Redirect HTTP to HTTPS (certbot managed)
-            }
             EOF
             
-            # Enable sites if not already enabled
-            sudo ln -sf /etc/nginx/sites-available/sqlution-prod /etc/nginx/sites-enabled/sqlution-prod || true
-            sudo ln -sf /etc/nginx/sites-available/sqlution-dev /etc/nginx/sites-enabled/sqlution-dev || true
+            # Enable sites
+            sudo ln -sf /etc/nginx/sites-available/sqlution-prod /etc/nginx/sites-enabled/sqlution-prod
+            sudo ln -sf /etc/nginx/sites-available/sqlution-dev /etc/nginx/sites-enabled/sqlution-dev
             
             # Test nginx configuration
             sudo nginx -t
