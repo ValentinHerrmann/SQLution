@@ -76,7 +76,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Configure nginx with SSL preservation
-        uses: appleboy/ssh-action@27b0d48c3c0d4c54cf5c7d07212e08a3b04ba201
+        uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ vars.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
@@ -159,7 +159,7 @@ jobs:
       SQLUTION_IMAGE: ${{ needs.build_image.outputs.image_ref }}
     steps:
       - name: Stop application over SSH
-        uses: appleboy/ssh-action@27b0d48c3c0d4c54cf5c7d07212e08a3b04ba201
+        uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ vars.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
@@ -188,7 +188,7 @@ jobs:
       DJANGO_STATIC_URL: ${{ vars.DJANGO_STATIC_URL || '/app-static/' }}
     steps:
       - name: Pull image on server
-        uses: appleboy/ssh-action@27b0d48c3c0d4c54cf5c7d07212e08a3b04ba201
+        uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ vars.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
@@ -206,7 +206,7 @@ jobs:
             docker pull "${SQLUTION_IMAGE}"
 
       - name: Run container on server
-        uses: appleboy/ssh-action@27b0d48c3c0d4c54cf5c7d07212e08a3b04ba201
+        uses: appleboy/ssh-action@v0.1.7
         env:
           DJANGO_ALLOWED_HOSTS: ${{ vars.DJANGO_ALLOWED_HOSTS || 'sqlution.de,www.sqlution.de,localhost,127.0.0.1' }}
           DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
