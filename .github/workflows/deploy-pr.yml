@@ -149,8 +149,8 @@ jobs:
               EOF
 
               # Replace the placeholder with the actual size (preserve other $-variables)
-              # Use envsubst to only substitute NGINX_CLIENT_MAX_BODY_SIZE and leave nginx $-variables intact
-              sudo envsubst '${NGINX_CLIENT_MAX_BODY_SIZE}' < /tmp/sqlution-dev.conf | sudo tee /etc/nginx/sites-available/sqlution-dev > /dev/null
+              # Run envsubst without sudo so it can see the exported variable, then pipe into sudo tee
+              envsubst '${NGINX_CLIENT_MAX_BODY_SIZE}' < /tmp/sqlution-dev.conf | sudo tee /etc/nginx/sites-available/sqlution-dev > /dev/null
               sudo rm -f /tmp/sqlution-dev.conf
               
               # If HTTPS block exists, append it (ensure client_max_body_size is present)
