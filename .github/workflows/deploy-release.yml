@@ -125,8 +125,32 @@ jobs:
               SSL_LINES=$(sudo grep -E 'ssl_|options-ssl-nginx.conf|dhparam' /etc/nginx/sites-available/sqlution-prod || true)
             fi
 
-            # Rebuild production site config (HTTP + HTTPS). If SSL lines existed, reuse them.
-            cat <<'EOF' | sudo tee /etc/nginx/sites-available/sqlution-prod > /dev/null
+            # If no SSL directives, only configure HTTP to avoid nginx ssl errors
+            if [ -z "$SSL_LINES" ]; then
+              cat <<'EOF' | sudo tee /etc/nginx/sites-available/sqlution-prod > /dev/null
+            upstream sqlution_prod {
+              server 127.0.0.1:8000;
+            }
+
+            server {
+              server_name sqlution.de www.sqlution.de;
+              listen 80;
+              listen [::]:80;
+
+              location / {
+                proxy_pass http://sqlution_prod;
+                proxy_set_header Host \$host;
+                proxy_set_header X-Real-IP \$remote_addr;
+                proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto \$scheme;
+                proxy_set_header Upgrade \$http_upgrade;
+                proxy_set_header Connection "upgrade";
+              }
+            }
+            EOF
+            else
+              # Rebuild production site config (HTTP + HTTPS) reusing SSL directives
+              cat <<'EOF' | sudo tee /etc/nginx/sites-available/sqlution-prod > /dev/null
             upstream sqlution_prod {
               server 127.0.0.1:8000;
             }
@@ -152,21 +176,9 @@ jobs:
               server_name sqlution.de www.sqlution.de;
               listen 443 ssl;
               listen [::]:443 ssl;
-            EOF
+EOF
 
-            # Add back ssl lines if present, otherwise add placeholder for certbot-managed SSL
-            if [ -n "$SSL_LINES" ]; then
               printf '  %s\n' "$SSL_LINES" | sudo tee -a /etc/nginx/sites-available/sqlution-prod > /dev/null
-            else
-              cat <<'EOF' | sudo tee -a /etc/nginx/sites-available/sqlution-prod > /dev/null
-              # SSL directives managed by certbot (run certbot if missing)
-              include /etc/letsencrypt/options-ssl-nginx.conf;
-              ssl_certificate /etc/letsencrypt/live/sqlution.de/fullchain.pem;
-              ssl_certificate_key /etc/letsencrypt/live/sqlution.de/privkey.pem;
-              ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
-              # ssl_trusted_certificate can be added if certbot configured it
-            EOF
-            fi
 
             cat <<'EOF' | sudo tee -a /etc/nginx/sites-available/sqlution-prod > /dev/null
 
@@ -181,6 +193,7 @@ jobs:
               }
             }
             EOF
+            fi
             
             # Enable production site
             sudo ln -sf /etc/nginx/sites-available/sqlution-prod /etc/nginx/sites-enabled/sqlution-prod
