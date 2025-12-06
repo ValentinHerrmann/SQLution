@@ -116,11 +116,8 @@ jobs:
             # Create nginx config directory if it doesn't exist
             sudo mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled
             
-            # Remove broken symlinks in sites-enabled
+            # Remove only broken symlinks in sites-enabled (preserve other valid sites)
             sudo find /etc/nginx/sites-enabled -type l ! -exec test -e {} \; -delete
-            
-            # Disable any conflicting dev site
-            sudo rm -f /etc/nginx/sites-enabled/sqlution-dev
             
             # Create/update production site config (preserves certbot SSL)
             cat <<'EOF' | sudo tee /etc/nginx/sites-available/sqlution-prod > /dev/null
@@ -148,7 +145,7 @@ jobs:
             }
             EOF
             
-            # Enable production site
+            # Enable production site (dev site may also be enabled, both coexist)
             sudo ln -sf /etc/nginx/sites-available/sqlution-prod /etc/nginx/sites-enabled/sqlution-prod
             
             # Test nginx configuration
