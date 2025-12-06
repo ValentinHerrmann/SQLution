@@ -85,7 +85,6 @@ jobs:
 
   stop:
     name: Stop running dev application
-    needs: build_image
     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
     permissions:
       contents: read
