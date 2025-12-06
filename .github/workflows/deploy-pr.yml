@@ -134,7 +134,7 @@ jobs:
                 listen [::]:80;
 
                 # limit request body size for uploads
-                client_max_body_size \\${NGINX_CLIENT_MAX_BODY_SIZE};
+                  client_max_body_size ${NGINX_CLIENT_MAX_BODY_SIZE};
 
                 location / {
                   proxy_pass http://sqlution_dev;
