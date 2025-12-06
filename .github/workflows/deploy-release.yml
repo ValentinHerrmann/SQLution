@@ -104,6 +104,92 @@ jobs:
       REGISTRY_TOKEN: ${{ secrets.DEPLOY_REGISTRY_TOKEN }}
       DJANGO_STATIC_URL: ${{ vars.DJANGO_STATIC_URL || '/app-static/' }}
     steps:
+      - name: Configure nginx
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ vars.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || '22' }}
+          script: |
+            set -euo pipefail
+            # Create nginx config directory if it doesn't exist
+            sudo mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled
+            
+            # Create/update production site config (preserves certbot SSL)
+            cat <<'EOF' | sudo tee /etc/nginx/sites-available/sqlution-prod > /dev/null
+            upstream sqlution_prod {
+              server 127.0.0.1:8000;
+            }
+            
+            server {
+              server_name sqlution.de www.sqlution.de;
+              
+              # Route to production container on port 8000
+              location / {
+                proxy_pass http://sqlution_prod;
+                proxy_set_header Host \$host;
+                proxy_set_header X-Real-IP \$remote_addr;
+                proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto \$scheme;
+                proxy_set_header Upgrade \$http_upgrade;
+                proxy_set_header Connection "upgrade";
+              }
+            
+              # SSL configuration will be auto-managed by certbot
+              # listen 443 ssl; and ssl_certificate directives added by certbot
+            }
+            
+            server {
+              listen 80;
+              server_name sqlution.de www.sqlution.de;
+              # Redirect HTTP to HTTPS (certbot managed)
+            }
+            EOF
+            
+            # Create/update dev site config
+            cat <<'EOF' | sudo tee /etc/nginx/sites-available/sqlution-dev > /dev/null
+            upstream sqlution_dev {
+              server 127.0.0.1:8001;
+            }
+            
+            server {
+              server_name dev.sqlution.de;
+              
+              # Route to dev container on port 8001
+              location / {
+                proxy_pass http://sqlution_dev;
+                proxy_set_header Host \$host;
+                proxy_set_header X-Real-IP \$remote_addr;
+                proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto \$scheme;
+                proxy_set_header Upgrade \$http_upgrade;
+                proxy_set_header Connection "upgrade";
+              }
+            
+              # SSL configuration will be auto-managed by certbot
+              # listen 443 ssl; and ssl_certificate directives added by certbot
+            }
+            
+            server {
+              listen 80;
+              server_name dev.sqlution.de;
+              # Redirect HTTP to HTTPS (certbot managed)
+            }
+            EOF
+            
+            # Enable sites if not already enabled
+            sudo ln -sf /etc/nginx/sites-available/sqlution-prod /etc/nginx/sites-enabled/sqlution-prod || true
+            sudo ln -sf /etc/nginx/sites-available/sqlution-dev /etc/nginx/sites-enabled/sqlution-dev || true
+            
+            # Test nginx configuration
+            sudo nginx -t
+            
+            # Reload nginx to apply changes
+            sudo systemctl reload nginx
+            
+            echo "Nginx configured successfully"
+
       - name: Pull image on server
         uses: appleboy/ssh-action@v0.1.7
         with:
