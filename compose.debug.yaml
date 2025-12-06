@@ -10,6 +10,10 @@ services:
       SECRET_KEY: "${SECRET_KEY:-dev-secret-key-change-me}"
       SQLUTION_DB_DIR: /data
       DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1"
+      # Upload limits (in bytes)
+      FILE_UPLOAD_MAX_MEMORY_SIZE: "${FILE_UPLOAD_MAX_MEMORY_SIZE:-104857600}"
+      DATA_UPLOAD_MAX_MEMORY_SIZE: "${DATA_UPLOAD_MAX_MEMORY_SIZE:-104857600}"
+      NGINX_CLIENT_MAX_BODY_SIZE: "${NGINX_CLIENT_MAX_BODY_SIZE:-100M}"
     command: ["sh", "-c", "pip install debugpy -t /tmp && if [ \"$WAIT_FOR_DEBUGGER\" = \"1\" ]; then python -m debugpy --wait-for-client --listen 0.0.0.0:5678 manage.py runserver 0.0.0.0:8000 --nothreading --noreload; else python manage.py runserver 0.0.0.0:8000 --nothreading --noreload; fi"]
     ports:
       - 8000:8000

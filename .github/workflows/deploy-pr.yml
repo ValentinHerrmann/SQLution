@@ -115,7 +115,9 @@ jobs:
               fi
               
               # Always create HTTP config
-              cat <<'EOF' | sudo tee /etc/nginx/sites-available/sqlution-dev > /dev/null
+              # Use NGINX_CLIENT_MAX_BODY_SIZE (default 100M) to set client_max_body_size
+              NGINX_CLIENT_MAX_BODY_SIZE=${NGINX_CLIENT_MAX_BODY_SIZE:-100M}
+              cat <<EOF | sudo tee /etc/nginx/sites-available/sqlution-dev > /dev/null
               upstream sqlution_dev {
                 server 127.0.0.1:8001;
               }
@@ -124,6 +126,9 @@ jobs:
                 server_name dev.sqlution.de;
                 listen 80;
                 listen [::]:80;
+
+                # limit request body size for uploads
+                client_max_body_size ${NGINX_CLIENT_MAX_BODY_SIZE};
 
                 location / {
                   proxy_pass http://sqlution_dev;
@@ -137,9 +142,10 @@ jobs:
               }
               EOF
               
-              # If HTTPS block exists, append it
+              # If HTTPS block exists, append it (ensure client_max_body_size is present)
               if [ -n "$HTTPS_BLOCK" ]; then
-                printf '\n%s\n' "$HTTPS_BLOCK" | sudo tee -a /etc/nginx/sites-available/sqlution-dev > /dev/null
+                # Inject client_max_body_size into each server block if missing
+                printf '%s' "$HTTPS_BLOCK" | awk -v size="$NGINX_CLIENT_MAX_BODY_SIZE" 'BEGIN{RS="\n\n"; ORS="\n\n"} { if ($0 !~ /client_max_body_size/) { sub(/server[ \t]*\{/, "server {\n    client_max_body_size " size ";") } print }' | sudo tee -a /etc/nginx/sites-available/sqlution-dev > /dev/null
               else
                 # No HTTPS config exists, run certbot to obtain SSL certificate
                 echo "No HTTPS configuration found, running certbot..."
@@ -214,6 +220,10 @@ jobs:
             DJANGO_DEBUG_MODE: ${{ vars.DJANGO_DEBUG_MODE || 'true' }}
             DEPLOY_APP_DIR: ${{ vars.DEPLOY_APP_DIR }}
             DJANGO_STATIC_URL: ${{ vars.DJANGO_STATIC_URL || '/app-static/' }}
+            # Pass upload limits (in bytes) into the container; default 100MB
+            FILE_UPLOAD_MAX_MEMORY_SIZE: ${{ vars.FILE_UPLOAD_MAX_MEMORY_SIZE || '104857600' }}
+            DATA_UPLOAD_MAX_MEMORY_SIZE: ${{ vars.DATA_UPLOAD_MAX_MEMORY_SIZE || '104857600' }}
+            NGINX_CLIENT_MAX_BODY_SIZE: ${{ vars.NGINX_CLIENT_MAX_BODY_SIZE || '100M' }}
           with:
             host: ${{ vars.DEPLOY_HOST }}
             username: ${{ secrets.DEPLOY_USER }}
@@ -233,6 +243,8 @@ jobs:
                 -e DJANGO_ALLOWED_HOSTS="${DJANGO_ALLOWED_HOSTS}" \
                 -e DJANGO_STATIC_URL="${DJANGO_STATIC_URL}" \
                 -e SQLUTION_DB_DIR='/data' \
+                -e FILE_UPLOAD_MAX_MEMORY_SIZE="${FILE_UPLOAD_MAX_MEMORY_SIZE}" \
+                -e DATA_UPLOAD_MAX_MEMORY_SIZE="${DATA_UPLOAD_MAX_MEMORY_SIZE}" \
                 -v sqlution-db-dev:/data \
                 -v "${DEPLOY_APP_DIR}/user_databases:/app/tutorial/user_databases" \
                 "${SQLUTION_IMAGE}"

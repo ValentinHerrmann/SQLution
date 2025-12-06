@@ -9,6 +9,11 @@ services:
       DJANGO_ALLOWED_HOSTS: "${DJANGO_ALLOWED_HOSTS:-sqlution.de,www.sqlution.de,localhost,127.0.0.1}"
       DJANGO_STATIC_URL: "${DJANGO_STATIC_URL:-/app-static/}"
       SQLUTION_DB_DIR: /data
+      # Upload limits (in bytes)
+      FILE_UPLOAD_MAX_MEMORY_SIZE: "${FILE_UPLOAD_MAX_MEMORY_SIZE:-104857600}"
+      DATA_UPLOAD_MAX_MEMORY_SIZE: "${DATA_UPLOAD_MAX_MEMORY_SIZE:-104857600}"
+      # Nginx client body size (human readable, e.g. 100M)
+      NGINX_CLIENT_MAX_BODY_SIZE: "${NGINX_CLIENT_MAX_BODY_SIZE:-100M}"
     restart: unless-stopped
     # Persist app data and cap memory usage
     volumes:
