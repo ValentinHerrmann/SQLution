@@ -3,6 +3,12 @@ name: Deploy Release
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      deploy_tag:
+        description: "Tag to deploy to production (from main branch)"
+        required: true
+        type: string
 
 jobs:
   build_image:
@@ -19,24 +25,44 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.deploy_tag || github.ref }}
 
       - name: Set VERSION file
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          DISPATCH_TAG: ${{ inputs.deploy_tag }}
         run: |
           set -euo pipefail
-          printf '%s\n' "${GITHUB_REF_NAME}" > VERSION
-          echo "VERSION file set to ${GITHUB_REF_NAME}"
+          TARGET_REF="$REF_NAME"
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ -n "${DISPATCH_TAG:-}" ]; then
+            TARGET_REF="$DISPATCH_TAG"
+          fi
+          printf '%s\n' "$TARGET_REF" > VERSION
+          echo "VERSION file set to $TARGET_REF"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Compute image metadata
         id: meta
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          DISPATCH_TAG: ${{ inputs.deploy_tag }}
         run: |
           OWNER=$(echo "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')
           IMAGE="ghcr.io/${OWNER}/sqlution"
-          VERSION_TAG="${IMAGE}:${GITHUB_REF_NAME}"
+          
+          TARGET_REF="$REF_NAME"
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ -n "${DISPATCH_TAG:-}" ]; then
+            TARGET_REF="$DISPATCH_TAG"
+          fi
+          
+          VERSION_TAG="${IMAGE}:${TARGET_REF}"
           LATEST_TAG="${IMAGE}:latest"
-          SAFE_REF=$(echo "${GITHUB_REF_NAME}" | tr '[:upper:]' '[:lower:]' | tr '/ ' '--')
+          SAFE_REF=$(echo "${TARGET_REF}" | tr '[:upper:]' '[:lower:]' | tr '/ ' '--')
           BRANCH_TAG="${IMAGE}:${SAFE_REF}"
           echo "image_ref=${VERSION_TAG}" >> "$GITHUB_OUTPUT"
           echo "branch_tag=${BRANCH_TAG}" >> "$GITHUB_OUTPUT"
@@ -88,10 +114,14 @@ jobs:
             sudo find /etc/nginx/sites-enabled -type l ! -exec test -e {} \; -delete
             
             # Capture existing SSL directives if any (preserve certbot config)
-            # Only preserve if they match the production domain
+            # Only preserve certificate paths that match the production domain
             SSL_LINES=""
             if [ -f /etc/nginx/sites-available/sqlution-prod ]; then
-              SSL_LINES=$(sudo grep -E 'ssl_certificate|ssl_certificate_key|options-ssl-nginx.conf|dhparam' /etc/nginx/sites-available/sqlution-prod | grep -E 'sqlution\.de|live/sqlution\.de' || true)
+              SSL_CERT_LINES=$(sudo grep -E 'ssl_certificate' /etc/nginx/sites-available/sqlution-prod | grep -v 'dev\.sqlution\.de' || true)
+              SSL_OTHER_LINES=$(sudo grep -E 'ssl_|options-ssl-nginx.conf|dhparam' /etc/nginx/sites-available/sqlution-prod | grep -v 'ssl_certificate' || true)
+              if [ -n "$SSL_CERT_LINES" ]; then
+                SSL_LINES=$(printf '%s\n%s' "$SSL_CERT_LINES" "$SSL_OTHER_LINES")
+              fi
             fi
             
             # Always create HTTP config
