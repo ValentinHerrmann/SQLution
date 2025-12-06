@@ -104,14 +104,13 @@ jobs:
               sudo mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled
               sudo find /etc/nginx/sites-enabled -type l ! -exec test -e {} \; -delete
               
-              # Capture existing SSL directives if any (preserve certbot config)
-              # Only preserve certificate paths that match the dev domain
-              SSL_LINES=""
+              # Capture existing HTTPS server block if it exists
+              HTTPS_BLOCK=""
               if [ -f /etc/nginx/sites-available/sqlution-dev ]; then
-                SSL_CERT_LINES=$(sudo grep -E 'ssl_certificate' /etc/nginx/sites-available/sqlution-dev | grep -v 'sqlution\.de' | grep -v 'www\.sqlution\.de' || true)
-                SSL_OTHER_LINES=$(sudo grep -E 'ssl_|options-ssl-nginx.conf|dhparam' /etc/nginx/sites-available/sqlution-dev | grep -v 'ssl_certificate' || true)
-                if [ -n "$SSL_CERT_LINES" ]; then
-                  SSL_LINES=$(printf '%s\n%s' "$SSL_CERT_LINES" "$SSL_OTHER_LINES")
+                # Check if HTTPS config exists by looking for listen 443
+                if sudo grep -q 'listen.*443' /etc/nginx/sites-available/sqlution-dev 2>/dev/null; then
+                  # Extract everything after the first server block (which is HTTP)
+                  HTTPS_BLOCK=$(sudo awk 'BEGIN{block=0; capture=0} /^server \{/{block++; if(block==2) capture=1} capture{print}' /etc/nginx/sites-available/sqlution-dev)
                 fi
               fi
               
@@ -138,31 +137,13 @@ jobs:
               }
               EOF
               
-              # If SSL directives exist, add HTTPS server block
-              if [ -n "$SSL_LINES" ]; then
-                cat <<'EOF' | sudo tee -a /etc/nginx/sites-available/sqlution-dev > /dev/null
-
-              server {
-                server_name dev.sqlution.de;
-                listen 443 ssl;
-                listen [::]:443 ssl;
-              EOF
-                
-                printf '  %s\n' "$SSL_LINES" | sudo tee -a /etc/nginx/sites-available/sqlution-dev > /dev/null
-                
-                cat <<'EOF' | sudo tee -a /etc/nginx/sites-available/sqlution-dev > /dev/null
-
-                location / {
-                  proxy_pass http://sqlution_dev;
-                  proxy_set_header Host $host;
-                  proxy_set_header X-Real-IP $remote_addr;
-                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                  proxy_set_header X-Forwarded-Proto $scheme;
-                  proxy_set_header Upgrade $http_upgrade;
-                  proxy_set_header Connection "upgrade";
-                }
-              }
-              EOF
+              # If HTTPS block exists, append it
+              if [ -n "$HTTPS_BLOCK" ]; then
+                printf '\n%s\n' "$HTTPS_BLOCK" | sudo tee -a /etc/nginx/sites-available/sqlution-dev > /dev/null
+              else
+                # No HTTPS config exists, run certbot to obtain SSL certificate
+                echo "No HTTPS configuration found, running certbot..."
+                sudo certbot --nginx -d dev.sqlution.de --non-interactive --agree-tos --redirect || echo "Certbot failed, continuing with HTTP only"
               fi
               
               sudo ln -sf /etc/nginx/sites-available/sqlution-dev /etc/nginx/sites-enabled/sqlution-dev
