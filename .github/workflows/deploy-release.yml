@@ -88,10 +88,14 @@ jobs:
             sudo find /etc/nginx/sites-enabled -type l ! -exec test -e {} \; -delete
             
             # Capture existing SSL directives if any (preserve certbot config)
-            # Only preserve if they match the production domain
+            # Only preserve certificate paths that match the production domain
             SSL_LINES=""
             if [ -f /etc/nginx/sites-available/sqlution-prod ]; then
-              SSL_LINES=$(sudo grep -E 'ssl_certificate|ssl_certificate_key|options-ssl-nginx.conf|dhparam' /etc/nginx/sites-available/sqlution-prod | grep -E 'sqlution\.de|live/sqlution\.de' || true)
+              SSL_CERT_LINES=$(sudo grep -E 'ssl_certificate' /etc/nginx/sites-available/sqlution-prod | grep -v 'dev\.sqlution\.de' || true)
+              SSL_OTHER_LINES=$(sudo grep -E 'ssl_|options-ssl-nginx.conf|dhparam' /etc/nginx/sites-available/sqlution-prod | grep -v 'ssl_certificate' || true)
+              if [ -n "$SSL_CERT_LINES" ]; then
+                SSL_LINES=$(printf '%s\n%s' "$SSL_CERT_LINES" "$SSL_OTHER_LINES")
+              fi
             fi
             
             # Always create HTTP config
