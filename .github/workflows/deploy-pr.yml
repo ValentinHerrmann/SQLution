@@ -206,4 +206,3 @@ jobs:
                 -v sqlution-db-dev:/data \
                 -v "${DEPLOY_APP_DIR}/user_databases:/app/tutorial/user_databases" \
                 "${SQLUTION_IMAGE}"
-          port: ${{ secrets.DEPLOY_PORT || '22' }}
