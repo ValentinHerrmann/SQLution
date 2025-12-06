@@ -105,9 +105,10 @@ jobs:
               sudo find /etc/nginx/sites-enabled -type l ! -exec test -e {} \; -delete
               
               # Capture existing SSL directives if any (preserve certbot config)
+              # Only preserve if they match the dev domain
               SSL_LINES=""
               if [ -f /etc/nginx/sites-available/sqlution-dev ]; then
-                SSL_LINES=$(sudo grep -E 'ssl_certificate|ssl_certificate_key|ssl_|options-ssl-nginx.conf|dhparam' /etc/nginx/sites-available/sqlution-dev || true)
+                SSL_LINES=$(sudo grep -E 'ssl_certificate|ssl_certificate_key|options-ssl-nginx.conf|dhparam' /etc/nginx/sites-available/sqlution-dev | grep -E 'dev\.sqlution\.de|live/dev\.sqlution\.de' || true)
               fi
               
               # Always create HTTP config
