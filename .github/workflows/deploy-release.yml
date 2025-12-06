@@ -113,10 +113,11 @@ jobs:
             sudo mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled
             sudo find /etc/nginx/sites-enabled -type l ! -exec test -e {} \; -delete
             
-            # Capture existing SSL directives if any (preserve certbot config)
-            SSL_LINES=""
+            # Capture existing HTTPS server block if it exists
+            HTTPS_BLOCK=""
             if [ -f /etc/nginx/sites-available/sqlution-prod ]; then
-              SSL_LINES=$(sudo grep -E 'ssl_certificate|ssl_certificate_key|ssl_protocols|ssl_ciphers|ssl_prefer_server_ciphers|options-ssl-nginx.conf|ssl_dhparam' /etc/nginx/sites-available/sqlution-prod || true)
+              # Extract the entire HTTPS server block (from 'server {' with 'listen 443' to its closing '}')
+              HTTPS_BLOCK=$(sudo awk '/server \{/,/^\}/ {if (/listen 443/ || found) {found=1; print; if (/^\}/) exit}}' /etc/nginx/sites-available/sqlution-prod || true)
             fi
             
             # Always create HTTP config
@@ -142,31 +143,13 @@ jobs:
             }
             EOF
             
-            # If SSL directives exist, add HTTPS server block
-            if [ -n "$SSL_LINES" ]; then
-              cat <<'EOF' | sudo tee -a /etc/nginx/sites-available/sqlution-prod > /dev/null
-
-            server {
-              server_name sqlution.de www.sqlution.de;
-              listen 443 ssl;
-              listen [::]:443 ssl;
-            EOF
-              
-              printf '  %s\n' "$SSL_LINES" | sudo tee -a /etc/nginx/sites-available/sqlution-prod > /dev/null
-              
-              cat <<'EOF' | sudo tee -a /etc/nginx/sites-available/sqlution-prod > /dev/null
-
-              location / {
-                proxy_pass http://sqlution_prod;
-                proxy_set_header Host $host;
-                proxy_set_header X-Real-IP $remote_addr;
-                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                proxy_set_header X-Forwarded-Proto $scheme;
-                proxy_set_header Upgrade $http_upgrade;
-                proxy_set_header Connection "upgrade";
-              }
-            }
-            EOF
+            # If HTTPS block exists, append it
+            if [ -n "$HTTPS_BLOCK" ]; then
+              printf '\n%s\n' "$HTTPS_BLOCK" | sudo tee -a /etc/nginx/sites-available/sqlution-prod > /dev/null
+            else
+              # No HTTPS config exists, run certbot to obtain SSL certificate
+              echo "No HTTPS configuration found, running certbot..."
+              sudo certbot --nginx -d sqlution.de -d www.sqlution.de --non-interactive --agree-tos --redirect || echo "Certbot failed, continuing with HTTP only"
             fi
             
             sudo ln -sf /etc/nginx/sites-available/sqlution-prod /etc/nginx/sites-enabled/sqlution-prod
