@@ -139,23 +139,23 @@ jobs:
             # Remove only broken symlinks in sites-enabled (preserve other valid sites)
             sudo find /etc/nginx/sites-enabled -type l ! -exec test -e {} \; -delete
             
-            # Back up any existing SSL configuration from certbot
-            CERT_BACKUP=""
+            # Capture existing certbot SSL directives (if any) to preserve certificates
+            SSL_LINES=""
             if [ -f /etc/nginx/sites-available/sqlution-dev ]; then
-              CERT_BACKUP=$(sudo sed -n '/listen 443 ssl/,/^}/p' /etc/nginx/sites-available/sqlution-dev)
+              SSL_LINES=$(sudo grep -E 'ssl_|options-ssl-nginx.conf|dhparam' /etc/nginx/sites-available/sqlution-dev || true)
             fi
-            
-            # Create dev site config with base configuration
+
+            # Rebuild dev site config (HTTP + HTTPS). If SSL lines existed, reuse them.
             cat <<'EOF' | sudo tee /etc/nginx/sites-available/sqlution-dev > /dev/null
             upstream sqlution_dev {
               server 127.0.0.1:8001;
             }
-            
+
             server {
               server_name dev.sqlution.de;
               listen 80;
               listen [::]:80;
-              
+
               # Route to dev container on port 8001
               location / {
                 proxy_pass http://sqlution_dev;
@@ -167,12 +167,40 @@ jobs:
                 proxy_set_header Connection "upgrade";
               }
             }
+
+            server {
+              server_name dev.sqlution.de;
+              listen 443 ssl;
+              listen [::]:443 ssl;
             EOF
-            
-            # If certbot had SSL config, append it
-            if [ -n "$CERT_BACKUP" ]; then
-              echo "$CERT_BACKUP" | sudo tee -a /etc/nginx/sites-available/sqlution-dev > /dev/null
+
+            # Add back ssl lines if present, otherwise add placeholder for certbot-managed SSL
+            if [ -n "$SSL_LINES" ]; then
+              printf '  %s\n' "$SSL_LINES" | sudo tee -a /etc/nginx/sites-available/sqlution-dev > /dev/null
+            else
+              cat <<'EOF' | sudo tee -a /etc/nginx/sites-available/sqlution-dev > /dev/null
+              # SSL directives managed by certbot (run certbot if missing)
+              include /etc/letsencrypt/options-ssl-nginx.conf;
+              ssl_certificate /etc/letsencrypt/live/dev.sqlution.de/fullchain.pem;
+              ssl_certificate_key /etc/letsencrypt/live/dev.sqlution.de/privkey.pem;
+              ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+              # ssl_trusted_certificate can be added if certbot configured it
+            EOF
             fi
+
+            cat <<'EOF' | sudo tee -a /etc/nginx/sites-available/sqlution-dev > /dev/null
+
+              location / {
+                proxy_pass http://sqlution_dev;
+                proxy_set_header Host \$host;
+                proxy_set_header X-Real-IP \$remote_addr;
+                proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto \$scheme;
+                proxy_set_header Upgrade \$http_upgrade;
+                proxy_set_header Connection "upgrade";
+              }
+            }
+            EOF
             
             # Enable dev site
             sudo ln -sf /etc/nginx/sites-available/sqlution-dev /etc/nginx/sites-enabled/sqlution-dev
