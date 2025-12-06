@@ -30,11 +30,11 @@ SECRET_KEY = os.getenv('SECRET_KEY') or 'sqlution-insecure-placeholder'
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG_MODE', 'False').lower() in ('true', '1', 'yes')
 
 ALLOWED_HOSTS = [host.strip() for host in os.getenv(
     'DJANGO_ALLOWED_HOSTS',
-    'www.sqlution.de,sqlution.de,127.0.0.1,localhost,217.154.94.239'
+    'www.sqlution.de,sqlution.de,127.0.0.1,localhost'
 ).split(',') if host.strip()]
 
 
@@ -101,9 +101,11 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'tutorial.wsgi.application'
 
-CSRF_TRUSTED_ORIGINS = ['https://sqlution.de',
-                        'https://127.0.0.1','http://127.0.0.1',
-                        'https://localhost','http://localhost']
+# trust all ALLOWED_HOSTS for CSRF
+CSRF_TRUSTED_ORIGINS = []
+CSRF_TRUSTED_ORIGINS += [f"https://{host}" for host in ALLOWED_HOSTS]
+
+
 
 
 # Database
