@@ -78,74 +78,52 @@ jobs:
             ${{ steps.meta.outputs.tmp_tag }}
             ${{ steps.meta.outputs.branch_tag }}
 
-      - name: Select image to use
-        id: choose-image
-        run: |
-          echo "image=${{ steps.meta.outputs.tmp_tag }}" >> "$GITHUB_OUTPUT"
+            else
+              # Rebuild dev site config (HTTP + HTTPS) reusing SSL directives
+              cat <<'EOF' | sudo tee /etc/nginx/sites-available/sqlution-dev > /dev/null
+            upstream sqlution_dev {
+              server 127.0.0.1:8001;
+            }
 
-  stop:
-    name: Stop running dev application
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
-    permissions:
-      contents: read
-    environment:
-      name: dev
-    runs-on: ubuntu-latest
-    env:
-      SQLUTION_IMAGE: ${{ needs.build_image.outputs.image_ref }}
-    steps:
-      - name: Stop dev application over SSH
-        uses: appleboy/ssh-action@v0.1.7
-        with:
-          host: ${{ vars.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          port: ${{ secrets.DEPLOY_PORT || '22' }}
-          envs: SQLUTION_IMAGE
-          script: |
-            set -euo pipefail
-            docker container stop sqlution-app-dev || true
-            docker container rm sqlution-app-dev || true
+            server {
+              server_name dev.sqlution.de;
+              listen 80;
+              listen [::]:80;
 
-  launch:
-    name: Launch new dev container
-    needs:
-      - build_image
-      - stop
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
-    permissions:
-      contents: read
-    runs-on: ubuntu-latest
-    environment:
-      name: dev
-    env:
-      SQLUTION_IMAGE: ${{ needs.build_image.outputs.image_ref }}
-      REGISTRY_USER: ${{ secrets.DEPLOY_REGISTRY_USER }}
-      REGISTRY_TOKEN: ${{ secrets.DEPLOY_REGISTRY_TOKEN }}
-      DJANGO_STATIC_URL: ${{ vars.DJANGO_STATIC_URL || '/app-static/' }}
-    steps:
-      - name: Configure nginx
-        uses: appleboy/ssh-action@v0.1.7
-        with:
-          host: ${{ vars.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          port: ${{ secrets.DEPLOY_PORT || '22' }}
-          script: |
-            set -euo pipefail
-            # Create nginx config directory if it doesn't exist
-            sudo mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled
-            
-            # Remove only broken symlinks in sites-enabled (preserve other valid sites)
-            sudo find /etc/nginx/sites-enabled -type l ! -exec test -e {} \; -delete
-            
-            # Capture existing certbot SSL directives (if any) to preserve certificates
-            SSL_LINES=""
-            if [ -f /etc/nginx/sites-available/sqlution-dev ]; then
-              SSL_LINES=$(sudo grep -E 'ssl_|options-ssl-nginx.conf|dhparam' /etc/nginx/sites-available/sqlution-dev || true)
+              # Route to dev container on port 8001
+              location / {
+                proxy_pass http://sqlution_dev;
+                proxy_set_header Host \$host;
+                proxy_set_header X-Real-IP \$remote_addr;
+                proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto \$scheme;
+                proxy_set_header Upgrade \$http_upgrade;
+                proxy_set_header Connection "upgrade";
+              }
+            }
+
+            server {
+              server_name dev.sqlution.de;
+              listen 443 ssl;
+              listen [::]:443 ssl;
+EOF
+
+              printf '  %s\n' "$SSL_LINES" | sudo tee -a /etc/nginx/sites-available/sqlution-dev > /dev/null
+
+            cat <<'EOF' | sudo tee -a /etc/nginx/sites-available/sqlution-dev > /dev/null
+
+              location / {
+                proxy_pass http://sqlution_dev;
+                proxy_set_header Host \$host;
+                proxy_set_header X-Real-IP \$remote_addr;
+                proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto \$scheme;
+                proxy_set_header Upgrade \$http_upgrade;
+                proxy_set_header Connection "upgrade";
+              }
+            }
+            EOF
             fi
-
-            # If no SSL directives, only configure HTTP to avoid nginx ssl errors
             if [ -z "$SSL_LINES" ]; then
               cat <<'EOF' | sudo tee /etc/nginx/sites-available/sqlution-dev > /dev/null
             upstream sqlution_dev {
