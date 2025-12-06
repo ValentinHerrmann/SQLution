@@ -107,8 +107,8 @@ jobs:
               # Capture existing HTTPS server block if it exists
               HTTPS_BLOCK=""
               if [ -f /etc/nginx/sites-available/sqlution-dev ]; then
-                # Extract the entire HTTPS server block (from 'server {' with 'listen 443' to its closing '}')
-                HTTPS_BLOCK=$(sudo awk '/server \{/,/^\}/ {if (/listen 443/ || found) {found=1; print; if (/^\}/) exit}}' /etc/nginx/sites-available/sqlution-dev || true)
+                # Extract the entire HTTPS server block
+                HTTPS_BLOCK=$(sudo awk '/server \{/{found=0} /listen 443/{found=1} found{print} /^\}/ && found{exit}' /etc/nginx/sites-available/sqlution-dev || true)
               fi
               
               # Always create HTTP config
