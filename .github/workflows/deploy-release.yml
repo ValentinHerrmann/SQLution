@@ -116,9 +116,11 @@ jobs:
             # Create nginx config directory if it doesn't exist
             sudo mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled
             
-            # Disable default site and any conflicting sites
-            sudo rm -f /etc/nginx/sites-enabled/default
-            sudo rm -f /etc/nginx/sites-enabled/sqlution*
+            # Remove broken symlinks in sites-enabled
+            sudo find /etc/nginx/sites-enabled -type l ! -exec test -e {} \; -delete
+            
+            # Disable any conflicting dev site
+            sudo rm -f /etc/nginx/sites-enabled/sqlution-dev
             
             # Create/update production site config (preserves certbot SSL)
             cat <<'EOF' | sudo tee /etc/nginx/sites-available/sqlution-prod > /dev/null
@@ -146,35 +148,8 @@ jobs:
             }
             EOF
             
-            # Create/update dev site config
-            cat <<'EOF' | sudo tee /etc/nginx/sites-available/sqlution-dev > /dev/null
-            upstream sqlution_dev {
-              server 127.0.0.1:8001;
-            }
-            
-            server {
-              server_name dev.sqlution.de;
-              listen 80;
-              
-              # Route to dev container on port 8001
-              location / {
-                proxy_pass http://sqlution_dev;
-                proxy_set_header Host \$host;
-                proxy_set_header X-Real-IP \$remote_addr;
-                proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-                proxy_set_header X-Forwarded-Proto \$scheme;
-                proxy_set_header Upgrade \$http_upgrade;
-                proxy_set_header Connection "upgrade";
-              }
-            
-              # SSL configuration will be auto-managed by certbot
-              # listen 443 ssl; and ssl_certificate directives added by certbot
-            }
-            EOF
-            
-            # Enable sites
+            # Enable production site
             sudo ln -sf /etc/nginx/sites-available/sqlution-prod /etc/nginx/sites-enabled/sqlution-prod
-            sudo ln -sf /etc/nginx/sites-available/sqlution-dev /etc/nginx/sites-enabled/sqlution-dev
             
             # Test nginx configuration
             sudo nginx -t
@@ -182,7 +157,7 @@ jobs:
             # Reload nginx to apply changes
             sudo systemctl reload nginx
             
-            echo "Nginx configured successfully"
+            echo "Nginx configured for production"
 
       - name: Pull image on server
         uses: appleboy/ssh-action@v0.1.7
