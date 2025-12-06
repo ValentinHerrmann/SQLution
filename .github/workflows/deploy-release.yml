@@ -6,7 +6,7 @@ on:
 
 jobs:
   build_image:
-    name: Build and publish prod image on GHCR
+    name: Build Image
     permissions:
       contents: read
       packages: write
@@ -67,7 +67,7 @@ jobs:
           echo "image=${{ steps.meta.outputs.image_ref }}" >> "$GITHUB_OUTPUT"
 
   configure_nginx:
-    name: Configure nginx for production
+    name: Configure NGINX
     permissions:
       contents: read
     environment:
@@ -149,7 +149,7 @@ jobs:
             sudo systemctl reload nginx
 
   stop:
-    name: Stop running application
+    name: Stop running Container
     permissions:
       contents: read
     environment:
@@ -174,7 +174,7 @@ jobs:
             docker images 'ghcr.io/*/sqlution' --format '{{.ID}}' | xargs -r docker rmi || true
 
   launch:
-    name: Launch new container
+    name: Launch Container
     needs: [build_image, configure_nginx, stop]
     permissions:
       contents: read

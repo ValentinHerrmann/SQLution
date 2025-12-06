@@ -1,4 +1,4 @@
-name: Deploy Dev (PR and Manual)
+name: Deploy Dev
 
 on:
   pull_request:
@@ -12,7 +12,7 @@ on:
 
 jobs:
     build_image:
-      name: Build and publish dev image on GHCR
+      name: Build Image
       permissions:
         contents: read
         packages: write
@@ -83,7 +83,7 @@ jobs:
           run: echo "image=${{ steps.meta.outputs.tmp_tag }}" >> "$GITHUB_OUTPUT"
 
     configure_nginx:
-      name: Configure nginx for dev
+      name: Configure NGINX
       if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
       permissions:
         contents: read
@@ -166,7 +166,7 @@ jobs:
               sudo systemctl reload nginx
 
     stop:
-      name: Stop running dev application
+      name: Stop running Container
       if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
       permissions:
         contents: read
@@ -188,7 +188,7 @@ jobs:
               docker container rm sqlution-app-dev || true
 
     launch:
-      name: Launch new dev container
+      name: Launch Container
       needs: [build_image, configure_nginx, stop]
       if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
       permissions:
