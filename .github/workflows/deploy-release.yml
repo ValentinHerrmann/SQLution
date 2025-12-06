@@ -126,7 +126,7 @@ jobs:
             # Always create HTTP config
             # Use NGINX_CLIENT_MAX_BODY_SIZE (default 100M) to set client_max_body_size
             NGINX_CLIENT_MAX_BODY_SIZE=${NGINX_CLIENT_MAX_BODY_SIZE:-100M}
-            cat <<NGINX_EOF | sudo tee /etc/nginx/sites-available/sqlution-prod > /dev/null
+            cat <<'NGINX_EOF' | sudo tee /etc/nginx/sites-available/sqlution-prod > /dev/null
             upstream sqlution_prod {
               server 127.0.0.1:8000;
             }
