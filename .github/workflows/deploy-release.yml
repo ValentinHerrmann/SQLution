@@ -10,6 +10,9 @@ jobs:
     permissions:
       contents: read
       packages: write
+    environment:
+      name: production
+      url: https://github.com/ValentinHerrmann/SQLution/pkgs/container/sqlution
     runs-on: ubuntu-latest
     outputs:
       image_ref: ${{ steps.choose-image.outputs.image }}
@@ -61,9 +64,89 @@ jobs:
         run: |
           echo "image=${{ steps.meta.outputs.image_ref }}" >> "$GITHUB_OUTPUT"
 
+  configure_nginx:
+    name: Configure nginx for production
+    permissions:
+      contents: read
+    environment:
+      name: production
+      url: https://sqlution.de
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure nginx with SSL preservation
+        uses: appleboy/ssh-action@27b0d48c3c0d4c54cf5c7d07212e08a3b04ba201
+        with:
+          host: ${{ vars.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || '22' }}
+          script: |
+            set -euo pipefail
+            sudo mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled
+            sudo find /etc/nginx/sites-enabled -type l ! -exec test -e {} \; -delete
+            
+            # Capture existing SSL directives if any (preserve certbot config)
+            SSL_LINES=""
+            if [ -f /etc/nginx/sites-available/sqlution-prod ]; then
+              SSL_LINES=$(sudo grep -E 'ssl_certificate|ssl_certificate_key|ssl_|options-ssl-nginx.conf|dhparam' /etc/nginx/sites-available/sqlution-prod || true)
+            fi
+            
+            # Always create HTTP config
+            cat <<'EOF' | sudo tee /etc/nginx/sites-available/sqlution-prod > /dev/null
+            upstream sqlution_prod {
+              server 127.0.0.1:8000;
+            }
+
+            server {
+              server_name sqlution.de www.sqlution.de;
+              listen 80;
+              listen [::]:80;
+
+              location / {
+                proxy_pass http://sqlution_prod;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+                proxy_set_header Upgrade $http_upgrade;
+                proxy_set_header Connection "upgrade";
+              }
+            }
+            EOF
+            
+            # If SSL directives exist, add HTTPS server block
+            if [ -n "$SSL_LINES" ]; then
+              cat <<'EOF' | sudo tee -a /etc/nginx/sites-available/sqlution-prod > /dev/null
+
+            server {
+              server_name sqlution.de www.sqlution.de;
+              listen 443 ssl;
+              listen [::]:443 ssl;
+            EOF
+              
+              printf '  %s\n' "$SSL_LINES" | sudo tee -a /etc/nginx/sites-available/sqlution-prod > /dev/null
+              
+              cat <<'EOF' | sudo tee -a /etc/nginx/sites-available/sqlution-prod > /dev/null
+
+              location / {
+                proxy_pass http://sqlution_prod;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+                proxy_set_header Upgrade $http_upgrade;
+                proxy_set_header Connection "upgrade";
+              }
+            }
+            EOF
+            fi
+            
+            sudo ln -sf /etc/nginx/sites-available/sqlution-prod /etc/nginx/sites-enabled/sqlution-prod
+            sudo nginx -t
+            sudo systemctl reload nginx
+
   stop:
     name: Stop running application
-    needs: build_image
     permissions:
       contents: read
     environment:
@@ -74,7 +157,7 @@ jobs:
       SQLUTION_IMAGE: ${{ needs.build_image.outputs.image_ref }}
     steps:
       - name: Stop application over SSH
-        uses: appleboy/ssh-action@v0.1.7
+        uses: appleboy/ssh-action@27b0d48c3c0d4c54cf5c7d07212e08a3b04ba201
         with:
           host: ${{ vars.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
@@ -89,9 +172,7 @@ jobs:
 
   launch:
     name: Launch new container
-    needs:
-      - build_image
-      - stop
+    needs: [build_image, configure_nginx, stop]
     permissions:
       contents: read
     runs-on: ubuntu-latest
@@ -104,110 +185,8 @@ jobs:
       REGISTRY_TOKEN: ${{ secrets.DEPLOY_REGISTRY_TOKEN }}
       DJANGO_STATIC_URL: ${{ vars.DJANGO_STATIC_URL || '/app-static/' }}
     steps:
-      - name: Configure nginx
-        uses: appleboy/ssh-action@v0.1.7
-        with:
-          host: ${{ vars.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          port: ${{ secrets.DEPLOY_PORT || '22' }}
-          script: |
-            set -euo pipefail
-            # Create nginx config directory if it doesn't exist
-            sudo mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled
-            
-            # Remove only broken symlinks in sites-enabled (preserve other valid sites)
-            sudo find /etc/nginx/sites-enabled -type l ! -exec test -e {} \; -delete
-            
-            # Capture existing certbot SSL directives (if any) to preserve certificates
-            SSL_LINES=""
-            if [ -f /etc/nginx/sites-available/sqlution-prod ]; then
-              SSL_LINES=$(sudo grep -E 'ssl_|options-ssl-nginx.conf|dhparam' /etc/nginx/sites-available/sqlution-prod || true)
-            fi
-
-            # If no SSL directives, only configure HTTP to avoid nginx ssl errors
-            if [ -z "$SSL_LINES" ]; then
-              cat <<'EOF' | sudo tee /etc/nginx/sites-available/sqlution-prod > /dev/null
-            upstream sqlution_prod {
-              server 127.0.0.1:8000;
-            }
-
-            server {
-              server_name sqlution.de www.sqlution.de;
-              listen 80;
-              listen [::]:80;
-
-              location / {
-                proxy_pass http://sqlution_prod;
-                proxy_set_header Host \$host;
-                proxy_set_header X-Real-IP \$remote_addr;
-                proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-                proxy_set_header X-Forwarded-Proto \$scheme;
-                proxy_set_header Upgrade \$http_upgrade;
-                proxy_set_header Connection "upgrade";
-              }
-            }
-            EOF
-            else
-              # Rebuild production site config (HTTP + HTTPS) reusing SSL directives
-              cat <<'EOF' | sudo tee /etc/nginx/sites-available/sqlution-prod > /dev/null
-            upstream sqlution_prod {
-              server 127.0.0.1:8000;
-            }
-
-            server {
-              server_name sqlution.de www.sqlution.de;
-              listen 80;
-              listen [::]:80;
-
-              # Route to production container on port 8000
-              location / {
-                proxy_pass http://sqlution_prod;
-                proxy_set_header Host \$host;
-                proxy_set_header X-Real-IP \$remote_addr;
-                proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-                proxy_set_header X-Forwarded-Proto \$scheme;
-                proxy_set_header Upgrade \$http_upgrade;
-                proxy_set_header Connection "upgrade";
-              }
-            }
-
-            server {
-              server_name sqlution.de www.sqlution.de;
-              listen 443 ssl;
-              listen [::]:443 ssl;
-EOF
-
-              printf '  %s\n' "$SSL_LINES" | sudo tee -a /etc/nginx/sites-available/sqlution-prod > /dev/null
-
-            cat <<'EOF' | sudo tee -a /etc/nginx/sites-available/sqlution-prod > /dev/null
-
-              location / {
-                proxy_pass http://sqlution_prod;
-                proxy_set_header Host \$host;
-                proxy_set_header X-Real-IP \$remote_addr;
-                proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-                proxy_set_header X-Forwarded-Proto \$scheme;
-                proxy_set_header Upgrade \$http_upgrade;
-                proxy_set_header Connection "upgrade";
-              }
-            }
-            EOF
-            fi
-            
-            # Enable production site
-            sudo ln -sf /etc/nginx/sites-available/sqlution-prod /etc/nginx/sites-enabled/sqlution-prod
-            
-            # Test nginx configuration
-            sudo nginx -t
-            
-            # Reload nginx to apply changes
-            sudo systemctl reload nginx
-            
-            echo "Nginx configured for production"
-
       - name: Pull image on server
-        uses: appleboy/ssh-action@v0.1.7
+        uses: appleboy/ssh-action@27b0d48c3c0d4c54cf5c7d07212e08a3b04ba201
         with:
           host: ${{ vars.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
@@ -225,7 +204,7 @@ EOF
             docker pull "${SQLUTION_IMAGE}"
 
       - name: Run container on server
-        uses: appleboy/ssh-action@v0.1.7
+        uses: appleboy/ssh-action@27b0d48c3c0d4c54cf5c7d07212e08a3b04ba201
         env:
           DJANGO_ALLOWED_HOSTS: ${{ vars.DJANGO_ALLOWED_HOSTS || 'sqlution.de,www.sqlution.de,localhost,127.0.0.1' }}
           DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
