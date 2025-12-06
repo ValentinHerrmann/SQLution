@@ -196,6 +196,12 @@ SESSION_COOKIE_AGE = 1800
 
 RESOURCES_REFRESH = 500
 
+# File upload limits (bytes). Configure via env vars if needed.
+# Increase these to allow larger uploads (default here: 100 MB).
+FILE_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv('FILE_UPLOAD_MAX_MEMORY_SIZE', 100 * 1024 * 1024))
+# File permission for uploaded files on disk
+FILE_UPLOAD_PERMISSIONS = 0o644
+
 # Log Rotation Settings
 LOG_ROTATION_MAX_SIZE_MB = 10  # Maximum log file size in MB before rotation
 LOG_ROTATION_MAX_FILES = 4     # Maximum number of old log files to keep

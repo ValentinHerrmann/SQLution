@@ -124,7 +124,15 @@ jobs:
             fi
             
             # Always create HTTP config
-            cat <<'NGINX_EOF' | sudo tee /etc/nginx/sites-available/sqlution-prod > /dev/null
+            # Use NGINX_CLIENT_MAX_BODY_SIZE (default 100M) to set client_max_body_size
+            NGINX_CLIENT_MAX_BODY_SIZE=${NGINX_CLIENT_MAX_BODY_SIZE:-100M}
+            if ! printf '%s' "$NGINX_CLIENT_MAX_BODY_SIZE" | grep -Eq '^[0-9]+([KMGkmg]?|[KMGkmg]?B)$'; then
+              echo "Invalid NGINX_CLIENT_MAX_BODY_SIZE: $NGINX_CLIENT_MAX_BODY_SIZE" >&2
+              exit 1
+            fi
+            export NGINX_CLIENT_MAX_BODY_SIZE
+            # write template with literal placeholder, then substitute only the client_max value
+            cat <<'NGINX_EOF' > /tmp/sqlution-prod.conf
             upstream sqlution_prod {
               server 127.0.0.1:8000;
             }
@@ -133,6 +141,9 @@ jobs:
               server_name sqlution.de www.sqlution.de;
               listen 80;
               listen [::]:80;
+
+              # limit request body size for uploads
+                client_max_body_size ${NGINX_CLIENT_MAX_BODY_SIZE};
 
               location / {
                 proxy_pass http://sqlution_prod;
@@ -145,10 +156,19 @@ jobs:
               }
             }
             NGINX_EOF
+
+            # Replace the placeholder with the actual size (preserve other $-variables)
+            # Run envsubst without sudo so it can see the exported variable, then pipe into sudo tee
+            envsubst '${NGINX_CLIENT_MAX_BODY_SIZE}' < /tmp/sqlution-prod.conf | sudo tee /etc/nginx/sites-available/sqlution-prod > /dev/null
+            sudo rm -f /tmp/sqlution-prod.conf
             
-            # If HTTPS block exists, append it
+            # If HTTPS block exists, append it (ensure client_max_body_size is present)
             if [ -n "$HTTPS_BLOCK" ]; then
-              printf '\n%s\n' "$HTTPS_BLOCK" | sudo tee -a /etc/nginx/sites-available/sqlution-prod > /dev/null
+              # Drop existing client_max_body_size directives and insert our configured value once per server block
+              printf '%s' "$HTTPS_BLOCK" \
+                | sed '/client_max_body_size[[:space:]]/d' \
+                | awk -v size="$NGINX_CLIENT_MAX_BODY_SIZE" 'BEGIN{RS="\n\n"; ORS="\n\n"} { sub(/server[ \t]*\{/, "server {\n    client_max_body_size " size ";"); print }' \
+                | sudo tee -a /etc/nginx/sites-available/sqlution-prod > /dev/null
             else
               # No HTTPS config exists, run certbot to obtain SSL certificate
               echo "No HTTPS configuration found, running certbot..."
@@ -225,12 +245,16 @@ jobs:
           DJANGO_DEBUG_MODE: ${{ vars.DJANGO_DEBUG_MODE || 'false' }}
           DEPLOY_APP_DIR: ${{ vars.DEPLOY_APP_DIR }}
           DJANGO_STATIC_URL: ${{ vars.DJANGO_STATIC_URL || '/app-static/' }}
+          # Pass upload limits (in bytes) into the container; default 100MB
+          FILE_UPLOAD_MAX_MEMORY_SIZE: ${{ vars.FILE_UPLOAD_MAX_MEMORY_SIZE || '104857600' }}
+          DATA_UPLOAD_MAX_MEMORY_SIZE: ${{ vars.DATA_UPLOAD_MAX_MEMORY_SIZE || '104857600' }}
+          NGINX_CLIENT_MAX_BODY_SIZE: ${{ vars.NGINX_CLIENT_MAX_BODY_SIZE || '100M' }}
         with:
           host: ${{ vars.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           port: ${{ secrets.DEPLOY_PORT || '22' }}
-          envs: SQLUTION_IMAGE,DJANGO_ALLOWED_HOSTS,DJANGO_SECRET_KEY,DJANGO_DEBUG_MODE,DEPLOY_APP_DIR,DJANGO_STATIC_URL
+          envs: SQLUTION_IMAGE,DJANGO_ALLOWED_HOSTS,DJANGO_SECRET_KEY,DJANGO_DEBUG_MODE,DEPLOY_APP_DIR,DJANGO_STATIC_URL,FILE_UPLOAD_MAX_MEMORY_SIZE,DATA_UPLOAD_MAX_MEMORY_SIZE
           script: |
             set -euo pipefail
             cd "${DEPLOY_APP_DIR}"
@@ -243,7 +267,9 @@ jobs:
               -e DEBUG_MODE="${DJANGO_DEBUG_MODE}" \
               -e DJANGO_ALLOWED_HOSTS="${DJANGO_ALLOWED_HOSTS}" \
               -e DJANGO_STATIC_URL="${DJANGO_STATIC_URL}" \
-              -e SQLUTION_DB_DIR='/data' \
+                -e SQLUTION_DB_DIR='/data' \
+                -e FILE_UPLOAD_MAX_MEMORY_SIZE="${FILE_UPLOAD_MAX_MEMORY_SIZE}" \
+                -e DATA_UPLOAD_MAX_MEMORY_SIZE="${DATA_UPLOAD_MAX_MEMORY_SIZE}" \
               -v sqlution-db:/data \
               -v "${DEPLOY_APP_DIR}/user_databases:/app/tutorial/user_databases" \
               "${SQLUTION_IMAGE}"

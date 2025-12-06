@@ -47,6 +47,9 @@ SQLution - Klassendiagramm
           <form id="uploadForm" method="post" action="{% url 'upload_json' %}" enctype="multipart/form-data">
             {% csrf_token %}
             <input id="json_file" type="file" name="json_file" accept=".json" required>
+            {% if upload_max_human %}
+              <div style="font-size:0.8em; margin-top:6px;">Maximale Dateigröße: {{ upload_max_human }}</div>
+            {% endif %}
           </form>
         </div>
       </div>
@@ -66,6 +69,7 @@ SQLution - Klassendiagramm
     const dropZone = document.getElementById('drop-zone');
     const fileInput = document.getElementById('json_file');
     const uploadForm = document.getElementById('uploadForm');
+    const UPLOAD_MAX_BYTES = {{ upload_max_bytes|default:'null' }};
 
     // Prevent navigating away on dragover
     dropZone.addEventListener('dragover', function(e) {
@@ -101,6 +105,11 @@ SQLution - Klassendiagramm
 
       
       const file = fileInput.files[0];
+      if (UPLOAD_MAX_BYTES && file.size > UPLOAD_MAX_BYTES) {
+        showAlertDialog('Datei ist zu groß. Maximale Dateigröße: {{ upload_max_human }}', 'fas fa-exclamation-triangle', 'red');
+        fileInput.value = null;
+        return;
+      }
       const reader = new FileReader();
       reader.onload = function(event) {
         try {
