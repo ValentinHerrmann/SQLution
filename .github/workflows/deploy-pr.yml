@@ -35,7 +35,6 @@ jobs:
             REF_BASIS="${INPUT_DEPLOY_REF:-${GITHUB_REF_NAME}}"
             SAFE_REF=$(echo "${REF_BASIS}" | tr '[:upper:]' '[:lower:]' | tr '/ ' '--')
             TMP_TAG="${IMAGE}:dev"
-            echo "branch_tag=${BRANCH_TAG}" >> "$GITHUB_OUTPUT"
             echo "tmp_tag=${TMP_TAG}" >> "$GITHUB_OUTPUT"
 
         - name: Log in to GitHub Container Registry
@@ -78,7 +77,6 @@ jobs:
             cache-to: type=gha,mode=max
             tags: |
               ${{ steps.meta.outputs.tmp_tag }}
-              ${{ steps.meta.outputs.branch_tag }}
 
         - name: Select image to use
           id: choose-image
