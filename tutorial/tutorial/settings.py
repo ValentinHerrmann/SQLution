@@ -101,9 +101,12 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'tutorial.wsgi.application'
 
-CSRF_TRUSTED_ORIGINS = ['https://sqlution.de',
-                        'https://127.0.0.1','http://127.0.0.1',
-                        'https://localhost','http://localhost']
+# trust all ALLOWED_HOSTS for CSRF
+CSRF_TRUSTED_ORIGINS = []
+CSRF_TRUSTED_ORIGINS += [f"https://{host}" for host in ALLOWED_HOSTS]
+CSRF_TRUSTED_ORIGINS += [f"http://{host}" for host in ALLOWED_HOSTS]
+
+
 
 
 # Database
