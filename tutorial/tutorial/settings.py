@@ -104,7 +104,6 @@ WSGI_APPLICATION = 'tutorial.wsgi.application'
 # trust all ALLOWED_HOSTS for CSRF
 CSRF_TRUSTED_ORIGINS = []
 CSRF_TRUSTED_ORIGINS += [f"https://{host}" for host in ALLOWED_HOSTS]
-CSRF_TRUSTED_ORIGINS += [f"http://{host}" for host in ALLOWED_HOSTS]
 
 
 
