@@ -66,7 +66,7 @@ SQLution - Übersicht
                 if (!fileInput || !fileInput.files || fileInput.files.length === 0) return;
                 const file = fileInput.files[0];
                 if (UPLOAD_MAX_BYTES && file.size > UPLOAD_MAX_BYTES) {
-                    alert('Datei ist zu groß. Maximale Dateigröße: {{ upload_max_human }}');
+                    showAlertDialog('Datei ist zu groß. Maximale Dateigröße: {{ upload_max_human }}', 'fas fa-exclamation-triangle', 'red');
                     fileInput.value = '';
                     return;
                 }
