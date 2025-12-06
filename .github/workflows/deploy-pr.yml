@@ -18,7 +18,7 @@ jobs:
         packages: write
       environment:
         name: dev
-        url: https://github.com/ValentinHerrmann/SQLution/pkgs/container/sqlution/601907445?tag=dev
+        url: https://github.com/ValentinHerrmann/SQLution/pkgs/container/sqlution/dev
       runs-on: ubuntu-latest
       if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
       outputs:

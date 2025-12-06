@@ -10,9 +10,9 @@ jobs:
     permissions:
       contents: read
       packages: write
-    environment:
-      name: production
-      url: https://github.com/ValentinHerrmann/SQLution/pkgs/container/sqlution
+      environment:
+        name: production
+        url: https://github.com/ValentinHerrmann/SQLution/pkgs/container/sqlution/
     runs-on: ubuntu-latest
     outputs:
       image_ref: ${{ steps.choose-image.outputs.image }}
