@@ -119,7 +119,13 @@ jobs:
             # Remove only broken symlinks in sites-enabled (preserve other valid sites)
             sudo find /etc/nginx/sites-enabled -type l ! -exec test -e {} \; -delete
             
-            # Create/update production site config (preserves certbot SSL)
+            # Back up any existing SSL configuration from certbot
+            CERT_BACKUP=""
+            if [ -f /etc/nginx/sites-available/sqlution-prod ]; then
+              CERT_BACKUP=$(sudo sed -n '/listen 443 ssl/,/^}/p' /etc/nginx/sites-available/sqlution-prod)
+            fi
+            
+            # Create production site config with base configuration
             cat <<'EOF' | sudo tee /etc/nginx/sites-available/sqlution-prod > /dev/null
             upstream sqlution_prod {
               server 127.0.0.1:8000;
@@ -128,6 +134,7 @@ jobs:
             server {
               server_name sqlution.de www.sqlution.de;
               listen 80;
+              listen [::]:80;
               
               # Route to production container on port 8000
               location / {
@@ -139,13 +146,15 @@ jobs:
                 proxy_set_header Upgrade \$http_upgrade;
                 proxy_set_header Connection "upgrade";
               }
-            
-              # SSL configuration will be auto-managed by certbot
-              # listen 443 ssl; and ssl_certificate directives added by certbot
             }
             EOF
             
-            # Enable production site (dev site may also be enabled, both coexist)
+            # If certbot had SSL config, append it
+            if [ -n "$CERT_BACKUP" ]; then
+              echo "$CERT_BACKUP" | sudo tee -a /etc/nginx/sites-available/sqlution-prod > /dev/null
+            fi
+            
+            # Enable production site
             sudo ln -sf /etc/nginx/sites-available/sqlution-prod /etc/nginx/sites-enabled/sqlution-prod
             
             # Test nginx configuration
