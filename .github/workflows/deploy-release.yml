@@ -100,6 +100,7 @@ jobs:
       name: production
       url: https://sqlution.de
     runs-on: ubuntu-latest
+    needs: stop
     steps:
       - name: Configure nginx with SSL preservation
         uses: appleboy/ssh-action@v0.1.7
