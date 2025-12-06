@@ -259,7 +259,36 @@
         banner.style.top = '40px';
         banner.style.left = '-90px';
         banner.style.padding = '8px 100px';
-        banner.style.background = 'rgba(var(--accent-danger), 0.5)';
+        // Resolve CSS variable --accent-danger to an rgba(...) string with alpha 0.5.
+        (function() {
+          var accent = getComputedStyle(document.documentElement).getPropertyValue('--accent-danger') || '';
+          accent = accent.trim();
+          function hexToRgb(hex) {
+            hex = hex.replace('#','');
+            if (hex.length === 3) { hex = hex.split('').map(function(h){return h+h;}).join(''); }
+            var bigint = Number.parseInt(hex, 16);
+            return [(bigint >> 16) & 255, (bigint >> 8) & 255, bigint & 255].join(',');
+          }
+          var rgb;
+          if (!accent) {
+            // fallback color (red) if variable missing
+            rgb = '255,0,0';
+          } else if (accent.charAt(0) === '#') {
+            // hex format: #rrggbb or #rgb
+            rgb = hexToRgb(accent);
+          } else if (accent.indexOf('rgb') === 0) {
+            // rgb(...) or rgba(...)
+            var nums = accent.replaceAll(/rgba?\(|\s+|\)/g, '').split(',');
+            rgb = nums.slice(0, 3).join(',');
+          } else if (accent.indexOf(',') === -1) {
+            // unknown format -> fallback
+            rgb = '255,0,0';
+          } else {
+            // raw "r,g,b" values stored in the CSS variable
+            rgb = accent;
+          }
+          banner.style.background = 'rgba(' + rgb + ', 0.5)';
+        })();
         banner.style.color = '#fff';
         banner.style.fontWeight = '700';
         banner.style.fontSize = '14px';
