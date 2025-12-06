@@ -16,6 +16,9 @@ jobs:
       permissions:
         contents: read
         packages: write
+      environment:
+        name: dev
+        url: https://github.com/ValentinHerrmann/SQLution/pkgs/container/sqlution/601907445?tag=dev
       runs-on: ubuntu-latest
       if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
       outputs:
@@ -31,7 +34,6 @@ jobs:
             IMAGE="ghcr.io/${OWNER}/sqlution"
             REF_BASIS="${INPUT_DEPLOY_REF:-${GITHUB_REF_NAME}}"
             SAFE_REF=$(echo "${REF_BASIS}" | tr '[:upper:]' '[:lower:]' | tr '/ ' '--')
-            BRANCH_TAG="${IMAGE}:${SAFE_REF}"
             TMP_TAG="${IMAGE}:dev"
             echo "branch_tag=${BRANCH_TAG}" >> "$GITHUB_OUTPUT"
             echo "tmp_tag=${TMP_TAG}" >> "$GITHUB_OUTPUT"
@@ -89,6 +91,7 @@ jobs:
         contents: read
       environment:
         name: dev
+        url: https://dev.sqlution.de
       runs-on: ubuntu-latest
       steps:
         - name: Configure nginx with SSL preservation
@@ -170,6 +173,7 @@ jobs:
         contents: read
       environment:
         name: dev
+        url: https://dev.sqlution.de
       runs-on: ubuntu-latest
       steps:
         - name: Stop dev application over SSH
@@ -193,6 +197,7 @@ jobs:
       runs-on: ubuntu-latest
       environment:
         name: dev
+        url: https://dev.sqlution.de
       env:
         SQLUTION_IMAGE: ${{ needs.build_image.outputs.image_ref }}
         REGISTRY_USER: ${{ secrets.DEPLOY_REGISTRY_USER }}
