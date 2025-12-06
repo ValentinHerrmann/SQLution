@@ -247,5 +247,30 @@
     <!-- Theme Switcher JavaScript -->
       <!-- Theme Switcher JS -->
   <script src="{% static 'js/theme-switcher.js' %}"></script>
+  <script>
+    (function () {
+      try {
+        var host = String(globalThis.location?.hostname || '').toLowerCase();
+        var isDev = host.includes('dev') || host.includes('tmp');
+        if (!isDev) return;
+        var banner = document.createElement('div');
+        banner.textContent = 'TEST';
+        banner.style.position = 'fixed';
+        banner.style.top = '0';
+        banner.style.left = '0';
+        banner.style.padding = '6px 12px';
+        banner.style.background = 'rgba(200, 0, 0, 0.6)';
+        banner.style.color = '#fff';
+        banner.style.fontWeight = '700';
+        banner.style.letterSpacing = '1px';
+        banner.style.zIndex = '11000';
+        banner.style.pointerEvents = 'none';
+        banner.style.userSelect = 'none';
+        document.body.appendChild(banner);
+      } catch (e) {
+        console.warn('Dev banner error', e);
+      }
+    })();
+  </script>
   </body>
 </html>
