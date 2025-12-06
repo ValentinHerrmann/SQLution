@@ -1,0 +1,174 @@
+name: Deploy Dev (PR and Manual)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches-ignore: []
+  workflow_dispatch:
+    inputs:
+      deploy_ref:
+        description: "Git reference (tag or branch) to deploy as dev"
+        default: ""
+        required: false
+
+jobs:
+  build_image:
+    name: Build and publish dev image on GHCR
+    permissions:
+      contents: read
+      packages: write
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    outputs:
+      image_ref: ${{ steps.choose-image.outputs.image }}
+    steps:
+      - name: Compute image metadata
+        id: meta
+        env:
+          INPUT_DEPLOY_REF: ${{ inputs.deploy_ref }}
+        run: |
+          OWNER=$(echo "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')
+          IMAGE="ghcr.io/${OWNER}/sqlution"
+          REF_BASIS="${INPUT_DEPLOY_REF:-${GITHUB_REF_NAME}}"
+          SAFE_REF=$(echo "${REF_BASIS}" | tr '[:upper:]' '[:lower:]' | tr '/ ' '--')
+          BRANCH_TAG="${IMAGE}:${SAFE_REF}"
+          TMP_TAG="${IMAGE}:dev"
+          echo "branch_tag=${BRANCH_TAG}" >> "$GITHUB_OUTPUT"
+          echo "tmp_tag=${TMP_TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.deploy_ref || github.ref }}
+
+      - name: Set VERSION file
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          DISPATCH_REF: ${{ inputs.deploy_ref }}
+        run: |
+          set -euo pipefail
+          TARGET_REF="$REF_NAME"
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ -n "${DISPATCH_REF:-}" ]; then
+            TARGET_REF="$DISPATCH_REF"
+          fi
+          printf '%s\n' "$TARGET_REF" > VERSION
+          echo "VERSION file set to $TARGET_REF"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          tags: |
+            ${{ steps.meta.outputs.tmp_tag }}
+            ${{ steps.meta.outputs.branch_tag }}
+
+      - name: Select image to use
+        id: choose-image
+        run: |
+          echo "image=${{ steps.meta.outputs.tmp_tag }}" >> "$GITHUB_OUTPUT"
+
+  stop:
+    name: Stop running dev application
+    needs: build_image
+    if: github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: read
+    environment:
+      name: dev
+    runs-on: ubuntu-latest
+    env:
+      SQLUTION_IMAGE: ${{ needs.build_image.outputs.image_ref }}
+    steps:
+      - name: Stop dev application over SSH
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ vars.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || '22' }}
+          envs: SQLUTION_IMAGE
+          script: |
+            set -euo pipefail
+            docker container stop sqlution-app-dev || true
+            docker container rm sqlution-app-dev || true
+
+  launch:
+    name: Launch new dev container
+    needs:
+      - build_image
+      - stop
+    if: github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    environment:
+      name: dev
+    env:
+      SQLUTION_IMAGE: ${{ needs.build_image.outputs.image_ref }}
+      REGISTRY_USER: ${{ secrets.DEPLOY_REGISTRY_USER }}
+      REGISTRY_TOKEN: ${{ secrets.DEPLOY_REGISTRY_TOKEN }}
+      DJANGO_STATIC_URL: ${{ vars.DJANGO_STATIC_URL || '/app-static/' }}
+    steps:
+      - name: Pull image on server
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ vars.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || '22' }}
+          envs: SQLUTION_IMAGE,REGISTRY_USER,REGISTRY_TOKEN
+          script: |
+            set -euo pipefail
+            if [ -z "${REGISTRY_USER:-}" ] || [ -z "${REGISTRY_TOKEN:-}" ]; then
+              echo "Missing registry credentials (DEPLOY_REGISTRY_USER / DEPLOY_REGISTRY_TOKEN)." >&2
+              exit 1
+            fi
+            echo "Pulling ${SQLUTION_IMAGE} on server"
+            echo "${REGISTRY_TOKEN}" | docker login ghcr.io -u "${REGISTRY_USER}" --password-stdin
+            docker pull "${SQLUTION_IMAGE}"
+
+      - name: Run dev container on server
+        uses: appleboy/ssh-action@v0.1.7
+        env:
+          DJANGO_ALLOWED_HOSTS: ${{ vars.DJANGO_ALLOWED_HOSTS || 'dev.sqlution.de,localhost,127.0.0.1' }}
+          DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+          DEPLOY_APP_DIR: ${{ vars.DEPLOY_APP_DIR }}
+          DJANGO_STATIC_URL: ${{ vars.DJANGO_STATIC_URL || '/app-static/' }}
+        with:
+          host: ${{ vars.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || '22' }}
+          envs: SQLUTION_IMAGE,DJANGO_ALLOWED_HOSTS,DJANGO_SECRET_KEY,DEPLOY_APP_DIR,DJANGO_STATIC_URL
+          script: |
+            set -euo pipefail
+            cd "${DEPLOY_APP_DIR}"
+            echo "Launching ${SQLUTION_IMAGE}"
+            docker run -d \
+              --restart unless-stopped \
+              --name sqlution-app-dev \
+              -p 8001:8001 \
+              -e SECRET_KEY="${DJANGO_SECRET_KEY}" \
+              -e DEBUG_MODE="${DJANGO_DEBUG_MODE}" \
+              -e DJANGO_ALLOWED_HOSTS="${DJANGO_ALLOWED_HOSTS}" \
+              -e DJANGO_STATIC_URL="${DJANGO_STATIC_URL}" \
+              -e SQLUTION_DB_DIR='/data' \
+              -v sqlution-db-dev:/data \
+              -v "${DEPLOY_APP_DIR}/user_databases:/app/tutorial/user_databases" \
+              "${SQLUTION_IMAGE}"
