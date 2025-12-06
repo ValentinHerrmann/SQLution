@@ -71,9 +71,23 @@ def overview(request):
 
 
 
+    # pass upload size limits to the template so forms can enforce/display them
+    upload_max_bytes = getattr(settings, 'FILE_UPLOAD_MAX_MEMORY_SIZE', None)
+    # human readable
+    def human_readable(num):
+        for unit in ['B','KB','MB','GB','TB']:
+            if abs(num) < 1024.0:
+                return "%3.1f %s" % (num, unit)
+            num /= 1024.0
+        return "%3.1f %s" % (num, 'PB')
+
+    upload_max_human = human_readable(upload_max_bytes) if upload_max_bytes else None
+
     return render(request, 'overview.html', {
         'models': tables,
-        'functions': sql
+        'functions': sql,
+        'upload_max_bytes': upload_max_bytes,
+        'upload_max_human': upload_max_human,
     })
 
 

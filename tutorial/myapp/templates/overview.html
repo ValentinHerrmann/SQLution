@@ -16,9 +16,12 @@ SQLution - Übersicht
     <div style="flex: 1; text-align: center;">
         <b> SQLite Datenbank (.db) hochladen: </b>
         <p style="font-size: 0.8em;"> Achtung: Hierdurch wird die aktuelle Datenbank gelöscht!</p>
-        <form id="uploadForm" method="post" action="{% url 'upload_db' %}" enctype="multipart/form-data">
+        <form id="uploadForm_db" method="post" action="{% url 'upload_db' %}" enctype="multipart/form-data">
             {% csrf_token %}
-            <input id="db_file" type="file" name="db_file" accept=".db" required class="btn btn-primary" style="margin-bottom: 10px; cursor: pointer;" onchange="this.form.submit();">
+            <input id="db_file" type="file" name="db_file" accept=".db" required class="btn btn-primary" style="margin-bottom: 10px; cursor: pointer;">
+            {% if upload_max_human %}
+                <div style="font-size:0.8em; margin-top:6px;">Maximale Dateigröße: {{ upload_max_human }}</div>
+            {% endif %}
         </form>
     </div>
     <div style="flex: 1; text-align: center;">
@@ -32,9 +35,12 @@ SQLution - Übersicht
     <div style="flex: 1; text-align: center;">
         <b> Projekt (.zip) hochladen: </b>
         <p style="font-size: 0.8em;"> Achtung: Hierdurch wird das aktuelle Projekt gelöscht!</p>
-        <form id="uploadForm" method="post" action="{% url 'upload_zip' %}" enctype="multipart/form-data">
+        <form id="uploadForm_zip" method="post" action="{% url 'upload_zip' %}" enctype="multipart/form-data">
             {% csrf_token %}
-            <input id="zip_file" type="file" name="zip_file" accept=".zip" required class="btn btn-primary" style="margin-bottom: 10px; cursor: pointer;" onchange="this.form.submit();">
+            <input id="zip_file" type="file" name="zip_file" accept=".zip" required class="btn btn-primary" style="margin-bottom: 10px; cursor: pointer;">
+            {% if upload_max_human %}
+                <div style="font-size:0.8em; margin-top:6px;">Maximale Dateigröße: {{ upload_max_human }}</div>
+            {% endif %}
         </form>
     </div>
     <div style="flex: 1; text-align: center;">
@@ -48,8 +54,27 @@ SQLution - Übersicht
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-      const fileInput = document.getElementById('db_file');
-      const uploadForm = document.getElementById('uploadForm');
+            const fileInputDB = document.getElementById('db_file');
+            const uploadFormDB = document.getElementById('uploadForm_db');
+            const fileInputZIP = document.getElementById('zip_file');
+            const uploadFormZIP = document.getElementById('uploadForm_zip');
+
+            // size limit from server (bytes)
+            const UPLOAD_MAX_BYTES = {{ upload_max_bytes|default:'null' }};
+
+            function checkAndSubmit(fileInput, form) {
+                if (!fileInput || !fileInput.files || fileInput.files.length === 0) return;
+                const file = fileInput.files[0];
+                if (UPLOAD_MAX_BYTES && file.size > UPLOAD_MAX_BYTES) {
+                    alert('Datei ist zu groß. Maximale Dateigröße: {{ upload_max_human }}');
+                    fileInput.value = '';
+                    return;
+                }
+                form.submit();
+            }
+
+            fileInputDB && fileInputDB.addEventListener('change', function(){ checkAndSubmit(fileInputDB, uploadFormDB); });
+            fileInputZIP && fileInputZIP.addEventListener('change', function(){ checkAndSubmit(fileInputZIP, uploadFormZIP); });
   
       /*// Prevent navigating away on dragover
       dropZone.addEventListener('dragover', function(e) {
