@@ -44,6 +44,7 @@ urlpatterns = [
     path('user_databases.sqlite', files.read_file),
     path('user_databases/<str:username>.sqlite', files.read_file),
 
+    path('api/', api.api_endpoints, name='api_endpoints'),
     path('api/sql/<str:filename>.sql', api.api_sql, name='api_sql'),
     path('api/sql/list', api.api_sql_list, name='api_sql_list'),
     path('api/sql/run', api.api_run_sql, name='api_run_sql'),
