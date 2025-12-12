@@ -180,13 +180,7 @@
 
       if (editor.getValue() !== contentOnLoad) {
         if(filenameOnLoad === 'Playground') {
-          const confirmed = await globalThis.showConfirmDialog(
-            "Der Playground wird nicht gespeichert. Änderungen gehen verloren. Fortfahren?",
-            "fas fa-exclamation-triangle"
-          );
-          if (!confirmed) {
-            return;
-          }
+          sessionStorage.setItem('sql_playground', editor.getValue());
         }
         else {
           const confirmed = await globalThis.showConfirmDialog(
@@ -218,7 +212,14 @@
         if (btn) btn.style.display = 'inline-block';
       }
       if(filename === 'Playground') {
-        const content = '-- Ein Playground ist eine Code-Umgebung zum Ausprobieren von SQL-Abfragen.\n-- Nichts, was du hier machst, wird gespeichert und ist gelöscht, sobald du\n-- in der linken Spalte die Datei wechselst.\n-- Um deine SQL-Abfragen zu speichern, erstelle eine neue SQL-Datei über das\n-- "+"-Symbol oben links im Dateiexplorer.\n\n\n';
+        if (sessionStorage.getItem('sql_playground')) {
+          const savedContent = sessionStorage.getItem('sql_playground');
+          editor.setValue(savedContent, -1);
+          contentOnLoad = savedContent;
+          filenameOnLoad = filename;
+          return;
+        }
+        const content = '-- Ein Playground ist eine Code-Umgebung zum Ausprobieren von SQL-Abfragen.\n-- Was du machst, wird gelöscht, sobald du dich abmeldest oder den Browser schließt.\n\n-- Um deine SQL-Abfragen zu speichern, erstelle eine neue SQL-Datei über das\n-- "+"-Symbol oben links im Dateiexplorer.\n\n\n';
         editor.setValue(content, -1);
         contentOnLoad = content;
         filenameOnLoad = filename;
