@@ -1,6 +1,7 @@
 import json
 from sqlite3 import OperationalError
 from django.http import HttpResponse, JsonResponse
+from django.urls import get_resolver
 import psutil
 from myapp.utils.decorators import *
 from django.contrib.auth.decorators import login_required,user_passes_test
@@ -11,10 +12,55 @@ from myapp.utils.users import *
 from myapp.models import *
 from myapp.utils.utils import *
 from myapp.utils.sqlite_connector import *
+from django.views.decorators.http import require_http_methods
 
 # Import functions from views_user.py
 from .. import views_user
 
+def _build_endpoint(pattern, path):
+    """Build an endpoint dictionary from a URL pattern."""
+    name = pattern.name if hasattr(pattern, 'name') else None
+    return {
+        'path': '/' + path.lstrip('^').rstrip('$').replace('\\', ''),
+        'name': name
+    }
+
+def extract_endpoints(url_patterns, prefix=''):
+    """Extract API endpoints from URL patterns."""
+    endpoints = []
+    if prefix != '' and not prefix.startswith('api/'):
+        return endpoints
+    
+    for pattern in url_patterns:
+        if hasattr(pattern, 'url_patterns'):
+            # This is an included URLconf, recurse into it
+            endpoints.extend(extract_endpoints(pattern.url_patterns, prefix + str(pattern.pattern)))
+        else:
+            # This is a regular URL pattern
+            path = prefix + str(pattern.pattern)
+            if path.startswith('api/'):
+                endpoints.append(_build_endpoint(pattern, path))
+    
+    return endpoints
+
+@require_http_methods(['GET'])
+def api_endpoints(request) -> HttpResponse:
+    """Return a JSON list of all API endpoints."""
+    try:
+        resolver = get_resolver()
+        endpoints = extract_endpoints(resolver.url_patterns)
+        
+        # Sort by path for better readability
+        endpoints.sort(key=lambda x: x['path'])
+        
+        return JsonResponse({
+            'endpoints': endpoints,
+            'count': len(endpoints)
+        }, json_dumps_params={'indent': 2})
+    except Exception as _:
+        return HttpResponse("Could not get endpoints", status=500)
+
+@require_http_methods(['GET', 'POST', 'PUT', 'DELETE'])
 @login_required
 @user_passes_test(is_db_admin)
 def api_sql(request, filename:str) -> HttpResponse:
@@ -25,18 +71,7 @@ def api_sql(request, filename:str) -> HttpResponse:
         if(not filename.endswith('.sql')):
             filename += '.sql'
 
-        if(request.method == "PUT"):
-
-            body_unicode = request.body.decode('utf-8')
-            body = json.loads(body_unicode)
-            sql = body['sql']
-
-            with open(fullpath(user_dir,f"{filename}"), 'w') as f:
-                f.write(sql)
-            sqllock_release(user_dir)
-            return HttpResponse("File saved successfully", status=200)
-
-        if(request.method == "POST"):
+        if(request.method == "PUT" or request.method == "POST"):
 
             body_unicode = request.body.decode('utf-8')
             body = json.loads(body_unicode)
@@ -65,6 +100,7 @@ def api_sql(request, filename:str) -> HttpResponse:
     finally:
         sqllock_release(user_dir)
 
+@require_http_methods(['POST'])
 @login_required
 @user_passes_test(is_db_admin)
 def api_sql_all(request) -> HttpResponse:
@@ -102,11 +138,12 @@ def api_sql_all(request) -> HttpResponse:
         return HttpResponse("Unknown request", status=404)
     except Exception as e:
         print(f"Error: {e}")
-        return HttpResponse("Internal Error", status=500)
+        return HttpResponse("Internal error while saving SQL files.", status=500)
     finally:
         sqllock_release(user_dir)
 
 
+@require_http_methods(['GET'])
 @login_required
 @user_passes_test(is_db_admin)
 def api_sql_list(request) -> HttpResponse:
@@ -123,16 +160,16 @@ def api_sql_list(request) -> HttpResponse:
             return HttpResponse("Method not allowed", status=405)
     except Exception as e:
         print(f"Error in api_sql_list: {e}")
-        return HttpResponse("Internal Error", status=500)
+        return HttpResponse("Internal error while listing user's SQL files", status=500)
     finally:
         sqllock_release(user_dir)
 
 
+@require_http_methods(['POST'])
 @login_required
 @user_passes_test(is_db_admin)
 def api_run_sql(request) -> HttpResponse:
     """Execute provided SQL and return JSON with columns/result or error."""
-    user_dir = get_user_directory(request.user.username)
     try:
         if request.method != 'POST':
             return HttpResponse("Method not allowed", status=405)
@@ -160,6 +197,7 @@ def api_run_sql(request) -> HttpResponse:
         print(f"Error in api_run_sql: {e}")
         return JsonResponse({'columns': [], 'result': [], 'error': str(e)}, status=500)
 
+@require_http_methods(['POST'])
 @login_required
 @user_passes_test(is_db_admin)
 def api_upload_db(request) -> HttpResponse:
@@ -175,6 +213,7 @@ def api_upload_db(request) -> HttpResponse:
         print(f"Error: {e}")
     return HttpResponse("Internal Error", status=500)
 
+@require_http_methods(['GET', 'POST'])
 @login_required
 @user_passes_test(is_db_admin)
 def api_diagram_json(request):
@@ -199,6 +238,7 @@ def api_diagram_json(request):
     finally:
         sqllock_release(user_dir)
 
+@require_http_methods(['GET'])
 @login_required
 @user_passes_test(is_global_admin)
 def get_system_data(request) -> HttpResponse:

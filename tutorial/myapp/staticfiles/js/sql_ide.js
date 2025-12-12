@@ -31,7 +31,8 @@
       const resp = await fetch('/api/sql/list');
       if (!resp.ok) throw new Error('Could not load file list');
       const data = await resp.json();
-      const files = data.files || [];
+      let files = data.files || [];
+      files.unshift('Playground');
       if (files.length === 0) {
         ul.innerHTML = '<li style="padding:0.8rem; color:var(--text-secondary);">Keine SQL-Dateien gefunden.</li>';
         return;
@@ -52,22 +53,20 @@
         nameSpan.textContent = f;
         nameSpan.style.flex = '1 1 auto';
 
-        const delBtn = document.createElement('button');
-        delBtn.type = 'button';
-        delBtn.title = 'Löschen';
-        delBtn.innerHTML = '<i class="fas fa-trash" aria-hidden="true"></i>';
-        delBtn.style.marginLeft = '0.5rem';
-        delBtn.style.background = 'transparent';
-        delBtn.style.border = 'none';
-        delBtn.style.color = 'var(--text-danger)';
-        delBtn.style.cursor = 'pointer';
-        delBtn.style.display = 'none';
-
-        // Clicking the li loads the file
-        li.addEventListener('click', () => loadFileIntoEditor(f, li));
-
-        // Delete handler (stop propagation so it doesn't trigger load)
-        delBtn.addEventListener('click', async (e) => {
+        let delBtn = null;
+        if(f !== 'Playground') {
+          delBtn = document.createElement('button');
+          delBtn.type = 'button';
+          delBtn.title = 'Löschen';
+          delBtn.innerHTML = '<i class="fas fa-trash" aria-hidden="true"></i>';
+          delBtn.style.marginLeft = '0.5rem';
+          delBtn.style.background = 'transparent';
+          delBtn.style.border = 'none';
+          delBtn.style.color = 'var(--text-danger)';
+          delBtn.style.cursor = 'pointer';
+          delBtn.style.display = 'none';
+          // Delete handler (stop propagation so it doesn't trigger load)
+          delBtn.addEventListener('click', async (e) => {
           e.stopPropagation();
           const ok = await globalThis.showConfirmDialog(
             `Datei "${f}" wirklich löschen?`,
@@ -96,9 +95,19 @@
             alert('Fehler beim Löschen der Datei.');
           }
         });
+        }
+
+        // Clicking the li loads the file
+        li.addEventListener('click', () => loadFileIntoEditor(f, li));
+
+        
 
         li.appendChild(nameSpan);
-        li.appendChild(delBtn);
+        if(f !== 'Playground') {
+          if(delBtn) {
+            li.appendChild(delBtn);
+          }
+        }
         ul.appendChild(li);
         if (idx === 0) firstLi = li;
         idx++;
@@ -151,6 +160,10 @@
       console.error('No file loaded to save');
       return false;
     }
+    if(filenameOnLoad === 'Playground') {
+      globalThis.showAlertDialog("Der Playground kann nicht gespeichert werden. Bitte erstelle eine neue SQL-Datei über das '+'-Symbol im Dateiexplorer.", "fas fa-exclamation-triangle");
+      return false;
+    }
 
     console.log("Content to save: " + content);
     console.log("Filename to save: " + filenameOnLoad);
@@ -166,16 +179,23 @@
       if (!editor) throw new Error('Editor not initialized');
 
       if (editor.getValue() !== contentOnLoad) {
-        const confirmed = await globalThis.showConfirmDialog(
-          "Änderungen speichern? Wenn nicht gespeichert wird, gehen diese verloren.",
-          "fas fa-save"
-        );
-        if (confirmed) {
-          let success = await saveCurrentFile();
-          console.log("Save success: " + success);
-          if (!success) {
-            alert("Speichern der Datei fehlgeschlagen. Abbruch des Ladevorgangs.");
-            return;
+        if(filenameOnLoad === 'Playground') {
+          sessionStorage.setItem('sql_playground', editor.getValue());
+        }
+        else {
+          const confirmed = await globalThis.showConfirmDialog(
+            "Änderungen speichern? Wenn nicht gespeichert wird, gehen diese verloren.",
+            "fas fa-save"
+          );
+          if (confirmed) {
+            if(filenameOnLoad !== 'Playground') {
+              let success = await saveCurrentFile();
+              console.log("Save success: " + success);
+              if (!success) {
+                globalThis.showAlertDialog("Speichern der Datei fehlgeschlagen. Abbruch des Ladevorgangs.", "fas fa-exclamation-triangle");
+                return;
+              }
+            }
           }
         }
       }
@@ -191,18 +211,33 @@
         const btn = liElement.querySelector('button');
         if (btn) btn.style.display = 'inline-block';
       }
-
-      const base = filename.replace(/\.sql$/i, '');
-      const resp = await fetch(`/api/sql/${encodeURIComponent(base)}.sql`);
-      if (!resp.ok) throw new Error('Could not load file content');
-      const content = await resp.text();
-      console.log("Load from file: " + content);
-      editor.setValue(content, -1);
-      contentOnLoad = content;
-      filenameOnLoad = filename;
+      if(filename === 'Playground') {
+        if (sessionStorage.getItem('sql_playground')) {
+          const savedContent = sessionStorage.getItem('sql_playground');
+          editor.setValue(savedContent, -1);
+          contentOnLoad = savedContent;
+          filenameOnLoad = filename;
+          return;
+        }
+        const content = '-- Ein Playground ist eine Code-Umgebung zum Ausprobieren von SQL-Abfragen.\n-- Was du machst, wird gelöscht, sobald du dich abmeldest oder den Browser schließt.\n\n-- Um deine SQL-Abfragen zu speichern, erstelle eine neue SQL-Datei über das\n-- "+"-Symbol oben links im Dateiexplorer.\n\n\n';
+        editor.setValue(content, -1);
+        contentOnLoad = content;
+        filenameOnLoad = filename;
+        return;
+      }
+      else {
+        const base = filename.replace(/\.sql$/i, '');
+        const resp = await fetch(`/api/sql/${encodeURIComponent(base)}.sql`);
+        if (!resp.ok) throw new Error('Could not load file content');
+        const content = await resp.text();
+        console.log("Load from file: " + content);
+        editor.setValue(content, -1);
+        contentOnLoad = content;
+        filenameOnLoad = filename;
+      }
     } catch (err) {
       console.error(err);
-      alert('Fehler beim Laden der Datei. Siehe Konsole.');
+      globalThis.showAlertDialog('Fehler beim Laden der Datei. Siehe Konsole.', "fas fa-exclamation-triangle");
     }
   }
 
@@ -263,11 +298,11 @@
         console.debug("File created successfully: " + filename);
       } else {
         console.error("Fehler beim Erstellen der SQL Datei.", resp.status, resp.statusText);
-        alert("Fehler beim Erstellen der SQL Datei.");
+        globalThis.showAlertDialog("Fehler beim Erstellen der SQL Datei.", "fas fa-exclamation-triangle");
       }
     } catch (err) {
       console.error('Error creating file:', err);
-      alert("Fehler beim Erstellen der SQL Datei.");
+      globalThis.showAlertDialog("Fehler beim Erstellen der SQL Datei.", "fas fa-exclamation-triangle");
     }
     loadFileList();
   }
@@ -445,3 +480,7 @@
   globalThis.saveFile = saveFile;
   globalThis.saveSQLFiles = saveSQLFiles;
 })();
+
+// random kommentare
+
+// um mal zu schauen, ob das so geht
