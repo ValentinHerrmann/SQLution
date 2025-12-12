@@ -31,7 +31,7 @@
       const resp = await fetch('/api/sql/list');
       if (!resp.ok) throw new Error('Could not load file list');
       const data = await resp.json();
-      let files = data.files || []
+      let files = data.files || [];
       files.unshift('Playground');
       if (files.length === 0) {
         ul.innerHTML = '<li style="padding:0.8rem; color:var(--text-secondary);">Keine SQL-Dateien gefunden.</li>';
