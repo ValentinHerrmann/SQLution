@@ -57,10 +57,8 @@ def api_endpoints(_) -> HttpResponse:
             'endpoints': endpoints,
             'count': len(endpoints)
         }, json_dumps_params={'indent': 2})
-    except Exception as e:
-        return JsonResponse({
-            'error': str(e)
-        }, status=500)
+    except Exception as _:
+        return HttpResponse("Could not get endpoints", status=500)
 
 @require_http_methods(['GET', 'POST', 'PUT', 'DELETE'])
 @login_required
