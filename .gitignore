@@ -173,7 +173,8 @@ cython_debug/
 .pypirc
 tutorial/myapp/static/
 user_databases/*
-tutorial/static/
+static/
+staticfiles/
 last_launched.txt
 
 tutorial/myapp/staticfiles/_sql-ide/
