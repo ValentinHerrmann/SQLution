@@ -44,7 +44,7 @@ def extract_endpoints(url_patterns, prefix=''):
     return endpoints
 
 @require_http_methods(['GET'])
-def api_endpoints(_) -> HttpResponse:
+def api_endpoints(request) -> HttpResponse:
     """Return a JSON list of all API endpoints."""
     try:
         resolver = get_resolver()
