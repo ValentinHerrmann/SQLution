@@ -66,6 +66,12 @@
             ],
             "firefoxArgs": [
                 "-start-debugger-server"
+            ],
+            "pathMappings": [
+                {
+                    "url": "http://localhost:8000/app-static/js",
+                    "path": "${workspaceFolder}/tutorial/myapp/staticfiles/js"
+                }
             ]
         },
         {
