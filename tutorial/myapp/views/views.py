@@ -101,8 +101,10 @@ def overview(request):
     except Exception as e:
         print(f"Error in overview view: {e}")
         return render(request, html_template, {
-            'models': None,
-            'functions': None
+            'models': [],
+            'functions': [],
+            'upload_max_bytes': None,
+            'upload_max_human': None,
         })
 
 
