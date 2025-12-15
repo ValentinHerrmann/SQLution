@@ -99,6 +99,7 @@ def overview(request):
             'upload_max_human': upload_max_human,
         })
     except Exception as e:
+        print(f"Error in overview view: {e}")
         return render(request, html_template, {
             'models': None,
             'functions': None
