@@ -61,7 +61,7 @@ def overview(request):
                     {
                         'name': t,
                         'columns': [],
-                        'rows': [['Fehler beim Abrufen der Tabelle. Das passiert typischerweise, wenn ein Tabellennamen ungültig sind. Überprüfe dein Datenbankschema!']]
+                        'rows': [['Fehler beim Abrufen der Tabelle. Das passiert typischerweise, wenn ein Tabellenname ungültig ist. Überprüfe dein Datenbankschema!']]
                     }
                 )
         sql = []
