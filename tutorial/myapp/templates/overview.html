@@ -9,7 +9,7 @@ SQLution - Übersicht
 
 <details>
 <summary style="text-align: center; cursor: pointer; list-style: none; margin: 20px;" onclick="toggleIcon(this)">
-    <h5><i class="far fa-caret-square-right" id="detailsIcon"></i> Datenbank und Projekt verwalten</h5>
+    <h5><i class="far fa-caret-square-right details-icon"></i> Datenbank und Projekt verwalten</h5>
 </summary>
 
 <div style="display: flex; justify-content: space-between; align-items: center; gap: 20px; width: 100%;">
@@ -82,14 +82,15 @@ SQLution - Übersicht
 <script>
 function toggleIcon(summary) {
     const details = summary.parentElement;
-    const icon = summary.querySelector('#detailsIcon');
-    
-    // Toggle happens after click, so check the future state
+    const icon = summary.querySelector('.details-icon');
+
+    // Toggle happens after click, so check the future state and update the icon class
     setTimeout(() => {
+        if (!icon) return;
         if (details.open) {
-            icon.className = 'far fa-caret-square-down';
+            icon.className = 'far fa-caret-square-down details-icon';
         } else {
-            icon.className = 'far fa-caret-square-right';
+            icon.className = 'far fa-caret-square-right details-icon';
         }
     }, 0);
 }
@@ -98,7 +99,7 @@ function toggleIcon(summary) {
 
 <details>
 <summary style="text-align: center; cursor: pointer; list-style: none;  margin: 20px;" onclick="toggleIcon(this)">
-    <h5><i class="far fa-caret-square-right" id="detailsIcon"></i> Nutzerfunktionen / gespeicherte SQL-Abfragen</h5>
+    <h5><i class="far fa-caret-square-right details-icon"></i> Nutzerfunktionen / gespeicherte SQL-Abfragen</h5>
 </summary>
 
 
@@ -115,7 +116,7 @@ function toggleIcon(summary) {
 
 <details>
 <summary style="text-align: center; cursor: pointer; list-style: none; margin: 20px;" onclick="toggleIcon(this)">
-    <h5><i class="far fa-caret-square-right" id="detailsIcon"></i> Tabellen (max. 5 Zeilen pro Tabelle)</h5>
+    <h5><i class="far fa-caret-square-right details-icon"></i> Tabellen (max. 5 Zeilen pro Tabelle)</h5>
 </summary>
 <h5 style="text-align: center;"></h5>
 <table border="1">
@@ -137,6 +138,31 @@ function toggleIcon(summary) {
         </table>
     {% endfor %}
 </details>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    function updateIconFor(details) {
+        const icon = details.querySelector('.details-icon');
+        if (!icon) return;
+        icon.className = details.open ? 'far fa-caret-square-down details-icon' : 'far fa-caret-square-right details-icon';
+    }
+
+    const detailsList = Array.from(document.querySelectorAll('details'));
+    detailsList.forEach(d => updateIconFor(d));
+
+    // Open exactly one details element based on numeric ?open=<index>
+    const params = new URLSearchParams(window.location.search);
+    const openParam = params.get('open');
+    if (openParam && /^\d+$/.test(openParam)) {
+        const idx = parseInt(openParam, 10);
+        if (idx >= 0 && idx < detailsList.length) {
+            // close all first, then open only the requested one
+            detailsList.forEach((d, i) => { d.open = false; updateIconFor(d); });
+            detailsList[idx].open = true;
+            updateIconFor(detailsList[idx]);
+        }
+    }
+});
+</script>
 
 <br>  
 {% endblock %}

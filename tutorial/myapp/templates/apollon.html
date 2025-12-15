@@ -146,9 +146,10 @@ SQLution - Klassendiagramm
         headers: { "Content-Type": "application/json", "X-CSRFToken": csrftoken },
         body: file
     })
-    .then(response => {
+    .then(async response => {
         if (response.ok) {
-          showAlertDialog("Klassendiagramm wurde als Datenbank geladen.", "fas fa-check-square", "green");
+          await showAlertDialog("Klassendiagramm wurde als Datenbank geladen. Überprüfe in der Übersicht, ob automatisch Fehler korrigiert wurden!", "fas fa-check-square", "green");
+          window.location.href = '/overview?open=2';
         } 
         else {
           showAlertDialog("Fehler beim Laden des Klassendiagramms als Datenbank. Überprüfe, ob das Format deines Diagramms korrekt ist!", "fas fa-exclamation-triangle", "red");
@@ -214,7 +215,7 @@ SQLution - Klassendiagramm
         }
       })
       .catch(error => {
-        showAlertDialog("Es konnte kein bestehendes Klassendiagramm vom Server geladen werden. Wenn du noch nie ein Klassendiagramm als Datenbank importiert hast, ist das normal.", "fas fa-exclamation-triangle", "orange");
+        showAlertDialog("Es konnte kein bestehendes Klassendiagramm vom Server geladen werden. Wenn du noch nie ein Klassendiagramm als Datenbank importiert hast, ist das normal. Ansonsten kannst du die Seite neu laden, dann erscheint dein Diagramm automatisch.", "fas fa-exclamation-triangle", "orange");
       });
 
   }
