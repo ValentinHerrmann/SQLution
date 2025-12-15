@@ -57,7 +57,7 @@
         {
             "type": "firefox",
             "request": "launch",
-            "reAttach": true,
+            "reAttach": false,
             "name": "Launch Firefox Session",
             "url": "http://localhost:8000",
             "webRoot": "${workspaceFolder}/tutorial/",
@@ -65,6 +65,8 @@
                 "**/node_modules/**"
             ],
             "firefoxArgs": [
+                "-new-window",
+                "http://localhost:8000",
                 "-start-debugger-server"
             ],
             "pathMappings": [
