@@ -14,10 +14,17 @@ from myapp.models import ZippedFolder
 DATATYPE_MAP = {
     'int': 'INTEGER',
     'integer': 'INTEGER',
+    'ganzzahl': 'INTEGER',
+    'text': 'TEXT',
+    'zeichenkette': 'TEXT',
+    'varchar': 'TEXT',
     'string': 'TEXT',
     'float': 'REAL',
+    'kommazahl': 'REAL',
     'double': 'REAL',
     'bool': 'BOOLEAN',
+    'boolean': 'BOOLEAN',
+    'wahrheitswert': 'BOOLEAN',
     # Weitere Typen können bei Bedarf ergänzt werden
 }
 
@@ -136,16 +143,15 @@ def extract_tables(data):
         
         pk_name, pk_type = pk_map.get(class_id, (None, None))
 
-        lines = [f'CREATE TABLE "{class_name}" (']
+        lines = [f'CREATE TABLE "{class_name.replace(" ", "")}" (']
         for col_name, col_type in attr_defs:
             if pk_name and col_name == pk_name:
                 if pk_type.lower() == 'auto':
-                    lines.append(f'  "{col_name}" INTEGER PRIMARY KEY AUTOINCREMENT,')
+                    lines.append(f'  "{col_name.replace(" ", "")}" INTEGER PRIMARY KEY AUTOINCREMENT,')
                 else:
-                    lines.append(f'  "{col_name}" {col_type} PRIMARY KEY,')
+                    lines.append(f'  "{col_name.replace(" ", "")}" {col_type} PRIMARY KEY,')
             else:
-                lines.append(f'  "{col_name}" {col_type},')
-
+                lines.append(f'  "{col_name.replace(" ", "")}" {col_type},')
 
         # Add foreign-key constraints
         for constraint in fk_constraints:
