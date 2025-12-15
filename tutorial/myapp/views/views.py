@@ -31,12 +31,13 @@ import xml.etree.ElementTree as ET
 @login_required
 @user_passes_test(is_db_admin)
 def overview(request):
+    html_template = 'overview.html'
     try:
         tables = []
 
         cursor = runSql("SELECT name FROM sqlite_master WHERE type='table' AND NOT name LIKE 'sqlite_%';", request.user.username)
         if(cursor is None):
-            return render(request, 'overview.html', {
+            return render(request, html_template, {
                 'models': None,
                 'functions': None
             })
@@ -91,14 +92,14 @@ def overview(request):
 
         upload_max_human = human_readable(upload_max_bytes) if upload_max_bytes else None
 
-        return render(request, 'overview.html', {
+        return render(request, html_template, {
             'models': tables,
             'functions': sql,
             'upload_max_bytes': upload_max_bytes,
             'upload_max_human': upload_max_human,
         })
     except Exception as e:
-        return render(request, 'overview.html', {
+        return render(request, html_template, {
             'models': None,
             'functions': None
         })
