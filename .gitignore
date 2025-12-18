@@ -176,6 +176,7 @@ user_databases/*
 static/
 tutorial/staticfiles/
 last_launched.txt
+app-static
 
 tutorial/myapp/staticfiles/_sql-ide/
 resource_logs.csv
