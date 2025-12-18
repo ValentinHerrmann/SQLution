@@ -378,6 +378,12 @@
     const editor = globalThis.sqlAceEditor;
     if (!editor) return;
     const sql = editor.getValue();
+
+    const proceed = await warnIfDDL(sql);
+    if(!proceed) { 
+      return;
+    }
+
     const resultsContainer = document.getElementById('sql-results');
     if (!resultsContainer) return;
     resultsContainer.innerHTML = '<div style="padding:8px;color:var(--text-secondary);">Ausführen…</div>';
@@ -441,6 +447,25 @@
       if (editor && typeof editor.resize === 'function') editor.resize();
     } catch (e) {
       console.error('restoreEditorHeight error', e);
+    }
+  }
+
+  function checkDDL(query) {
+    const ddlCommands = ['CREATE', 'ALTER', 'DROP', 'TRUNCATE', 'RENAME'];
+    const trimmedQuery = query.trim().toUpperCase();
+    for (const cmd of ddlCommands) {
+      if (trimmedQuery.includes(cmd + ' ')) {
+        return true;
+      }
+    }
+  }
+
+  async function warnIfDDL(query) {
+    if (checkDDL(query)) {
+      return await globalThis.showConfirmDialog(
+        "Achtung: Diese Abfrage enthält DDL-Befehle (z.B. CREATE, ALTER, DROP). Diese Befehle verändern die Datenbankstruktur (ohne dabei das Klassendiagramm anzupassen) und können nicht rückgängig gemacht werden. Führe solche Befehle nur aus, wenn du weißt, was du tust!",
+        "fas fa-exclamation-triangle"
+      );
     }
   }
 
