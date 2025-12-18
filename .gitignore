@@ -174,7 +174,7 @@ cython_debug/
 tutorial/myapp/static/
 user_databases/*
 static/
-staticfiles/
+tutorial/staticfiles/
 last_launched.txt
 
 tutorial/myapp/staticfiles/_sql-ide/
