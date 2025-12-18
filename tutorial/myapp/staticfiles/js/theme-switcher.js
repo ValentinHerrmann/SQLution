@@ -11,7 +11,7 @@ const setThemeDataAttribute = (node, theme) => {
 
 class ThemeSwitcher {
     constructor() {
-        this.currentTheme = localStorage.getItem('theme') || 'light';
+        this.currentTheme = localStorage.getItem('theme') || 'dark';
         this.init();
     }
 
