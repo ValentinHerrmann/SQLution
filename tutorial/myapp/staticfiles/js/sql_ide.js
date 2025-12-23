@@ -458,6 +458,7 @@
         return true;
       }
     }
+    return false;
   }
 
   async function warnIfDDL(query) {
