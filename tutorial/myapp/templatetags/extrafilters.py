@@ -1,7 +1,7 @@
 from django import template
 from django.utils.safestring import mark_safe
 import os
-import re as regex
+import re
 
 register = template.Library()
 
@@ -35,7 +35,7 @@ def version_helper():
                 v = v.replace("merge/", "")
                 url = f"https://github.com/ValentinHerrmann/SQLution/pull/{v}"
                 version = f"PR #{v}"
-            elif regex.match(r'^\d+(\.\d+)?(\.\d+)?$', v):
+            elif re.match(r'^\d+(\.\d+)?(\.\d+)?$', v):
                 version = v
                 url = f"https://github.com/ValentinHerrmann/SQLution/releases/tag/{v}"
             else:
