@@ -468,6 +468,7 @@
         "fas fa-exclamation-triangle"
       );
     }
+    return true;
   }
 
   // Wire up events once DOM is ready
