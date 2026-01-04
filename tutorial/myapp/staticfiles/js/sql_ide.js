@@ -454,10 +454,12 @@
     const ddlCommands = ['CREATE', 'ALTER', 'DROP', 'TRUNCATE', 'RENAME'];
     const trimmedQuery = query.trim().toUpperCase();
     for (const cmd of ddlCommands) {
-      if (trimmedQuery.includes(cmd + ' ')) {
+      const regex = new RegExp('^' + cmd + '\\b');
+      if (regex.test(trimmedQuery)) {
         return true;
       }
     }
+    return false;
     return false;
   }
 
