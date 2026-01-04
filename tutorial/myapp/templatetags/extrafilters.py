@@ -24,7 +24,6 @@ def dict_get(d, key):
     except Exception:
         return ''
 def version_helper():
-    version = '0.0.0'
     url = "https://github.com/ValentinHerrmann/SQLution/releases/"
     
     version_file = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'VERSION')
