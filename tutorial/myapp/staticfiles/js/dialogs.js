@@ -103,5 +103,5 @@ function showAlertDialog(message, iconClass = 'fas fa-exclamation-triangle', col
 }
 
 // Make dialogs globally accessible
-window.showConfirmDialog = showConfirmDialog;
-window.showAlertDialog = showAlertDialog;
+globalThis.showConfirmDialog = showConfirmDialog;
+globalThis.showAlertDialog = showAlertDialog;
