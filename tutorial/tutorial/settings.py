@@ -165,7 +165,7 @@ USE_TZ = True
 
 STATIC_URL = os.getenv('DJANGO_STATIC_URL', '/app-static/').rstrip('/') + '/'
 
-STATIC_ROOT = os.getenv('DJANGO_STATIC_ROOT', os.path.join(BASE_DIR, 'staticfiles'))
+STATIC_ROOT = os.getenv('DJANGO_STATIC_ROOT', os.path.join(BASE_DIR, 'app-static'))
 
 # Include shared project assets and generated frontend bundles during collectstatic.
 STATICFILES_DIRS = [

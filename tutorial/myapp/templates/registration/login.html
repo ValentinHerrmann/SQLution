@@ -29,7 +29,8 @@
         <div class="text-center mb-4">
           <div class="d-flex flex-column align-items-center">
             <img src="{% static 'img/SQLution.svg' %}" alt="SQLution Logo" style="width: 150px;">
-            <span style="color: #bbbbbb; font-size: 1.1em; margin-top: -14px;">SQLution - {% get_version %}</span> <!-- SOFTWARE VERSION -->
+
+            <a href="{% get_version_url %}" style="color: var(--text-muted); font-size: 1.1em; margin-top: -14px;">SQLution - {% get_version %}</a>
           </div>
         </div>
 
@@ -76,9 +77,6 @@
     </div>
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- Theme Switcher JavaScript -->
-    <script src="{% static 'js/theme-switcher.js' %}"></script>
-    <script src="{% static 'js/dev-server-banner.js' %}" ></script>
+    <script type="module" src="{% static 'js/sqlution.js' %}" ></script>
   </body>
 </html>

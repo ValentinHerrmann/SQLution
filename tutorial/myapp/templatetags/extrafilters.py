@@ -1,5 +1,7 @@
 from django import template
+from django.utils.safestring import mark_safe
 import os
+import re
 
 register = template.Library()
 
@@ -21,13 +23,32 @@ def dict_get(d, key):
         return d.get(key, '')
     except Exception:
         return ''
-
-@register.simple_tag
-def get_version():
-    """Read version from VERSION file"""
+def version_helper():
+    url = "https://github.com/ValentinHerrmann/SQLution/releases/"
+    
     version_file = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'VERSION')
     try:
         with open(version_file, 'r') as f:
-            return f.read().strip()
+            v = f.read().strip()
+            if v.startswith("merge/"):
+                v = v.replace("merge/", "")
+                url = f"https://github.com/ValentinHerrmann/SQLution/pull/{v}"
+                version = f"PR #{v}"
+            elif re.match(r'^\d+(\.\d+)?(\.\d+)?$', v):
+                version = v
+                url = f"https://github.com/ValentinHerrmann/SQLution/releases/tag/{v}"
+            else:
+                version = v
     except Exception:
-        return "0.0.0"
+        version = '0.0.0'
+        url = "https://github.com/ValentinHerrmann/SQLution/releases/"
+    return (version, mark_safe(url))
+    
+
+@register.simple_tag
+def get_version():
+    return version_helper()[0]
+    
+@register.simple_tag
+def get_version_url():
+    return version_helper()[1]
