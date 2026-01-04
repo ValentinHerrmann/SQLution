@@ -32,25 +32,25 @@ function showConfirmDialog(message, iconClass = 'fas fa-exclamation-triangle', c
     const modal = document.getElementById(modalId);
     const yesBtn = document.getElementById(yesId);
     const noBtn = document.getElementById(noId);
-      
-      // Handle button clicks
-      yesBtn.onclick = () => {
-        modal.remove();
-        resolve(true);
-      };
-      
-      noBtn.onclick = () => {
+    
+    // Handle button clicks
+    yesBtn.onclick = () => {
+      modal.remove();
+      resolve(true);
+    };
+    
+    noBtn.onclick = () => {
+      modal.remove();
+      resolve(false);
+    };
+    
+    // Handle clicking outside modal
+    modal.onclick = (e) => {
+      if (e.target === modal) {
         modal.remove();
         resolve(false);
-      };
-      
-      // Handle clicking outside modal
-      modal.onclick = (e) => {
-        if (e.target === modal) {
-          modal.remove();
-          resolve(false);
-        }
-      };
+      }
+    };
   });
 }
 
