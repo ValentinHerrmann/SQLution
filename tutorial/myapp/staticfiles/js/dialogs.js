@@ -83,10 +83,10 @@ function showAlertDialog(message, iconClass = 'fas fa-exclamation-triangle', col
     document.body.insertAdjacentHTML('beforeend', modalHtml);
     
     const modal = document.getElementById(modalId);
-    const yesBtn = document.getElementById(okId);
+    const okBtn = document.getElementById(okId);
     
     // Handle button clicks
-    yesBtn.onclick = () => {
+    okBtn.onclick = () => {
       modal.remove();
       resolve(true);
     };
