@@ -23,7 +23,6 @@ def dict_get(d, key):
         return d.get(key, '')
     except Exception:
         return ''
-    
 def version_helper():
     version = '0.0.0'
     url = "https://github.com/ValentinHerrmann/SQLution/releases/"
