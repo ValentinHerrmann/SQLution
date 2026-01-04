@@ -39,9 +39,7 @@ function createModal(config) {
       if (resolved) return;
       resolved = true;
       clearTimeout(safetyTimeout);
-      if (modal && modal.parentNode) {
-        modal.parentNode.removeChild(modal);
-      }
+      modal?.remove();
       resolve(result);
     };
     
