@@ -29,12 +29,7 @@
             ],
             "django": true,
             "program": "${workspaceFolder}/tutorial/manage.py",
-            "console": "internalConsole",
-            "serverReadyAction": {
-                "pattern": "Starting development server at http://localhost:([0-9]+)/",
-                "action": "startDebugging",
-                "name": "Launch Firefox Session"
-            }
+            "console": "internalConsole"
         },
         {
             "name": "Django Simple",
