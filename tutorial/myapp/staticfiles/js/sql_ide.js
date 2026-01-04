@@ -138,13 +138,16 @@
 
       if (resp.ok) {
         console.debug("File saved successfully: " + filename);
+        showAlertDialog(`Datei "${filename}" erfolgreich gespeichert.`, "fas fa-check-circle", "var(--accent-success)");
         return true;
       } else {
         console.error("Fehler beim Speichern der SQL Datei.", resp.status, resp.statusText);
+        showAlertDialog("Fehler beim Speichern der SQL Datei.", "fas fa-exclamation-triangle", "var(--accent-danger)");
         return false;
       }
     } catch (err) {
       console.error('Error saving file:', err);
+      showAlertDialog("Fehler beim Speichern der SQL Datei.", "fas fa-exclamation-triangle", "var(--accent-danger)");
       return false;
     }
   }
@@ -161,7 +164,7 @@
       return false;
     }
     if(filenameOnLoad === 'Playground') {
-      globalThis.showAlertDialog("Der Playground kann nicht gespeichert werden. Bitte erstelle eine neue SQL-Datei über das '+'-Symbol im Dateiexplorer.", "fas fa-exclamation-triangle");
+      showAlertDialog("Der Playground kann nicht gespeichert werden. Bitte erstelle eine neue SQL-Datei über das '+'-Symbol im Dateiexplorer.", "fas fa-exclamation-triangle");
       return false;
     }
 
@@ -192,7 +195,7 @@
               let success = await saveCurrentFile();
               console.log("Save success: " + success);
               if (!success) {
-                globalThis.showAlertDialog("Speichern der Datei fehlgeschlagen. Abbruch des Ladevorgangs.", "fas fa-exclamation-triangle");
+                showAlertDialog("Speichern der Datei fehlgeschlagen. Abbruch des Ladevorgangs.", "fas fa-exclamation-triangle");
                 return;
               }
             }
@@ -237,7 +240,7 @@
       }
     } catch (err) {
       console.error(err);
-      globalThis.showAlertDialog('Fehler beim Laden der Datei. Siehe Konsole.', "fas fa-exclamation-triangle");
+      showAlertDialog('Fehler beim Laden der Datei. Siehe Konsole.', "fas fa-exclamation-triangle");
     }
   }
 
@@ -298,11 +301,11 @@
         console.debug("File created successfully: " + filename);
       } else {
         console.error("Fehler beim Erstellen der SQL Datei.", resp.status, resp.statusText);
-        globalThis.showAlertDialog("Fehler beim Erstellen der SQL Datei.", "fas fa-exclamation-triangle");
+        showAlertDialog("Fehler beim Erstellen der SQL Datei.", "fas fa-exclamation-triangle");
       }
     } catch (err) {
       console.error('Error creating file:', err);
-      globalThis.showAlertDialog("Fehler beim Erstellen der SQL Datei.", "fas fa-exclamation-triangle");
+      showAlertDialog("Fehler beim Erstellen der SQL Datei.", "fas fa-exclamation-triangle");
     }
     loadFileList();
   }
@@ -476,7 +479,13 @@
     if (syncBtn) syncBtn.addEventListener('click', loadFileList);
 
     const saveBtn = document.getElementById('save-sql-btn');
-    if (saveBtn) saveBtn.addEventListener('click', saveCurrentFile);
+    if (saveBtn) {
+      saveBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        await saveCurrentFile();
+      });
+    }
 
     const addBtn = document.getElementById('add-sql-btn');
     if (addBtn) addBtn.addEventListener('click', addSQLFileDialog);

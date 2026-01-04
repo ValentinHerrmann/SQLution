@@ -14,4 +14,3 @@
 import './dev-server-banner.js';
 import './theme-switcher.js';
 import './dialogs.js';
-import './sql_ide.js';
