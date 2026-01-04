@@ -8,7 +8,7 @@ function showConfirmDialog(message, iconClass = 'fas fa-exclamation-triangle', c
     const modalHtml = `
       <div id="${modalId}" class="modal-overlay" style="
           position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-          background: rgba(1,0,0,0.5); z-index: 9999; 
+          background: rgba(0,0,0,0.5); z-index: 9999; 
           display: flex; justify-content: center; align-items: center;">
           <div class="modal-content" style="
             background: white; padding: 20px; border-radius: 8px; 
