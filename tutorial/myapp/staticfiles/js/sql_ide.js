@@ -451,16 +451,11 @@
   }
 
   function checkDDL(query) {
-    const ddlCommands = ['CREATE', 'ALTER', 'DROP', 'TRUNCATE', 'RENAME'];
-    const trimmedQuery = query.trim().toUpperCase();
-    for (const cmd of ddlCommands) {
-      const regex = new RegExp('^' + cmd + '\\b');
-      if (regex.test(trimmedQuery)) {
-        return true;
-      }
+    if (typeof query !== 'string') {
+      return false;
     }
-    return false;
-    return false;
+    const ddlPattern = /(^|;)\s*(CREATE|ALTER|DROP|TRUNCATE|RENAME)\b/i;
+    return ddlPattern.test(query);
   }
 
   async function warnIfDDL(query) {
