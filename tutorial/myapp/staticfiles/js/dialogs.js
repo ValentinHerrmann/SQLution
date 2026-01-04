@@ -2,9 +2,10 @@
 function showConfirmDialog(message, iconClass = 'fas fa-exclamation-triangle', color="var(--accent-warning)") {
   return new Promise((resolve) => {
     // Use unique ID to avoid conflicts
-    const modalId = 'customConfirmModal_' + Date.now();
-    const yesId = 'confirmYes_' + Date.now();
-    const noId = 'confirmNo_' + Date.now();
+    const timestamp = Date.now();
+    const modalId = 'customConfirmModal_' + timestamp;
+    const yesId = modalId + '_yes';
+    const noId = modalId + '_no';
     const modalHtml = `
       <div id="${modalId}" class="modal-overlay" style="
           position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
