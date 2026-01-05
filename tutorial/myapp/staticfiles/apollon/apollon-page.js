@@ -288,7 +288,7 @@ async function downloadJson() {
   a.download = "diagram.json"
   document.body.appendChild(a)
   a.click()
-  document.body.removeChild(a)
+  a.remove()
   URL.revokeObjectURL(url)
 }
 
@@ -301,7 +301,7 @@ async function downloadSvg() {
   a.download = "diagram.svg"
   document.body.appendChild(a)
   a.click()
-  document.body.removeChild(a)
+  a.remove()
   URL.revokeObjectURL(url)
 }
 
@@ -328,7 +328,7 @@ async function downloadPng() {
         a.download = "diagram.png"
         document.body.appendChild(a)
         a.click()
-        document.body.removeChild(a)
+        a.remove()
         URL.revokeObjectURL(url)
       })
     }
@@ -442,7 +442,7 @@ loadEditorJsonFromServer(false)
 let apollonNavigationSaveInProgress = false
 
 function shouldInterceptApollonNavigation(anchor, event) {
-  if (!anchor || !anchor.href) return false
+  if (!anchor?.href) return false
   if (event && (event.ctrlKey || event.metaKey || event.button === 1)) return false
   if (anchor.hasAttribute("download")) return false
   let targetAttr = anchor.getAttribute("target")
