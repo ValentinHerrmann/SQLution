@@ -6,227 +6,61 @@ SQLution - Klassendiagramm
 
 
 {% block content %} 
-    <script defer="defer" src="{% static 'apollon/vendors.js' %}"></script>
-    <script defer="defer" src="{% static 'apollon/main.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'apollon/assets/index-D6Ql9_0I.css' %}">
+    <link rel="stylesheet" href="{% static 'apollon/apollon-custom.css' %}">
 
-
-
-<div id="div-full-page" class="flex-col" style="height:84vh">
-
-  <div id="div-top-section" class="flex-row" style="justify-content: space-evenly;">
-
-    <div id="div-db-diagram"  class="form-flex-container" style="justify-content: center;">
-      
-      <div class="flex-col" style="text-align: center;">
-        <h4 class="fas fa-database"> Datenbank</h4>
-
-        <div class="flex-row">
-          <button id="btn-model-to-db" class="btn btn-primary" onclick="loadToDB()" title="Datenbank erstellen">
-            <a class="fas fa-arrow-up"></a>
-          </button>
-          <button id="btn-db-to-model" class="btn btn-primary" onclick="loadDbToEditor()"> <i class="fas fa-arrow-down"></i> </button>
+    <div id="div-full-page">
+      <div id="div-top-section">
+        <div id="div-db-diagram">
+          <h4 class="fas fa-database" style="margin:0;"> Datenbank</h4>
+          <div class="flex-row" style="gap:6px;">
+            <button id="btn-model-to-db" class="btn btn-primary" onclick="loadToDB()" title="Datenbank erstellen">
+              <a class="fas fa-arrow-up"></a>
+            </button>
+            <button id="btn-db-to-model" class="btn btn-primary" onclick="loadDbToEditor()"> <i class="fas fa-arrow-down"></i> </button>
+          </div>
+          <h4 class="fas fa-project-diagram" style="margin:0;"> Diagramm-Editor</h4>
         </div>
-        <h4 class="fas fa-project-diagram"> Diagramm-Editor</h4>
 
+        <div class="flex-row" style="gap:12px; align-items:center; flex-wrap:wrap;">
+          <div class="flex-row" style="gap:6px;">
+            <button id="btn-download-json" class="btn btn-primary" onclick="downloadJson()" title="Diagramm als JSON herunterladen"> <a class="fas fa-download"> *.json</a> </button>
+            <button id="btn-download-svg" class="btn btn-primary" onclick="downloadSvg()" title="Diagramm als SVG herunterladen"> <a class="fas fa-download"> *.svg</a> </button>
+            <button id="btn-download-png" class="btn btn-inactive" onclick="downloadPng()" title="Diagramm als PNG herunterladen"> <a class="fas fa-download"> *.png</a> </button>
+          </div>
+
+          <div id="drop-zone" class="flex-col">
+            <div id="div-file-upload" class="flex-col" style="gap:6px;">
+              <button id="upload-uml-btn" class="btn btn-primary" onclick="triggerUpload(true)"><a class="fas fa-upload"> *.json</a></button>
+              <form id="uploadForm" method="post" action="{% url 'upload_json' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input id="json_file" type="file" name="json_file" accept=".json" required>
+                {% if upload_max_human %}
+                  <div style="font-size:0.8em; margin-top:6px;">Maximale Dateigröße: {{ upload_max_human }}</div>
+                {% endif %}
+              </form>
+            </div>
+          </div>
+        </div>
       </div>
 
+      <div class="apollon-container">
+        <main id="root" style="height: 100%;"></main>
+      </div>
     </div>
 
-    <div class="flex-row">
-      <div class="flex-col">
-        <button id="btn-download-json" class="btn btn-primary" onclick="downloadJson()" title="Datenbank erstellen"> <a class="fas fa-download"> *.json</a> </button>
-        <button id="btn-download-svg" class="btn btn-primary" onclick="downloadSvg()" title="Datenbank erstellen"> <a class="fas fa-download"> *.svg</a> </button>
-        <button id="btn-download-png" class="btn btn-inactive" onclick="downloadPng()" title="Datenbank erstellen"> <a class="fas fa-download"> *.png</a> </button>
-      </div>
-
-      <div id="drop-zone" class="flex-col" style="border: 2px dashed #ccc; padding: 5px; ">
-        <!-- Hidden upload form -->
-
-        <div id="div-file-upload" class="flex-col" >
-          <button id="upload-uml-btn" class="btn btn-primary" onclick="triggerUpload(true)"><a class="fas fa-upload"> *.json</a></button>
-          <form id="uploadForm" method="post" action="{% url 'upload_json' %}" enctype="multipart/form-data">
-            {% csrf_token %}
-            <input id="json_file" type="file" name="json_file" accept=".json" required>
-            {% if upload_max_human %}
-              <div style="font-size:0.8em; margin-top:6px;">Maximale Dateigröße: {{ upload_max_human }}</div>
-            {% endif %}
-          </form>
-        </div>
-      </div>
-      </div>
-  </div>
-
-  <div class="apollon-container" style="flex: 1 1 auto; min-height: 0;">
-    <main id="apollon" style="height: 100%;"></main>
-  </div>
-</div>
-
-<script>
-
-  
-
-  document.addEventListener('DOMContentLoaded', function() {
-    const dropZone = document.getElementById('drop-zone');
-    const fileInput = document.getElementById('json_file');
-    const uploadForm = document.getElementById('uploadForm');
-    const UPLOAD_MAX_BYTES = {{ upload_max_bytes|default:'null' }};
-
-    // Prevent navigating away on dragover
-    dropZone.addEventListener('dragover', function(e) {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = 'copy';
-    });
-
-    // Handle the dropped file
-    dropZone.addEventListener('drop', async function(e) {
-      e.preventDefault();
-      fileInput.files = e.dataTransfer.files;
-      triggerUpload();
-    });
-  });
-  
-  async function triggerUpload() {  
-    
-    const fileInput = document.getElementById('json_file');
-    if (fileInput.files.length < 1) {
-      showAlertDialog("Keine Datei zum Upload ausgewählt. Wähle mit 'Browse...' eine Datei zum Upload aus oder ziehe sie per Drag'n'Drop in den gestrichelten Kasten.");
-      return;
-    }
-
-      const confirmed = await showConfirmDialog(
-        "Achtung, hierdurch wird das aktuelle Klassendiagramm gelöscht! Die Datenbank wird nicht verändert.",
-        "fas fa-project-diagram"
-      );
-      
-      if (!confirmed) {
-          return;
+    <script type="module" src="{% static 'apollon/assets/index-kUV1xGLp.js' %}"></script>
+    <script>
+      window.apollonPageConfig = {
+        uploadMaxBytes: {{ upload_max_bytes|default:'null' }},
+        uploadMaxHuman: "{{ upload_max_human|default:'' }}",
       }
-
-
-      
-      const file = fileInput.files[0];
-      if (UPLOAD_MAX_BYTES && file.size > UPLOAD_MAX_BYTES) {
-        showAlertDialog('Datei ist zu groß. Maximale Dateigröße: {{ upload_max_human }}', 'fas fa-exclamation-triangle', 'red');
-        fileInput.value = null;
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = function(event) {
-        try {
-          const json = JSON.parse(event.target.result);
-          console.log(json);
-          window.apollon.loadModel(json);
-        } catch (err) {
-          showAlertDialog("Fehler beim Laden der JSON-Datei: " + err.message, "fas fa-exclamation-triangle", "red");
-        }
-      };
-      reader.readAsText(file, "utf-8");
-
-      await showAlertDialog("Klassendiagramm wurde erfolgreich in den Editor geladen.", "fas fa-check-square", "green");
-
-      
-      fileInput.value = null;
-  }
-
-  async function loadToDB() {
-    let json = window.apollon.model();
-
-    const blob = new Blob([JSON.stringify(json)], { type: "application/json" });
-    const file = new File([blob], "diagram.json", { type: "application/json" });    
-
-    if(! await showConfirmDialog(
-      "Achtung, hierdurch wird deine aktuelle Datenbank vollständig gelöscht! Das kann nicht rückgängig gemacht werden!",
-      "fas fa-database"
-    )) { return; }
-    
-    
-    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-    fetch("/api/diagram.json", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "X-CSRFToken": csrftoken },
-        body: file
-    })
-    .then(async response => {
-        if (response.ok) {
-          await showAlertDialog("Klassendiagramm wurde als Datenbank geladen. Überprüfe in der Übersicht, ob automatisch Fehler korrigiert wurden!", "fas fa-check-square", "green");
-          window.location.href = '/overview?open=2';
-        } 
-        else {
-          showAlertDialog("Fehler beim Laden des Klassendiagramms als Datenbank. Überprüfe, ob das Format deines Diagramms korrekt ist!", "fas fa-exclamation-triangle", "red");
-        }
-    });
-    //loadJsonFromServer();
-  }
-
-  function downloadJson() {
-    
-    let json = window.apollon.model();
-
-    const blob = new Blob([JSON.stringify(json)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = "diagram.json";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }
-  async function downloadSvg() {
-   //console.log("x");
-    let blob = await window.apollon.getSvg();    
-   //console.log("y");
-    const url = URL.createObjectURL(blob);
-   //console.log(url);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = "diagram.svg";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }
-  function downloadPng() {
-    showAlertDialog("Diese Funktion steht noch nicht zur Verfügung. Du kannst das Diagramm stattdessen als *.svg (Vektografik) herunterladen und direkt nutzen oder zu einem *.png konvertieren.")
-  }
-
-  async function loadDbToEditor() {
-    const confirmation = await showConfirmDialog(
-      "Achtung, hierdurch wird das Diagramm im Editor unwiderruflich gelöscht und durch das deiner aktuellen Datenbank ersetzt.",
-      "fas fa-project-diagram"
-    );
-    if(!confirmation ) { return; }
-
-    loadJsonFromServer(true);
-  }
-
-  function loadJsonFromServer(manuallyTriggered = false) {
-
-    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-    fetch('/api/diagram.json', {
-        method: "GET",
-        headers: { "Content-Type": "application/json", "X-CSRFToken": csrftoken }
-      })
-      .then(response => response.json())
-      .then(data => {
-        window.apollon.loadModel(data);
-        if(manuallyTriggered) {
-          showAlertDialog("Klassendiagramm wurde erfolgreich in den Editor geladen.", "fas fa-check-square", "green")
-        }
-      })
-      .catch(error => {
-        showAlertDialog("Es konnte kein bestehendes Klassendiagramm vom Server geladen werden. Wenn du noch nie ein Klassendiagramm als Datenbank importiert hast, ist das normal. Ansonsten kannst du die Seite neu laden, dann erscheint dein Diagramm automatisch.", "fas fa-exclamation-triangle", "orange");
-      });
-
-  }
-
-  loadJsonFromServer();
-</script>
-
+    </script>
+    <script src="{% static 'apollon/apollon-page.js' %}"></script>
 {% endblock %} 
 
 {% block powered_by %}
-    <a href="https://github.com/ls1intum/Apollon" target="_blank" style="color: #888; text-decoration: underline;">
-      Powered by TUM's Apollon Editor
+    <a href="https://github.com/ls1intum/Apollon2" target="_blank" style="color: #888; text-decoration: underline;">
+      Powered by TUM's Apollon2 Editor
     </a>
 {% endblock %} 
