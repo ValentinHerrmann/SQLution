@@ -47,8 +47,22 @@ SQLution - Klassendiagramm
 
         </div>
 
-        <div id="div-export-import" class="flex-row" style="background-color: var(--bg-secondary); padding: 15px; margin: 5px; border-radius: 8px; align-items: center;">
-          
+        <div id="div-export-import" class="flex-row" style="background-color: var(--bg-secondary); padding: 15px; margin: 5px; border-radius: 8px; align-items: center; position: relative;">
+            <!-- Export/Upload help: question-mark icon that opens a small overlay (moved left of JSON download) -->
+            <div class="inline-help" style="position: absolute; left: 0px; top: 0px; margin-right: 0px;">
+              <button id="export-help-btn" class="db-help-button" data-help-overlay="#export-help-overlay" aria-label="Export/Import Hilfe" title="Export/Import">
+                <i class="fas fa-question"></i>
+              </button>
+
+              <div id="export-help-overlay" class="db-help-overlay" hidden>
+                <button class="db-help-overlay-close" aria-label="Overlay schließen">×</button>
+                <h5><i class="fas fa-download"></i><span>Export / Import</span></h5>
+                <ul>
+                  <li>Download: Du kannst dein aktuelles Klassendiagramm als JSON (kann man anschließend wieder hochladen, eignet sich z.B. gut für Backups), SVG (Vektorgrafik, kann unbegrenzt vergrößert werden ohne zu verpixeln) oder PNG (normales Bild) herunterladen.</li>
+                  <li>Upload: Lade ein bestehendes Diagramm als JSON in den Editor.</li>
+                </ul>
+              </div>
+            </div>
           <div id="drop-zone" class="flex-col" style="border: 2px dashed var(--text-muted); padding: 5px; color: var(--text-primary); background-color: var(--background-secondary); margin-left: 10px;">
             <!-- Hidden upload form -->
 
@@ -64,22 +78,6 @@ SQLution - Klassendiagramm
             </div>
           </div>
           <div class="flex-col">
-            <!-- Export/Upload help: question-mark icon that opens a small overlay (moved left of JSON download) -->
-            <div class="inline-help" style="display: inline-block; margin-right: 8px;">
-              <button id="export-help-btn" class="db-help-button" data-help-overlay="#export-help-overlay" aria-label="Export/Import Hilfe" title="Export/Import">
-                <i class="fas fa-question"></i>
-              </button>
-
-              <div id="export-help-overlay" class="db-help-overlay" hidden>
-                <button class="db-help-overlay-close" aria-label="Overlay schließen">×</button>
-                <h5><i class="fas fa-download"></i><span>Export / Import</span></h5>
-                <ul>
-                  <li>Download: Du kannst dein aktuelles Klassendiagramm als JSON (kann man anschließend wieder hochladen, eignet sich z.B. gut für Backups), SVG (Vektorgrafik, kann unbegrenzt vergrößert werden ohne zu verpixeln) oder PNG (normales Bild) herunterladen.</li>
-                  <li>Upload: Lade ein bestehendes Diagramm als JSON in den Editor.</li>
-                </ul>
-              </div>
-            </div>
-
             <button id="btn-download-json" class="btn btn-primary" onclick="downloadJson()" title="Diagramm als JSON herunterladen"> <a class="fas fa-download"> *.json</a> </button>
             <button id="btn-download-svg" class="btn btn-primary" onclick="downloadSvg()" title="Diagramm als SVG herunterladen"> <a class="fas fa-download"> *.svg</a> </button>
             <button id="btn-download-png" class="btn btn-inactive" onclick="downloadPng()" title="Diagramm als PNG herunterladen"> <a class="fas fa-download"> *.png</a> </button>
