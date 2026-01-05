@@ -9,28 +9,50 @@ SQLution - Klassendiagramm
     <link rel="stylesheet" href="{% static 'apollon/assets/index-D6Ql9_0I.css' %}">
     <link rel="stylesheet" href="{% static 'apollon/apollon-custom.css' %}">
 
+    <link rel="stylesheet" href="{% static 'apollon/apollon-help.css' %}">
+
     <div id="div-full-page">
-      <div id="div-top-section">
-        <div id="div-db-diagram">
-          <h4 class="fas fa-database" style="margin:0;"> Datenbank</h4>
-          <div class="flex-row" style="gap:6px;">
-            <button id="btn-model-to-db" class="btn btn-primary" onclick="loadToDB()" title="Datenbank erstellen">
-              <a class="fas fa-arrow-up"></a>
-            </button>
-            <button id="btn-db-to-model" class="btn btn-primary" onclick="loadDbToEditor()"> <i class="fas fa-arrow-down"></i> </button>
+      <div id="div-top-section" class="flex-row" style="justify-content: space-evenly;">
+
+        <div id="div-db-diagram"  class="form-flex-container" style="justify-content: center; background-color: var(--bg-secondary); padding: 15px; border-radius: 8px; margin: 5px; margin-right: 20px;">
+
+          <button id="db-diagram-help-btn" class="db-help-button" data-help-overlay="#db-diagram-help-overlay" aria-label="Kurzanleitung" title="Kurzanleitung">
+            <i class="fas fa-question"></i>
+          </button>
+
+          <div id="db-diagram-help-overlay" class="db-help-overlay" hidden>
+            <button id="db-diagram-help-close" class="db-help-overlay-close" aria-label="Overlay schließen">×</button>
+            <h5><i class="fas fa-lightbulb"></i><span>Klassendiagramm</span></h5>
+            <ul>
+              <li>Nutze die Pfeil-Buttons, um zwischen Diagramm-Editor und Datenbank zu synchronisieren.</li>
+              <li>Speichere mit dem Disketten-Icon ohne das Diagramm direkt als Datenbank zu laden.</li>
+              <li>Bevor du die Seite wechselst, wirst du immer dazu aufgefordert, damit nichts verloren geht.</li>
+            </ul>
           </div>
-          <h4 class="fas fa-project-diagram" style="margin:0;"> Diagramm-Editor</h4>
+          
+          <div class="flex-col" style="text-align: center;">
+            <h4 class="fas fa-database"> Datenbank</h4>
+
+            <div class="flex-row">
+              <button id="btn-model-to-db" class="btn btn-primary" onclick="loadToDB()" title="Klassendiagramm in die Datenbank laden">
+                <a class="fas fa-arrow-up"></a>
+              </button>
+              <button id="btn-db-to-model" class="btn btn-primary" onclick="loadDbToEditor()" title="Datenbank als Klassendiagramm laden"> <i class="fas fa-arrow-down"></i> </button>
+            </div>
+            <div class="flex-row" style="align-items: center;">
+              <h4 class="fas fa-project-diagram" style="margin: 0; display: flex; align-items: center;"> Diagramm-Editor</h4>
+              <button id="btn-save-diagram" class="btn btn-primary" onclick="saveDiagram()" style="display: flex; align-items: center; justify-content: center;"> <i class="fas fa-save"></i> </button>
+            </div>
+          </div>
+
         </div>
 
-        <div class="flex-row" style="gap:12px; align-items:center; flex-wrap:wrap;">
-          <div class="flex-row" style="gap:6px;">
-            <button id="btn-download-json" class="btn btn-primary" onclick="downloadJson()" title="Diagramm als JSON herunterladen"> <a class="fas fa-download"> *.json</a> </button>
-            <button id="btn-download-svg" class="btn btn-primary" onclick="downloadSvg()" title="Diagramm als SVG herunterladen"> <a class="fas fa-download"> *.svg</a> </button>
-            <button id="btn-download-png" class="btn btn-inactive" onclick="downloadPng()" title="Diagramm als PNG herunterladen"> <a class="fas fa-download"> *.png</a> </button>
-          </div>
+        <div id="div-export-import" class="flex-row" style="background-color: var(--bg-secondary); padding: 15px; margin: 5px; border-radius: 8px; align-items: center;">
+          
+          <div id="drop-zone" class="flex-col" style="border: 2px dashed var(--text-muted); padding: 5px; color: var(--text-primary); background-color: var(--background-secondary); margin-left: 10px;">
+            <!-- Hidden upload form -->
 
-          <div id="drop-zone" class="flex-col">
-            <div id="div-file-upload" class="flex-col" style="gap:6px;">
+            <div id="div-file-upload" class="flex-col" >
               <button id="upload-uml-btn" class="btn btn-primary" onclick="triggerUpload(true)"><a class="fas fa-upload"> *.json</a></button>
               <form id="uploadForm" method="post" action="{% url 'upload_json' %}" enctype="multipart/form-data">
                 {% csrf_token %}
@@ -41,6 +63,28 @@ SQLution - Klassendiagramm
               </form>
             </div>
           </div>
+          <div class="flex-col">
+            <!-- Export/Upload help: question-mark icon that opens a small overlay (moved left of JSON download) -->
+            <div class="inline-help" style="display: inline-block; margin-right: 8px;">
+              <button id="export-help-btn" class="db-help-button" data-help-overlay="#export-help-overlay" aria-label="Export/Import Hilfe" title="Export/Import">
+                <i class="fas fa-question"></i>
+              </button>
+
+              <div id="export-help-overlay" class="db-help-overlay" hidden>
+                <button class="db-help-overlay-close" aria-label="Overlay schließen">×</button>
+                <h5><i class="fas fa-download"></i><span>Export / Import</span></h5>
+                <ul>
+                  <li>Download: Du kannst dein aktuelles Klassendiagramm als JSON (kann man anschließend wieder hochladen, eignet sich z.B. gut für Backups), SVG (Vektorgrafik, kann unbegrenzt vergrößert werden ohne zu verpixeln) oder PNG (normales Bild) herunterladen.</li>
+                  <li>Upload: Lade ein bestehendes Diagramm als JSON in den Editor.</li>
+                </ul>
+              </div>
+            </div>
+
+            <button id="btn-download-json" class="btn btn-primary" onclick="downloadJson()" title="Diagramm als JSON herunterladen"> <a class="fas fa-download"> *.json</a> </button>
+            <button id="btn-download-svg" class="btn btn-primary" onclick="downloadSvg()" title="Diagramm als SVG herunterladen"> <a class="fas fa-download"> *.svg</a> </button>
+            <button id="btn-download-png" class="btn btn-inactive" onclick="downloadPng()" title="Diagramm als PNG herunterladen"> <a class="fas fa-download"> *.png</a> </button>
+          </div>
+
         </div>
       </div>
 
@@ -56,6 +100,7 @@ SQLution - Klassendiagramm
         uploadMaxHuman: "{{ upload_max_human|default:'' }}",
       }
     </script>
+    <script src="{% static 'apollon/apollon-help.js' %}"></script>
     <script src="{% static 'apollon/apollon-page.js' %}"></script>
 {% endblock %} 
 
