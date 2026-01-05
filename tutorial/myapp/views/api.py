@@ -220,7 +220,6 @@ def api_diagram_json(request):
     user_dir = get_user_directory(request.user.username)
     try:
         sqllock_get(user_dir)
-        print(request.method)
         if(request.method == "GET"):
             with open(f'{user_dir}/model.json', 'rb') as f:
                 file_content = f.read()
