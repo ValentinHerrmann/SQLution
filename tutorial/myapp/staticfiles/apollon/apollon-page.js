@@ -1,11 +1,11 @@
-var APOLLON_CONFIG = globalThis.apollonPageConfig || {}
-var UPLOAD_MAX_BYTES =
+let APOLLON_CONFIG = globalThis.apollonPageConfig || {}
+let UPLOAD_MAX_BYTES =
   typeof APOLLON_CONFIG.uploadMaxBytes === "number"
     ? APOLLON_CONFIG.uploadMaxBytes
     : null
-var UPLOAD_MAX_HUMAN = APOLLON_CONFIG.uploadMaxHuman || ""
+let UPLOAD_MAX_HUMAN = APOLLON_CONFIG.uploadMaxHuman || ""
 
-var apollonReady = (globalThis.apollon2Ready =
+let apollonReady = (globalThis.apollon2Ready =
   globalThis.apollon2Ready ||
   new Promise(function (resolve) {
     if (globalThis.apollon2) {
@@ -51,7 +51,7 @@ async function convertLegacyApollonModel(model) {
 
   Object.keys(elements).forEach(function (key) {
     let el = elements[key]
-    if (!el || !el.type) return
+    if (!el?.type) return
     let type = (el.type || "")
     if (type === "ClassAttribute") {
       let owner = el.owner
@@ -66,7 +66,7 @@ async function convertLegacyApollonModel(model) {
 
   Object.keys(elements).forEach(function (key) {
     let el = elements[key]
-    if (!el || !el.type) return
+    if (!el?.type) return
     let type = (el.type || "")
     if (type.toLowerCase() === "class") {
       let width = el.bounds?.width || 160
@@ -89,7 +89,7 @@ async function convertLegacyApollonModel(model) {
 
   Object.keys(relationships).forEach(function (key) {
     let rel = relationships[key]
-    if (!rel || !rel.type) return
+    if (!rel?.type) return
     let type = (rel.type || "ClassBidirectional")
     let data = {}
     if (rel.source?.multiplicity) { data.sourceMultiplicity = rel.source.multiplicity }
@@ -439,7 +439,7 @@ async function loadEditorJsonFromServer(manuallyTriggered) {
 loadEditorJsonFromServer(false)
 
 // Save the current diagram before navigating away so changes are not lost.
-var apollonNavigationSaveInProgress = false
+let apollonNavigationSaveInProgress = false
 
 function shouldInterceptApollonNavigation(anchor, event) {
   if (!anchor || !anchor.href) return false
