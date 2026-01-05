@@ -3,15 +3,14 @@ from sqlite3 import OperationalError
 from django.http import HttpResponse, JsonResponse
 from django.urls import get_resolver
 import psutil
-from myapp.utils.decorators import *
+from myapp.utils.decorators import is_db_admin, is_global_admin
 from django.contrib.auth.decorators import login_required,user_passes_test
 from myapp.utils.directories import *
 from myapp.utils.diagram import load_json
-from myapp.utils.utils import *
-from myapp.utils.users import *
-from myapp.models import *
-from myapp.utils.utils import *
-from myapp.utils.sqlite_connector import *
+from myapp.utils.users import get_logged_in_users_count, get_session_details
+from myapp.utils.utils import timestamp
+
+from myapp.utils.sqlite_connector import runSql
 from django.views.decorators.http import require_http_methods
 
 # Import functions from views_user.py
@@ -268,7 +267,7 @@ def api_editor_diagram_json(request):
 @login_required
 @user_passes_test(is_global_admin)
 def get_system_data(request) -> HttpResponse:
-    print(f"{timestamp()}get_system_data endpoint called by {request.user.username}")
+    print(f"{views_user.timestamp()}get_system_data endpoint called by {request.user.username}")
 
     # Get user databases directory information
     try:
