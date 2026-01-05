@@ -216,7 +216,7 @@ def api_upload_db(request) -> HttpResponse:
 @require_http_methods(['GET', 'POST'])
 @login_required
 @user_passes_test(is_db_admin)
-def api_diagram_json(request):
+def api_db_diagram_json(request):
     user_dir = get_user_directory(request.user.username)
     try:
         sqllock_get(user_dir)
@@ -226,6 +226,33 @@ def api_diagram_json(request):
             return HttpResponse(file_content, content_type="application/json")
         elif(request.method == "POST"):
             load_json(request.body,request.user.username)
+            return HttpResponse("", status=200)
+        else:
+            return HttpResponse("", status=405)
+
+            
+    except Exception as e:
+        print(f"Error: {e}")
+        return HttpResponse("Internal Error", status=500)
+    finally:
+        sqllock_release(user_dir)
+        
+        
+
+@require_http_methods(['GET', 'POST'])
+@login_required
+@user_passes_test(is_db_admin)
+def api_editor_diagram_json(request):
+    user_dir = get_user_directory(request.user.username)
+    try:
+        sqllock_get(user_dir)
+        if(request.method == "GET"):
+            with open(f'{user_dir}/editor_model.json', 'rb') as f:
+                file_content = f.read()
+            return HttpResponse(file_content, content_type="application/json")
+        elif(request.method == "POST"):
+            with open(f'{user_dir}/editor_model.json', 'wb+') as f:
+                f.write(request.body)
             return HttpResponse("", status=200)
         else:
             return HttpResponse("", status=405)
