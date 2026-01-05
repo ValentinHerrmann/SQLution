@@ -208,16 +208,18 @@ async function triggerUpload() {
 
 
 
-async function saveDiagram() {
+async function saveDiagram(force=false) {
   let bridge = await apollonReady
   let json = bridge.model()
 
-  let confirmed = await showConfirmDialog(
-    "Klassendiagramm auf dem Server speichern? Bestehendes Diagramm wird überschrieben, die Datenbank bleibt unverändert. Wenn du die Seite wechselst, ohne zu speichern, gehen deine Änderungen verloren!",
-    "fas fa-save"
-  )
-  if (!confirmed) {
-    return
+  if(!force) {
+    let confirmed = await showConfirmDialog(
+      "Klassendiagramm auf dem Server speichern? Bestehendes Diagramm wird überschrieben, die Datenbank bleibt unverändert. Wenn du die Seite wechselst, ohne zu speichern, gehen deine Änderungen verloren!",
+      "fas fa-save"
+    )
+    if (!confirmed) {
+      return
+    }
   }
 
   let csrftoken = document.querySelector("[name=csrfmiddlewaretoken]").value
@@ -247,12 +249,14 @@ async function loadToDB() {
   let json = bridge.model()
 
   let confirmed = await showConfirmDialog(
-    "Achtung, hierdurch wird deine aktuelle Datenbank vollständig gelöscht! Das kann nicht rückgängig gemacht werden!",
+    "Achtung, hierdurch wird deine aktuelle Datenbank vollständig gelöscht! Das kann nicht rückgängig gemacht werden! Das Klassendiagramm wird außerdem einzeln gespeichert.",
     "fas fa-database"
   )
   if (!confirmed) {
     return
   }
+
+  await saveDiagram(true)
 
   let csrftoken = document.querySelector("[name=csrfmiddlewaretoken]").value
   fetch("/api/db_diagram.json", {
