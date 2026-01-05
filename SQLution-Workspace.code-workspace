@@ -2,6 +2,12 @@
 	"folders": [
 		{
 			"path": "."
+		},
+		{
+			"path": "../SQLution_Apollon2"
+		},
+		{
+			"path": "../SQLution_Apollon"
 		}
 	]
 }

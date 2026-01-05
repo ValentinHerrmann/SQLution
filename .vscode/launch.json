@@ -66,6 +66,10 @@
             ],
             "pathMappings": [
                 {
+                    "url": "http://localhost:8000/app-static/apollon",
+                    "path": "${workspaceFolder}/tutorial/myapp/staticfiles/apollon"
+                },
+                {
                     "url": "http://localhost:8000/app-static/js",
                     "path": "${workspaceFolder}/tutorial/myapp/staticfiles/js"
                 }

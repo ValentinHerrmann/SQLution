@@ -3,15 +3,14 @@ from sqlite3 import OperationalError
 from django.http import HttpResponse, JsonResponse
 from django.urls import get_resolver
 import psutil
-from myapp.utils.decorators import *
+from myapp.utils.decorators import is_db_admin, is_global_admin
 from django.contrib.auth.decorators import login_required,user_passes_test
 from myapp.utils.directories import *
 from myapp.utils.diagram import load_json
-from myapp.utils.utils import *
-from myapp.utils.users import *
-from myapp.models import *
-from myapp.utils.utils import *
-from myapp.utils.sqlite_connector import *
+from myapp.utils.users import get_logged_in_users_count, get_session_details
+from myapp.utils.utils import timestamp
+
+from myapp.utils.sqlite_connector import runSql
 from django.views.decorators.http import require_http_methods
 
 # Import functions from views_user.py
@@ -211,16 +210,15 @@ def api_upload_db(request) -> HttpResponse:
             return HttpResponse("File saved successfully", status=201)
     except Exception as e:
         print(f"Error: {e}")
-    return HttpResponse("Internal Error", status=500)
+    return HttpResponse("Internal Error while uploading database", status=500)
 
 @require_http_methods(['GET', 'POST'])
 @login_required
 @user_passes_test(is_db_admin)
-def api_diagram_json(request):
+def api_db_diagram_json(request):
     user_dir = get_user_directory(request.user.username)
     try:
         sqllock_get(user_dir)
-        print(request.method)
         if(request.method == "GET"):
             with open(f'{user_dir}/model.json', 'rb') as f:
                 file_content = f.read()
@@ -234,7 +232,34 @@ def api_diagram_json(request):
             
     except Exception as e:
         print(f"Error: {e}")
-        return HttpResponse("Internal Error", status=500)
+        return HttpResponse("Internal Error while handling database diagram JSON", status=500)
+    finally:
+        sqllock_release(user_dir)
+        
+        
+
+@require_http_methods(['GET', 'POST'])
+@login_required
+@user_passes_test(is_db_admin)
+def api_editor_diagram_json(request):
+    user_dir = get_user_directory(request.user.username)
+    try:
+        sqllock_get(user_dir)
+        if(request.method == "GET"):
+            with open(f'{user_dir}/editor_model.json', 'rb') as f:
+                file_content = f.read()
+            return HttpResponse(file_content, content_type="application/json")
+        elif(request.method == "POST"):
+            with open(f'{user_dir}/editor_model.json', 'wb+') as f:
+                f.write(request.body)
+            return HttpResponse("", status=200)
+        else:
+            return HttpResponse("", status=405)
+
+            
+    except Exception as e:
+        print(f"Error: {e}")
+        return HttpResponse("Internal Error while handling editor diagram JSON", status=500)
     finally:
         sqllock_release(user_dir)
 
@@ -242,7 +267,7 @@ def api_diagram_json(request):
 @login_required
 @user_passes_test(is_global_admin)
 def get_system_data(request) -> HttpResponse:
-    print(f"{timestamp()}get_system_data endpoint called by {request.user.username}")
+    print(f"{views_user.timestamp()}get_system_data endpoint called by {request.user.username}")
 
     # Get user databases directory information
     try:

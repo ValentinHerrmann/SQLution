@@ -1,7 +1,9 @@
 import json
 
-from myapp.utils.utils import *
+
 from myapp.utils.sqlite_connector import *
+from myapp.utils.utils import extract_tables, format_sql
+
 
 
 def load_json(json_bytes, username):
@@ -11,6 +13,7 @@ def load_json(json_bytes, username):
         
         sql_output = format_sql(extract_tables(data))
 
+
         with open(get_user_directory(username)+'/_CreateDB.sql_', "w") as f:
             f.write(sql_output)
         with open(get_user_directory(username)+'/model.json', "wb+") as f:
@@ -19,3 +22,4 @@ def load_json(json_bytes, username):
 
     except Exception as e:
         print(f"Error: {e}")
+        raise e
