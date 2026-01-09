@@ -30,8 +30,8 @@ def version_helper():
     try:
         with open(version_file, 'r') as f:
             v = f.read().strip()
-            if "merge/" in v:
-                v = v.replace("merge/", "")
+            if "/merge" in v:
+                v = v.replace("/merge", "")
                 url = f"https://github.com/ValentinHerrmann/SQLution/pull/{v}"
                 version = f"PR #{v}"
             elif re.match(r'^\d+(\.\d+)?(\.\d+)?$', v):
