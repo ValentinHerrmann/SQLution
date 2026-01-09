@@ -229,11 +229,13 @@ async function saveDiagram(force=false) {
     body: JSON.stringify(json),
   }).then(async function (response) {
     if (response.ok) {
-      await showAlertDialog(
-        "Klassendiagramm wurde erfolgreich auf dem Server gespeichert.",
-        "fas fa-check-square",
-        "var(--accent-success)"
-      )
+      if(!force) {
+        await showAlertDialog(
+          "Klassendiagramm wurde erfolgreich auf dem Server gespeichert.",
+          "fas fa-check-square",
+          "var(--accent-success)"
+        )
+      }
     } else {
       showAlertDialog(
         "Fehler beim Speichern des Klassendiagramms auf dem Server. Überprüfe, ob das Format deines Diagramms korrekt ist!",
