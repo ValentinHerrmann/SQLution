@@ -1,6 +1,7 @@
 from django.utils.deprecation import MiddlewareMixin
 import requests
 import json
+import ipaddress
 
 class UserAgentMiddleware(MiddlewareMixin):
     """Middleware to capture user agent and IP information in session"""
@@ -72,70 +73,89 @@ class UserAgentMiddleware(MiddlewareMixin):
         ]
         
         return any(ip.startswith(prefix) for prefix in private_ranges)
+
+    def _format_location(self, city, country, region=''):
+        """Normalize fields and return the dict shape used by the app."""
+        city = city or 'Unknown'
+        country = country or 'Unknown'
+        region = region or ''
+
+        if region and region != city:
+            full = f"{city}, {region}, {country}"
+        else:
+            full = f"{city}, {country}"
+
+        return {
+            'city': city,
+            'country': country,
+            'region': region,
+            'full_location': full
+        }
+
+    def _query_ipapi(self, ip):
+        """Query ipapi.co over HTTPS. Return formatted dict or None."""
+        try:
+            url = f'https://ipapi.co/{ip}/json/'
+            resp = requests.get(url, timeout=3, allow_redirects=False, headers={'User-Agent': 'SQLution-Middleware/1.0'})
+            if resp.status_code != 200:
+                return None
+            data = resp.json()
+            if data.get('error'):
+                return None
+            return self._format_location(
+                data.get('city'),
+                data.get('country_name'),
+                data.get('region')
+            )
+        except requests.exceptions.RequestException:
+            return None
+
+    def _query_ipwho(self, ip):
+        """Query ipwho.is over HTTPS. Return formatted dict or None."""
+        try:
+            url = f'https://ipwho.is/{ip}'
+            resp = requests.get(url, timeout=3, allow_redirects=False, headers={'User-Agent': 'SQLution-Middleware/1.0'})
+            if resp.status_code != 200:
+                return None
+            data = resp.json()
+            if data.get('success') is False:
+                return None
+            return self._format_location(
+                data.get('city'),
+                data.get('country'),
+                data.get('region')
+            )
+        except requests.exceptions.RequestException:
+            return None
     
     def get_location_from_ip(self, ip):
         """Get location information from IP address using a free geolocation service"""
+        # Validate IP format first to avoid constructing URLs from untrusted input
+        if not ip:
+            return None
+
         try:
-            # For development: if it's a private/local IP, simulate location or use a public IP for testing
-            if self.is_private_ip(ip):
-                # In development, you might want to test with a real IP
-                # For now, we'll return a development indicator
-                return {'city': 'Development', 'country': 'Local'}
-            
-            # Prefer HTTPS providers: try ipapi.co first, then fall back to ipwho.is
-            try:
-                url = f'https://ipapi.co/{ip}/json/'
-                resp = requests.get(url, timeout=3, allow_redirects=False, headers={'User-Agent': 'SQLution-Middleware/1.0'})
-                if resp.status_code == 200:
-                    data = resp.json()
-                    # ipapi returns an 'error' key when lookup fails
-                    if not data.get('error'):
-                        city = data.get('city', 'Unknown')
-                        country = data.get('country_name', 'Unknown')
-                        region = data.get('region', '')
-                        if region and region != city:
-                            location_str = f"{city}, {region}, {country}"
-                        else:
-                            location_str = f"{city}, {country}"
-                        return {
-                            'city': city,
-                            'country': country,
-                            'region': region,
-                            'full_location': location_str
-                        }
-                # Fallback to ipwho.is (HTTPS)
-                url2 = f'https://ipwho.is/{ip}'
-                resp2 = requests.get(url2, timeout=3, allow_redirects=False, headers={'User-Agent': 'SQLution-Middleware/1.0'})
-                if resp2.status_code == 200:
-                    data2 = resp2.json()
-                    if data2.get('success') is not False:
-                        city = data2.get('city', 'Unknown')
-                        country = data2.get('country', 'Unknown')
-                        region = data2.get('region', '')
-                        if region and region != city:
-                            location_str = f"{city}, {region}, {country}"
-                        else:
-                            location_str = f"{city}, {country}"
-                        return {
-                            'city': city,
-                            'country': country,
-                            'region': region,
-                            'full_location': location_str
-                        }
-            except requests.exceptions.Timeout:
-                print(f"Timeout when querying location for {ip}")
-            except requests.exceptions.RequestException as e:
-                print(f"Request error when querying location for {ip}: {e}")
-            except Exception as e:
-                print(f"Unexpected error when querying location for {ip}: {e}")
-                
-        except requests.exceptions.Timeout:
-            print(f"Timeout when querying location for {ip}")
-        except requests.exceptions.RequestException as e:
-            print(f"Request error when querying location for {ip}: {e}")
-        except Exception as e:
-            print(f"Unexpected error when querying location for {ip}: {e}")
-        
+            # This will raise ValueError for invalid or non-IP input
+            ip_obj = ipaddress.ip_address(ip)
+        except ValueError:
+            # Invalid IP — do not use it to construct external URLs
+            return None
+
+        # Development/local IP short-circuit
+        if self.is_private_ip(ip):
+            return {'city': 'Development', 'country': 'Local'}
+
+        # Try primary provider
+        result = self._query_ipapi(ip)
+        if result:
+            return result
+
+        # Try fallback provider
+        result = self._query_ipwho(ip)
+        if result:
+            return result
+
+        # If everything fails, return unknown location
         return {'city': 'Unknown', 'country': 'Unknown', 'full_location': 'Unknown'}
     
     def process_request(self, request):
