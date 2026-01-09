@@ -236,7 +236,7 @@ def api_db_diagram_json(request):
             
     except Exception as e:
         print(f"Error: {e}")
-        return HttpResponse(f"Internal Error while handling database diagram JSON: {e}", status=500)
+        return HttpResponse("Internal error while handling database diagram JSON.", status=500)
     finally:
         sqllock_release(user_dir)
         
@@ -263,7 +263,7 @@ def api_editor_diagram_json(request):
             
     except Exception as e:
         print(f"Error: {e}")
-        return HttpResponse(f"Internal Error while handling editor diagram JSON: {e}", status=500)
+        return HttpResponse("Internal error while handling editor diagram JSON.", status=500)
     finally:
         sqllock_release(user_dir)
 
