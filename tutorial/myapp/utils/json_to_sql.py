@@ -214,20 +214,16 @@ class SQLGenerator:
 
     def _gather_attributes(self, class_id: str) -> tuple:
         """Collect class name and attribute definitions."""
-        try:
-            class_data = self.class_elements[class_id]['data']
-            class_name = class_data["name"]
-            attr_ids = class_data.get("attributes", [])
-            attr_defs = []
+        class_data = self.class_elements[class_id]['data']
+        class_name = class_data["name"]
+        attr_ids = class_data.get("attributes", [])
+        attr_defs = []
 
-            for attr_id in attr_ids:
-                attr = attr_id if isinstance(attr_id, dict) else self.attributes.get(attr_id)
-                if attr:
-                    col_name, col_type = parse_attribute(attr.get("name", ""))
-                    attr_defs.append((col_name, col_type))
-        except Exception as e:
-            print(f"Error gathering attributes: {e}")
-            class_name, attr_defs = "", []
+        for attr_id in attr_ids:
+            attr = attr_id if isinstance(attr_id, dict) else self.attributes.get(attr_id)
+            if attr:
+                col_name, col_type = parse_attribute(attr.get("name", ""))
+                attr_defs.append((col_name, col_type))
 
         return class_name, attr_defs
 
