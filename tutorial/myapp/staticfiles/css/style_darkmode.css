@@ -49,6 +49,12 @@
   color: var(--text-tertiary) !important;
 }
 
+[data-theme="dark"] .navbar-nav .nav-link.active {
+  color: var(--text-tertiary) !important;
+  font-weight: bold;
+  border-bottom: 2px solid var(--text-tertiary);
+}
+
 [data-theme="dark"] .navbar-text {
   color: var(--text-primary) !important;
 }

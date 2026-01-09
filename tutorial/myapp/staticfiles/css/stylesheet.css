@@ -105,6 +105,64 @@ html, body, .main-flex-container {
   width: calc(100% - 10px);
 }
 
+/* ACE Editor styling */
+#editor .ace_editor,
+#editor .ace_gutter {
+  background-color: var(--bg-primary) !important;
+}
+
+#editor .ace_content {
+  background-color: var(--bg-primary) !important;
+}
+
+#editor .ace_gutter-active-line {
+  background-color: var(--bg-primary) !important;
+}
+
+#editor .ace_marker-layer .ace_active-line {
+  background-color: var(--bg-primary) !important;
+}
+
+/* Remove the vertical line between gutter and content */
+#editor .ace_gutter {
+  border-right: none !important;
+}
+
+#editor .ace_scroller {
+  border-left: none !important;
+}
+
+/* Fix text color */
+#editor .ace_text-layer {
+  color: var(--text-primary) !important;
+}
+
+#editor .ace_line {
+  color: var(--text-primary) !important;
+}
+
+#editor .ace_gutter-layer {
+  background-color: var(--bg-primary) !important;
+}
+
+#editor .ace_gutter-cell {
+  color: var(--text-muted) !important;
+}
+
+/* Hide or style the vertical separator line in gutter */
+#editor .ace_fold-widget {
+  background-color: transparent !important;
+}
+
+/* Hide the print margin vertical line */
+#editor .ace_print-margin {
+  display: none !important;
+}
+
+#editor .ace_print-margin-layer {
+  display: none !important;
+}
+
 /* Style for expanded details elements */
 /* Top-level details get --bg-secondary */
 details[open]:not(details details) {
@@ -214,28 +272,6 @@ details details[open] {
   gap: 10px;
   align-items: center;
   margin-top: 20px;
-}
-
-/* =================================================================
-   APOLLON.HTML STYLES
-   ================================================================= */
-
-.flex-col {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: stretch;
-  gap: 3px;
-  margin: 3px;
-}
-
-.flex-row {
-  display: flex;
-  flex-direction: row; /* Force horizontal layout */
-  justify-content: center;
-  align-items: stretch;
-  gap: 3px;
-  margin: 3px;
 }
 
 /* =================================================================

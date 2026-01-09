@@ -54,6 +54,13 @@ body:not([data-theme]) .navbar-nav .nav-link:hover {
   color: var(--text-tertiary) !important;
 }
 
+[data-theme="light"] .navbar-nav .nav-link.active,
+body:not([data-theme]) .navbar-nav .nav-link.active {
+  color: var(--text-tertiary) !important;
+  font-weight: bold;
+  border-bottom: 2px solid var(--text-tertiary);
+}
+
 [data-theme="light"] .navbar-text,
 body:not([data-theme]) .navbar-text {
   color: var(--text-primary) !important;

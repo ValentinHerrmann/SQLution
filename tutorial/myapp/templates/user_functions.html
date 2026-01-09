@@ -8,9 +8,9 @@ SQLution - Nutzerfunktionen
 <ul>
   {% for category, files in data.items %}
     <h4>{{ category }}</h4>
-    <div style="margin-bottom: 20px;">
+    <div class="margin-bottom-lg">
       {% for file in files %}
-        <a href="{% url 'user_functions_execute' %}?file={{ file.file }}" class="btn btn-primary" style="margin: 5px 5px 5px 0;">{{ file.name }}</a>
+        <a href="{% url 'user_functions_execute' %}?file={{ file.file }}" class="btn btn-primary margin-sm" style="margin-left: 0;">{{ file.name }}</a>
       {% endfor %}
     </div>
   {% endfor %}

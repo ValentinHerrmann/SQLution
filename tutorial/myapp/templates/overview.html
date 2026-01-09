@@ -8,7 +8,7 @@ SQLution - Übersicht
 <h3  style="text-align: center; margin: 20px; color: var(--text-secondary)">Übersicht</h3>
 
 <details>
-<summary style="text-align: center; cursor: pointer; list-style: none; margin: 20px;" onclick="toggleIcon(this)">
+<summary class="collapsible-summary" onclick="toggleIcon(this)">
     <h5><i class="far fa-caret-square-right details-icon"></i> Datenbank und Projekt verwalten</h5>
 </summary>
 
@@ -98,7 +98,7 @@ function toggleIcon(summary) {
 
 
 <details>
-<summary style="text-align: center; cursor: pointer; list-style: none;  margin: 20px;" onclick="toggleIcon(this)">
+<summary class="collapsible-summary" onclick="toggleIcon(this)">
     <h5><i class="far fa-caret-square-right details-icon"></i> Nutzerfunktionen / gespeicherte SQL-Abfragen</h5>
 </summary>
 
@@ -115,7 +115,7 @@ function toggleIcon(summary) {
 
 
 <details>
-<summary style="text-align: center; cursor: pointer; list-style: none; margin: 20px;" onclick="toggleIcon(this)">
+<summary class="collapsible-summary" onclick="toggleIcon(this)">
     <h5><i class="far fa-caret-square-right details-icon"></i> Tabellen (max. 5 Zeilen pro Tabelle)</h5>
 </summary>
 <table border="1">
@@ -147,6 +147,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const detailsList = Array.from(document.querySelectorAll('details'));
     detailsList.forEach(d => updateIconFor(d));
+
+    // Add observer to watch for programmatic changes to details elements
+    detailsList.forEach(details => {
+        // Use MutationObserver to detect when details.open attribute changes
+        const observer = new MutationObserver(() => {
+            updateIconFor(details);
+        });
+        observer.observe(details, { attributes: true, attributeFilter: ['open'] });
+    });
 
     // Open exactly one details element based on numeric ?open=<index>
     const params = new URLSearchParams(window.location.search);

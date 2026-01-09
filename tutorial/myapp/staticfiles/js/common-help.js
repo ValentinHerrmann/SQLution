@@ -1,6 +1,11 @@
+/* =================================================================
+   COMMON JAVASCRIPT FOR HELP OVERLAYS
+   Handles opening/closing of help popup overlays
+   ================================================================= */
+
 (function () {
   document.addEventListener('DOMContentLoaded', function () {
-    // Attach to all buttons that declare a data-help-overlay attribute.
+    // Attach to all buttons that declare a data-help-overlay attribute
     let buttons = document.querySelectorAll('[data-help-overlay]')
     let overlayEntries = []
 
@@ -27,7 +32,7 @@
       }
     })
 
-    // Global click handler: close any open overlay when clicking outside overlay and its opener
+    // Global click handler: close any open overlay when clicking outside
     document.addEventListener('click', function (e) {
       let target = e.target
       overlayEntries.forEach(function (entry) {

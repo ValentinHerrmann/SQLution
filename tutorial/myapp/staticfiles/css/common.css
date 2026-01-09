@@ -1,0 +1,288 @@
+/* =================================================================
+   COMMON REUSABLE COMPONENTS
+   Common CSS classes and styles used across multiple pages
+   ================================================================= */
+
+/* =================================================================
+   HELP POPUP COMPONENTS (Question Mark Button + Overlay)
+   Usage: See apollon.html for example implementation
+   ================================================================= */
+
+/* Help button - circular question mark icon */
+.help-button {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-muted);
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  z-index: 10;
+}
+
+.help-button:hover {
+  background: var(--bg-secondary);
+}
+
+/* Help overlay - popup that appears when help button is clicked */
+.help-overlay {
+  position: absolute;
+  top: 46px;
+  left: 8px;
+  width: 280px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-muted);
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.22);
+  padding: 12px;
+  z-index: 30;
+}
+
+.help-overlay[hidden] {
+  display: none;
+}
+
+.help-overlay h5 {
+  margin: 0 0 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.help-overlay ul {
+  padding-left: 18px;
+  margin: 0;
+}
+
+.help-overlay li {
+  margin-bottom: 6px;
+  font-size: 0.92em;
+}
+
+/* Close button for help overlay */
+.help-overlay-close {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.help-overlay-close:hover {
+  color: var(--text-secondary);
+}
+
+/* Wrapper for inline help that needs relative positioning */
+.inline-help {
+  position: relative;
+  display: inline-block;
+}
+
+/* =================================================================
+   CARD CONTAINERS
+   Styled boxes with padding, margin, border-radius
+   ================================================================= */
+
+/* Standard card container with background */
+.card-container {
+  background-color: var(--bg-secondary);
+  padding: 15px;
+  border-radius: 8px;
+  margin: 5px;
+}
+
+/* Card container with position relative for absolute positioned children */
+.card-container-relative {
+  position: relative;
+  background-color: var(--bg-secondary);
+  padding: 15px;
+  border-radius: 8px;
+  margin: 5px;
+}
+
+/* Larger card container */
+.card-container-lg {
+  background-color: var(--bg-secondary);
+  padding: 20px;
+  border-radius: 8px;
+  margin: 10px;
+}
+
+/* Card container with custom margin-right */
+.card-container-mr {
+  background-color: var(--bg-secondary);
+  padding: 15px;
+  border-radius: 8px;
+  margin: 5px;
+  margin-right: 20px;
+}
+
+/* =================================================================
+   COLLAPSIBLE DETAILS ELEMENTS
+   Styled details/summary tags for expandable sections
+   ================================================================= */
+
+/* Top-level details get bg-secondary when open */
+details[open]:not(details details) {
+  background-color: var(--bg-secondary) !important;
+  padding: 10px; 
+  border-radius: 0.25rem;
+  box-shadow: 0 0px 3px var(--shadow-light);
+  margin: 10px;
+}
+
+/* Nested details elements get bg-tertiary when open */
+details details[open] {
+  background-color: var(--bg-tertiary) !important;
+  padding: 10px; /*0.5rem;  removed to reduce padding inside cards*/
+  border-radius: 0.25rem;
+  margin: 10px;
+}
+
+/* Standard summary styling */
+.collapsible-summary {
+  text-align: center;
+  cursor: pointer;
+  list-style: none;
+  margin: 10px;
+}
+
+/* Icon for collapsible details */
+.details-icon {
+  transition: transform 0.2s ease;
+}
+
+.nonscroll-bottom-container {
+  flex: 1 1 auto;
+  min-height: 0;
+  background: var(--bg-secondary);
+}
+
+/* =================================================================
+   MARGIN UTILITIES
+   Common margin classes for consistent spacing
+   ================================================================= */
+
+.margin-sm {
+  margin: 5px;
+}
+
+.margin-md {
+  margin: 10px;
+}
+
+.margin-lg {
+  margin: 20px;
+}
+
+.margin-bottom-sm {
+  margin-bottom: 5px;
+}
+
+.margin-bottom-md {
+  margin-bottom: 10px;
+}
+
+.margin-bottom-lg {
+  margin-bottom: 20px;
+}
+
+.margin-top-sm {
+  margin-top: 5px;
+}
+
+.margin-top-md {
+  margin-top: 10px;
+}
+
+.margin-top-lg {
+  margin-top: 20px;
+}
+
+/* =================================================================
+   PADDING UTILITIES
+   Common padding classes for consistent spacing
+   ================================================================= */
+
+.padding-sm {
+  padding: 5px;
+}
+
+.padding-md {
+  padding: 10px;
+}
+
+.padding-lg {
+  padding: 15px;
+}
+
+.padding-xl {
+  padding: 20px;
+}
+
+/* =================================================================
+   FLEXBOX UTILITIES
+   Common flexbox layouts used across pages
+   ================================================================= */
+
+.flex-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+  gap: 3px;
+  margin: 3px;
+}
+
+.flex-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: stretch;
+  gap: 3px;
+  margin: 3px;
+}
+
+.flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.flex-wrap {
+  flex-wrap: wrap;
+}
+
+/* =================================================================
+   BORDER UTILITIES
+   Common border styles
+   ================================================================= */
+
+.border-rounded {
+  border-radius: 8px;
+}
+
+.border-rounded-sm {
+  border-radius: 4px;
+}
+
+.border-rounded-lg {
+  border-radius: 12px;
+}

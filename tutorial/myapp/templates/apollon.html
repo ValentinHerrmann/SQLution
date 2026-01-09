@@ -9,19 +9,17 @@ SQLution - Klassendiagramm
     <link rel="stylesheet" href="{% static 'apollon/assets/index-D6Ql9_0I.css' %}">
     <link rel="stylesheet" href="{% static 'apollon/apollon-custom.css' %}">
 
-    <link rel="stylesheet" href="{% static 'apollon/apollon-help.css' %}">
-
     <div id="div-full-page">
       <div id="div-top-section" class="flex-row" style="justify-content: space-evenly;">
 
-        <div id="div-db-diagram"  class="form-flex-container" style="justify-content: center; background-color: var(--bg-secondary); padding: 15px; border-radius: 8px; margin: 5px; margin-right: 20px;">
+        <div id="div-db-diagram" class="form-flex-container card-container-relative card-container-mr" style="justify-content: center;">
 
-          <button id="db-diagram-help-btn" class="db-help-button" data-help-overlay="#db-diagram-help-overlay" aria-label="Kurzanleitung" title="Kurzanleitung">
+          <button id="db-diagram-help-btn" class="help-button" data-help-overlay="#db-diagram-help-overlay" aria-label="Kurzanleitung" title="Kurzanleitung">
             <i class="fas fa-question"></i>
           </button>
 
-          <div id="db-diagram-help-overlay" class="db-help-overlay" hidden>
-            <button id="db-diagram-help-close" class="db-help-overlay-close" aria-label="Overlay schließen">×</button>
+          <div id="db-diagram-help-overlay" class="help-overlay" hidden>
+            <button id="db-diagram-help-close" class="help-overlay-close" aria-label="Overlay schließen">×</button>
             <h5><i class="fas fa-lightbulb"></i><span>Klassendiagramm</span></h5>
             <ul>
               <li>Nutze die Pfeil-Buttons, um zwischen Diagramm-Editor und Datenbank zu synchronisieren.</li>
@@ -47,15 +45,15 @@ SQLution - Klassendiagramm
 
         </div>
 
-        <div id="div-export-import" class="flex-row" style="background-color: var(--bg-secondary); padding: 15px; margin: 5px; border-radius: 8px; align-items: center; position: relative;">
+        <div id="div-export-import" class="flex-row card-container-relative" style="align-items: center;">
             <!-- Export/Upload help: question-mark icon that opens a small overlay (moved left of JSON download) -->
             <div class="inline-help" style="position: absolute; left: 0px; top: 0px; margin-right: 0px;">
-              <button id="export-help-btn" class="db-help-button" data-help-overlay="#export-help-overlay" aria-label="Export/Import Hilfe" title="Export/Import">
+              <button id="export-help-btn" class="help-button" data-help-overlay="#export-help-overlay" aria-label="Export/Import Hilfe" title="Export/Import">
                 <i class="fas fa-question"></i>
               </button>
 
-              <div id="export-help-overlay" class="db-help-overlay" hidden>
-                <button class="db-help-overlay-close" aria-label="Overlay schließen">×</button>
+              <div id="export-help-overlay" class="help-overlay" hidden>
+                <button class="help-overlay-close" aria-label="Overlay schließen">×</button>
                 <h5><i class="fas fa-download"></i><span>Export / Import</span></h5>
                 <ul>
                   <li>Download: Du kannst dein aktuelles Klassendiagramm als JSON (kann man anschließend wieder hochladen, eignet sich z.B. gut für Backups), SVG (Vektorgrafik, kann unbegrenzt vergrößert werden ohne zu verpixeln) oder PNG (normales Bild) herunterladen.</li>
@@ -63,7 +61,7 @@ SQLution - Klassendiagramm
                 </ul>
               </div>
             </div>
-          <div id="drop-zone" class="flex-col" style="border: 2px dashed var(--text-muted); padding: 5px; color: var(--text-primary); background-color: var(--background-secondary); margin-left: 10px;">
+          <div id="drop-zone" class="flex-col" style="border: 2px dashed var(--text-muted); padding: 5px; color: var(--text-primary); background-color: var(--background-secondary);">
             <!-- Hidden upload form -->
 
             <div id="div-file-upload" class="flex-col" >
@@ -86,8 +84,23 @@ SQLution - Klassendiagramm
         </div>
       </div>
 
-      <div class="apollon-container">
-        <main id="root" style="height: 100%;"></main>
+      <div id="div-apollon" class="nonscroll-bottom-container form-flex-container card-container-relative card-container-mr" style="justify-content: center; margin: 10px;">
+
+          <button id="apollon-btn" class="help-button" data-help-overlay="#apollon-help-overlay" aria-label="Kurzanleitung" title="Kurzanleitung">
+            <i class="fas fa-question"></i>
+          </button>
+
+          <div id="apollon-help-overlay" class="help-overlay" hidden>
+            <button id="apollon-help-close" class="help-overlay-close" aria-label="Overlay schließen">×</button>
+            <h5><i class="fas fa-lightbulb"></i><span>Diagramm Editor</span></h5>
+            <ul>
+              <li>Achte darauf, bei deinem Diagramm alle bekannten Format-Regeln einzuhalten (z.B. Primärschlüssel als erstes, Beziehungen korrekt beschriften, ...), ansonsten kann es nicht in eine Datenbank übersetzt werden!</li>
+              <li>Manchmal gibt es Grafik-Bugs, besonders bei Beziehungen auf dem iPad. Grundsätzlich gilt: Solange die Daten korrekt sind, ist alles in Ordnung.</li>
+              <li>Mit dem Datentyp 'auto' kannst du Primärschlüssel anlegen, die automatisch hochgezählt werden (das ist in den meisten Fällen empfohlen).</li>
+              <li></li>
+            </ul>
+          </div>
+          <main id="root" style="height: 100%;"></main>
       </div>
     </div>
 
@@ -98,12 +111,11 @@ SQLution - Klassendiagramm
         uploadMaxHuman: "{{ upload_max_human|default:'' }}",
       }
     </script>
-    <script src="{% static 'apollon/apollon-help.js' %}"></script>
     <script src="{% static 'apollon/apollon-page.js' %}"></script>
 {% endblock %} 
 
 {% block powered_by %}
-    <a href="https://github.com/ls1intum/Apollon2" target="_blank" style="color: #888; text-decoration: underline;">
+    <a href="https://github.com/ls1intum/Apollon2" target="_blank">
       Powered by TUM's Apollon2 Editor
     </a>
 {% endblock %} 

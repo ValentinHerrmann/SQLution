@@ -1,18 +1,38 @@
 :root {
-  --apollon2-primary: #3e8acc;
-  --apollon2-primary-contrast: #f8f9fa;
-  --apollon2-secondary: #6c757d;
-  --apollon2-background: #181a18;
-  --apollon2-background-variant: #242724;
-  --apollon2-gray: #303530;
-  --apollon2-grid: rgba(255, 255, 255, 0.09);
+  --apollon2-primary: var(--accent-primary);
+  --apollon2-primary-contrast: var(--text-primary);
+  --apollon2-secondary: var(--text-muted);
+  --apollon2-background: var(--bg-secondary);
+  --apollon2-background-variant: var(--bg-secondary);
+  --apollon2-gray: var(--bg-tertiary);
+  --apollon2-grid: var(--shadow-light);
+}
+
+[data-theme="dark"] {
+  --apollon2-primary: var(--accent-primary);
+  --apollon2-primary-contrast: var(--text-primary);
+  --apollon2-secondary: var(--text-muted);
+  --apollon2-background: var(--bg-secondary);
+  --apollon2-background-variant: var(--bg-secondary);
+  --apollon2-gray: var(--bg-tertiary);
+  --apollon2-grid: var(--shadow-light);
+}
+
+[data-theme="light"] {
+  --apollon2-primary: var(--accent-primary);
+  --apollon2-primary-contrast: var(--text-primary);
+  --apollon2-secondary: var(--text-muted);
+  --apollon2-background: var(--bg-secondary);
+  --apollon2-background-variant: var(--bg-secondary);
+  --apollon2-gray: var(--bg-tertiary);
+  --apollon2-grid: var(--shadow-light);
 }
 
 #div-full-page {
-  height: 84vh;
+  height: 89vh;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0px;
 }
 
 #div-top-section {
@@ -21,43 +41,37 @@
   justify-content: space-between;
   align-items: flex-start;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 0px;
 }
 
 #div-db-diagram {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 16px;
+  gap: 0px;
 }
 
 #drop-zone {
-  border: 2px dashed #616161;
+  border: 2px dashed var(--border-color);
   padding: 8px;
   border-radius: 6px;
   min-width: 220px;
-  background: #0f0f0f;
-  color: #f8f9fa;
+  background: var(--bg-primary);
+  color: var(--text-primary);
 }
 
-.apollon-container {
-  flex: 1 1 auto;
-  min-height: 0;
-  background: #181a18;
-  border: 1px solid #2b2e2b;
-}
 
 /* Improve class frame visibility */
 .apollon-editor svg .apollon-node rect,
 .apollon-editor svg .apollon-node path {
   stroke-width: 1.25px;
-  stroke: #b5c7d8;
+  stroke: var(--text-secondary);
 }
 
 .apollon-editor svg .apollon-node text {
-  fill: #f8f9fa;
+  fill: var(--text-primary);
 }
 
 .apollon-editor svg .apollon-node .apollon-divider {
-  stroke: #7e8d9b;
+  stroke: var(--border-color);
 }
