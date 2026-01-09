@@ -206,6 +206,8 @@ FILE_UPLOAD_PERMISSIONS = 0o644
 LOG_ROTATION_MAX_SIZE_MB = 10  # Maximum log file size in MB before rotation
 LOG_ROTATION_MAX_FILES = 4     # Maximum number of old log files to keep
 
-AXES_FAILURE_LIMIT = 10
+AXES_FAILURE_LIMIT = 20
 
 AXES_COOLOFF_TIME = 2
+
+AXES_ONLY_USER_FAILURES = True
