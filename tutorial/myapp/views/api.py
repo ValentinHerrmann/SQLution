@@ -1,20 +1,21 @@
 import json
+import os
+import shutil
 from sqlite3 import OperationalError
 from django.http import HttpResponse, JsonResponse
 from django.urls import get_resolver
 import psutil
 from myapp.utils.decorators import is_db_admin, is_global_admin
 from django.contrib.auth.decorators import login_required,user_passes_test
-from myapp.utils.directories import *
 from myapp.utils.diagram import load_json
 from myapp.utils.users import get_logged_in_users_count, get_session_details
 from myapp.utils.utils import timestamp
-
+from myapp.utils.directories import fullpath, get_directory_tree_with_sizes, get_user_directory, sqllock_get, sqllock_release
 from myapp.utils.sqlite_connector import runSql
+from myapp import views_user
+
 from django.views.decorators.http import require_http_methods
 
-# Import functions from views_user.py
-from .. import views_user
 
 def _build_endpoint(pattern, path):
     """Build an endpoint dictionary from a URL pattern."""
@@ -210,7 +211,8 @@ def api_upload_db(request) -> HttpResponse:
             return HttpResponse("File saved successfully", status=201)
     except Exception as e:
         print(f"Error: {e}")
-    return HttpResponse("Internal Error while uploading database", status=500)
+        return HttpResponse(f"Internal Error while uploading database: {e}", status=500)
+    return HttpResponse(f"Method Not Allowed: {request.method}", status=405)
 
 @require_http_methods(['GET', 'POST'])
 @login_required
@@ -224,6 +226,8 @@ def api_db_diagram_json(request):
                 file_content = f.read()
             return HttpResponse(file_content, content_type="application/json")
         elif(request.method == "POST"):
+            with open(f'{user_dir}/model.json', 'wb+') as f:
+                f.write(request.body)
             load_json(request.body,request.user.username)
             return HttpResponse("", status=200)
         else:
@@ -232,7 +236,7 @@ def api_db_diagram_json(request):
             
     except Exception as e:
         print(f"Error: {e}")
-        return HttpResponse("Internal Error while handling database diagram JSON", status=500)
+        return HttpResponse(f"Internal Error while handling database diagram JSON: {e}", status=500)
     finally:
         sqllock_release(user_dir)
         
@@ -259,7 +263,7 @@ def api_editor_diagram_json(request):
             
     except Exception as e:
         print(f"Error: {e}")
-        return HttpResponse("Internal Error while handling editor diagram JSON", status=500)
+        return HttpResponse(f"Internal Error while handling editor diagram JSON: {e}", status=500)
     finally:
         sqllock_release(user_dir)
 
