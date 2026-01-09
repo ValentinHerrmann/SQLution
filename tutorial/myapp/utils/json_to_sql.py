@@ -143,16 +143,13 @@ class ModelAnalyzer:
     @staticmethod
     def _get_attribute(attr_entry, attributes: dict) -> dict:
         """Get attribute dict from entry or lookup."""
-        
+
         if isinstance(attr_entry, dict):
             return attr_entry
         elif attributes.get(attr_entry):
             return attributes[attr_entry]
         else: 
             return {}
-            
-        
-
 class SQLGenerator:
     """Generates SQL CREATE TABLE statements from model data."""
 
