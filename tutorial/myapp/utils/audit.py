@@ -199,7 +199,7 @@ def get_location_for_login(request):
         ip_address = get_client_ip_from_request(request)
         
         if not _validate_ip_for_location(ip_address):
-            return 'Unknown' if ip_address else 'Unknown'
+            return 'Unknown'
         
         location = _fetch_location_from_api(ip_address)
         return location or 'Unknown'
