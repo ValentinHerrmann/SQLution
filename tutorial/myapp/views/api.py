@@ -212,7 +212,7 @@ def api_upload_db(request) -> HttpResponse:
     except Exception as e:
         print(f"Error: {e}")
         return HttpResponse("Internal error while uploading database.", status=500)
-    return HttpResponse(f"Method Not Allowed: {request.method}", status=405)
+    return HttpResponse("Method Not Allowed", status=405)
 
 @require_http_methods(['GET', 'POST'])
 @login_required
