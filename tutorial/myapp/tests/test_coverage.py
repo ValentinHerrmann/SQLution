@@ -333,10 +333,10 @@ def test_extract_tables_error_handling():
     """Test error handling in extract_tables"""
     # Test with invalid/empty data
     try:
-        result = j2s_mod.extract_tables({})
+        j2s_mod.extract_tables({})
         # Should handle gracefully or raise
-    except Exception as e:
-        assert True  # Expected
+    except Exception as _:
+        pass
 
 
 # ============================================================================
