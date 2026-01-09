@@ -17,10 +17,26 @@
         enableLiveAutocompletion: false,
       });
       globalThis.sqlAceEditor.setValue("");
+      
+      // Update editor colors when theme changes
+      updateEditorColors();
     } catch (err) {
       console.error('Error initializing ACE editor:', err);
     }
   }
+
+  function updateEditorColors() {
+    const editor = globalThis.sqlAceEditor;
+    if (!editor) return;
+    
+    // Force refresh of editor rendering
+    editor.renderer.updateFull();
+  }
+
+  // Listen for theme changes
+  globalThis.addEventListener('themeChanged', function() {
+    updateEditorColors();
+  });
 
   // File explorer functions
   async function loadFileList() {

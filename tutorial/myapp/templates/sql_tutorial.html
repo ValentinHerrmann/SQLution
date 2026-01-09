@@ -1,26 +1,26 @@
 
 {% load static %}
 
-<div>
-    <div>
-        <details class="single-details" style="margin-bottom: 1.2em;">
-            <summary style="cursor: pointer">
-                <b style="font-size: 1.2em;">Tabellenschema (aufklappen/zuklappen)</b>
+<div style="width: 100%; display: flex; justify-content: center;">
+    <div style="width: 100%;">
+        <details class="single-details" style="width: 100%;">
+            <summary class="collapsible-summary" onclick="toggleIcon(this)">
+                <b style="font-size: 1.2em;"><i class="far fa-caret-square-right details-icon"></i> Tabellenschema (aufklappen/zuklappen)</b>
             </summary>
-            <div style="margin-left: 1.2em;">
+            <div>
                 <p style="color: var(--text-secondary);">{{ tablescheme|safe }}</p>
             </div>
         </details>
-        <details>
-            <summary style="cursor: pointer">
-                <b style="font-size: 1.2em;">Tutorial (aufklappen/zuklappen)</b>
+        <details style="width: 100%;">
+            <summary class="collapsible-summary" onclick="toggleIcon(this)">
+                <b style="font-size: 1.2em;"><i class="far fa-caret-square-right details-icon"></i> Tutorial (aufklappen/zuklappen)</b>
             </summary>
 
-            <details class="single-details" style="margin-left: 1.2em">
-                    <summary style="cursor: pointer">
-                        <i>SQL-Abfrage für Nutzer speichern</i>
+            <details class="single-details" style="width: 100%;">
+                    <summary class="collapsible-summary" onclick="toggleIcon(this)">
+                        <i><i class="far fa-caret-square-right details-icon"></i> SQL-Abfrage für Nutzer speichern</i>
                     </summary>
-                    <div style="display: flex; align-items: flex-start; gap: 1.5em; margin-left: 1.2em;">
+                    <div style="display: flex; align-items: flex-start;">
                         <div>
                             <br>
                             Im Code-Editor kannst du Dateien anlegen und benennen. 
@@ -33,11 +33,11 @@
                     </div>
                 </details>
 
-                <details class="single-details" style="margin-left: 1.2em">
-                    <summary style="cursor: pointer">
-                        <i>Mehrere Nutzer mit unterschiedlichen Rechten</i>
+                <details class="single-details" style="width: 100%;">
+                    <summary class="collapsible-summary" onclick="toggleIcon(this)">
+                        <i><i class="far fa-caret-square-right details-icon"></i> Mehrere Nutzer mit unterschiedlichen Rechten</i>
                     </summary>
-                    <div style="display: flex; align-items: flex-start; gap: 1.5em; margin-left: 1.2em;">
+                    <div style="display: flex; align-items: flex-start;">
                         <div>
                             Deine Datenbank hat immer einen Admin-Account (mit dem bist du gerade eingeloggt), um die Datenbank mit SQL-Abfragen zu erstellen und einen Nutzer-Account, der nur auf die fertigen SQL-Abfragen zugreifen kann. Diese beiden Accounts können immer auf alle gespeicherten SQL-Abfragen zugreifen.
                             <br><br>
@@ -48,11 +48,11 @@
                     </div>
                 </details>
                     
-                <details class="single-details" style="margin-left: 1.2em;">
-                    <summary style="cursor: pointer">
-                        <i>Variablen</i>
+                <details class="single-details" style="width: 100%;">
+                    <summary class="collapsible-summary" onclick="toggleIcon(this)">
+                        <i><i class="far fa-caret-square-right details-icon"></i> Variablen</i>
                     </summary>
-                    <div style="display: flex; align-items: flex-start; gap: 1.5em; margin-left: 1.2em;">
+                    <div style="display: flex; align-items: flex-start;">
                         <div>
                             <br>In gespeicherten SQL-Abfragen kannst du mit geschweiften Klammern <i>{Variablen}</i> verwenden. 
                             Führt der Nutzer die Abfrage aus, muss er für jede Variable einen Wert eingeben und diese werden dann 1:1 eingesetzt. 
@@ -67,11 +67,11 @@
                     </div>
                 </details>
 
-                <details class="single-details" style="margin-left: 1.2em;">
-                    <summary style="cursor: pointer">
-                        <i>Dropdown Menü</i>
+                <details class="single-details" style="width: 100%;">
+                    <summary class="collapsible-summary" onclick="toggleIcon(this)">
+                        <i><i class="far fa-caret-square-right details-icon"></i> Dropdown Menü</i>
                     </summary>
-                    <div style="display: flex; align-items: flex-start; gap: 1.5em; margin: 1.2em;">
+                    <div style="display: flex; align-items: flex-start;">
                     <div>
                         Statt einer freien Texteingabe für Variablen kannst du auch ein Dropdown-Menü mit 
                         vorgegebenen Optionen verwenden.
@@ -96,3 +96,40 @@
         </details>
     </div>
 </div>
+
+<script>
+function updateIconFor(details) {
+    const icon = details.querySelector('.details-icon');
+    if (!icon) return;
+    icon.className = details.open ? 'far fa-caret-square-down details-icon' : 'far fa-caret-square-right details-icon';
+}
+
+function toggleIcon(summary) {
+    const details = summary.parentElement;
+    const icon = summary.querySelector('.details-icon');
+
+    // Toggle happens after click, so check the future state and update the icon class
+    setTimeout(() => {
+        if (!icon) return;
+        if (details.open) {
+            icon.className = 'far fa-caret-square-down details-icon';
+        } else {
+            icon.className = 'far fa-caret-square-right details-icon';
+        }
+    }, 0);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const detailsList = Array.from(document.querySelectorAll('details'));
+    detailsList.forEach(d => updateIconFor(d));
+
+    // Add observer to watch for programmatic changes to details elements
+    detailsList.forEach(details => {
+        // Use MutationObserver to detect when details.open attribute changes
+        const observer = new MutationObserver(() => {
+            updateIconFor(details);
+        });
+        observer.observe(details, { attributes: true, attributeFilter: ['open'] });
+    });
+});
+</script>
