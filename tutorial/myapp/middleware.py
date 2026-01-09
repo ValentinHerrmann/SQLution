@@ -136,7 +136,7 @@ class UserAgentMiddleware(MiddlewareMixin):
 
         try:
             # This will raise ValueError for invalid or non-IP input
-            ip_obj = ipaddress.ip_address(ip)
+            ipaddress.ip_address(ip)
         except ValueError:
             # Invalid IP — do not use it to construct external URLs
             return None
