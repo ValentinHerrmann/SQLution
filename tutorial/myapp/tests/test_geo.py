@@ -1,6 +1,14 @@
 import pytest
 import sys
 import types
+import os
+
+# Ensure `tutorial` package is importable when PYTHONPATH isn't set by the runner
+# tests file located at tutorial/myapp/tests/test_geo.py -> go up two directories to `tutorial`
+tests_dir = os.path.dirname(__file__)
+project_root = os.path.abspath(os.path.join(tests_dir, '..', '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
 # Provide a lightweight fake `myapp.models` to avoid importing Django during tests
 if 'myapp.models' not in sys.modules:
