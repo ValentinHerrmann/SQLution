@@ -98,6 +98,12 @@
 </div>
 
 <script>
+function updateIconFor(details) {
+    const icon = details.querySelector('.details-icon');
+    if (!icon) return;
+    icon.className = details.open ? 'far fa-caret-square-down details-icon' : 'far fa-caret-square-right details-icon';
+}
+
 function toggleIcon(summary) {
     const details = summary.parentElement;
     const icon = summary.querySelector('.details-icon');
@@ -114,12 +120,6 @@ function toggleIcon(summary) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    function updateIconFor(details) {
-        const icon = details.querySelector('.details-icon');
-        if (!icon) return;
-        icon.className = details.open ? 'far fa-caret-square-down details-icon' : 'far fa-caret-square-right details-icon';
-    }
-
     const detailsList = Array.from(document.querySelectorAll('details'));
     detailsList.forEach(d => updateIconFor(d));
 
