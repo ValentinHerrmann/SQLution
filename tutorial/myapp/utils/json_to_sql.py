@@ -148,7 +148,7 @@ class ModelAnalyzer:
             return attr_entry
         elif attributes.get(attr_entry):
             return attributes[attr_entry]
-        else: 
+        else:
             return {}
 class SQLGenerator:
     """Generates SQL CREATE TABLE statements from model data."""
