@@ -2,6 +2,7 @@ from django.utils import timezone
 from django.conf import settings
 from myapp.models import AuditLog
 import requests
+import ipaddress
 from datetime import datetime
 import pytz
 
@@ -82,7 +83,7 @@ def log_audit_event(user, action, request=None, forced_reason=None):
         print(f"Error creating audit log: {e}")
 
 def get_client_ip_from_request(request):
-    """Extract client IP from request headers"""
+    """Extract client IP from request headers and ensure it's a valid IP (not a hostname)."""
     headers_to_check = [
         'HTTP_X_FORWARDED_FOR',
         'HTTP_X_REAL_IP',
@@ -98,9 +99,16 @@ def get_client_ip_from_request(request):
         if ip:
             if ',' in ip:
                 ip = ip.split(',')[0].strip()
-            return ip
+            # Validate it's a proper IP address (reject hostnames)
+            try:
+                ipaddress.ip_address(ip)
+                return ip
+            except ValueError:
+                # Not a valid IP, ignore and continue to next header
+                continue
     
-    return '127.0.0.1'
+    # Return None when no valid public IP was found
+    return None
 
 def parse_os_from_user_agent(user_agent):
     """Parse OS from user agent string"""
@@ -138,74 +146,76 @@ def parse_os_from_user_agent(user_agent):
     else:
         return "Unknown"
 
+def _validate_ip_for_location(ip_address):
+    """Validate IP and check if it's private/local. Returns True if IP is valid and public."""
+    if not ip_address:
+        return False
+    
+    try:
+        ip_obj = ipaddress.ip_address(ip_address)
+        return not (ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_link_local or ip_obj.is_reserved)
+    except ValueError:
+        return False
+
+def _fetch_location_from_api(ip_address):
+    """Fetch location from IP geolocation API. Returns location string or None."""
+    try:
+        response = requests.get(
+            f'http://ip-api.com/json/{ip_address}',
+            params={'fields': 'status,message,country,regionName,city,timezone'},
+            timeout=3,
+            allow_redirects=False,
+            headers={'User-Agent': 'SQLution-Audit/1.0'},
+            verify=True
+        )
+        
+        if response.status_code != 200:
+            return None
+        
+        data = response.json()
+        if data.get('status') != 'success':
+            return None
+        
+        return _format_location_string(data)
+    except Exception:
+        return None
+
+def _format_location_string(data):
+    """Format location data into a location string."""
+    city = data.get('city', 'Unknown')
+    country = data.get('country', 'Unknown')
+    region = data.get('regionName', '')
+    
+    if city == 'Unknown' or country == 'Unknown':
+        return None
+    
+    if region and region != city:
+        return f"{city}, {region}, {country}"
+    return f"{city}, {country}"
+
 def get_location_for_login(request):
     """Get location data directly during login when session might not have it yet"""
     try:
-        # Get IP from request
         ip_address = get_client_ip_from_request(request)
         
-        # Check if it's a private IP
-        if is_private_ip(ip_address):
-            return 'Development, Local'
-            #return {'city': 'Development', 'country': 'Local', 'full_location': 'Development, Local'}
+        if not _validate_ip_for_location(ip_address):
+            return 'Unknown' if ip_address else 'Unknown'
         
-        # Fetch location from API
-        response = requests.get(
-            f'http://ip-api.com/json/{ip_address}?fields=status,message,country,regionName,city,timezone', 
-            timeout=3
-        )
-        
-        if response.status_code == 200:
-            data = response.json()
-            if data.get('status') == 'success':
-                city = data.get('city', 'Unknown')
-                country = data.get('country', 'Unknown')
-                region = data.get('regionName', '')
-                
-                if region and region != city:
-                    location_str = f"{city}, {region}, {country}"
-                else:
-                    location_str = f"{city}, {country}"
-                
-                if city != 'Unknown' and country != 'Unknown':
-                    return location_str
-        
-        return 'Unknown'
+        location = _fetch_location_from_api(ip_address)
+        return location or 'Unknown'
         
     except Exception as e:
         print(f"Error getting location for login: {e}")
         return 'Unknown'
-
+    
 def is_private_ip(ip):
     """Check if IP is private/local"""
     if not ip:
         return True
     
-    private_ranges = [
-        '127.',      # Loopback
-        '192.168.',  # Private Class C
-        '10.',       # Private Class A
-        '172.16.',   # Private Class B start
-        '172.17.',   # Private Class B
-        '172.18.',   # Private Class B
-        '172.19.',   # Private Class B
-        '172.20.',   # Private Class B
-        '172.21.',   # Private Class B
-        '172.22.',   # Private Class B
-        '172.23.',   # Private Class B
-        '172.24.',   # Private Class B
-        '172.25.',   # Private Class B
-        '172.26.',   # Private Class B
-        '172.27.',   # Private Class B
-        '172.28.',   # Private Class B
-        '172.29.',   # Private Class B
-        '172.30.',   # Private Class B
-        '172.31.',   # Private Class B end
-        '169.254.',  # Link-local
-        '::1',       # IPv6 loopback
-        'fc00:',     # IPv6 private
-        'fd00:',     # IPv6 private
-        'fe80:',     # IPv6 link-local
-    ]
-    
-    return any(ip.startswith(prefix) for prefix in private_ranges)
+    try:
+        ip_obj = ipaddress.ip_address(ip)
+        return ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_link_local or ip_obj.is_reserved
+    except ValueError:
+        # Treat invalid/non-IP input as private/untrusted
+        return True
