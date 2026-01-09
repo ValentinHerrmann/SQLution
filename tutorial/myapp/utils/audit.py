@@ -94,21 +94,38 @@ def get_client_ip_from_request(request):
         'HTTP_FORWARDED',
         'REMOTE_ADDR'
     ]
-    
+    # First pass: return the first valid public/non-reserved IP found in headers
     for header in headers_to_check:
-        ip = request.META.get(header)
-        if ip:
-            if ',' in ip:
-                ip = ip.split(',')[0].strip()
-            # Validate it's a proper IP address (reject hostnames)
+        raw = request.META.get(header)
+        if not raw:
+            continue
+
+        candidates = [p.strip() for p in raw.split(',') if p.strip()]
+        for candidate in candidates:
             try:
-                ipaddress.ip_address(ip)
-                return ip
+                ip_obj = ipaddress.ip_address(candidate)
             except ValueError:
-                # Not a valid IP, ignore and continue to next header
+                # Not an IP literal (could be a hostname) — skip
                 continue
-    
-    # Return None when no valid public IP was found
+
+            if not (ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_link_local or ip_obj.is_reserved):
+                return candidate
+
+    # Second pass: return the first syntactically valid IP (even if private)
+    for header in headers_to_check:
+        raw = request.META.get(header)
+        if not raw:
+            continue
+
+        candidates = [p.strip() for p in raw.split(',') if p.strip()]
+        for candidate in candidates:
+            try:
+                ipaddress.ip_address(candidate)
+                return candidate
+            except ValueError:
+                continue
+
+    # No valid IP found
     return None
 
 def parse_os_from_user_agent(user_agent):
