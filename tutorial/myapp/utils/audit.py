@@ -94,38 +94,42 @@ def get_client_ip_from_request(request):
         'HTTP_FORWARDED',
         'REMOTE_ADDR'
     ]
-    # First pass: return the first valid public/non-reserved IP found in headers
+    # Helper functions (module-level small helpers would be ideal; kept local to keep file scope tidy)
+    def _parse_candidates(raw):
+        return [p.strip() for p in raw.split(',') if p and p.strip()]
+
+    def _is_valid_ip(candidate):
+        try:
+            ipaddress.ip_address(candidate)
+            return True
+        except ValueError:
+            return False
+
+    def _is_public_ip(candidate):
+        try:
+            ip_obj = ipaddress.ip_address(candidate)
+            return not (ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_link_local or ip_obj.is_reserved)
+        except ValueError:
+            return False
+
+    # Collect candidates from headers in order
+    candidates = []
     for header in headers_to_check:
         raw = request.META.get(header)
         if not raw:
             continue
+        candidates.extend(_parse_candidates(raw))
 
-        candidates = [p.strip() for p in raw.split(',') if p.strip()]
-        for candidate in candidates:
-            try:
-                ip_obj = ipaddress.ip_address(candidate)
-            except ValueError:
-                # Not an IP literal (could be a hostname) — skip
-                continue
+    # Prefer the first public IP
+    for c in candidates:
+        if _is_public_ip(c):
+            return c
 
-            if not (ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_link_local or ip_obj.is_reserved):
-                return candidate
+    # Otherwise return the first valid IP (may be private)
+    for c in candidates:
+        if _is_valid_ip(c):
+            return c
 
-    # Second pass: return the first syntactically valid IP (even if private)
-    for header in headers_to_check:
-        raw = request.META.get(header)
-        if not raw:
-            continue
-
-        candidates = [p.strip() for p in raw.split(',') if p.strip()]
-        for candidate in candidates:
-            try:
-                ipaddress.ip_address(candidate)
-                return candidate
-            except ValueError:
-                continue
-
-    # No valid IP found
     return None
 
 def parse_os_from_user_agent(user_agent):
