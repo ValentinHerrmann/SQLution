@@ -5,6 +5,7 @@ import requests
 import ipaddress
 from datetime import datetime
 import pytz
+from myapp.middleware import UserAgentMiddleware
 
 def log_audit_event(user, action, request=None, forced_reason=None):
     """
@@ -160,35 +161,32 @@ def _validate_ip_for_location(ip_address):
 def _fetch_location_from_api(ip_address):
     """Fetch location from IP geolocation API. Returns location string or None."""
     try:
-        response = requests.get(
-            f'http://ip-api.com/json/{ip_address}',
-            params={'fields': 'status,message,country,regionName,city,timezone'},
-            timeout=3,
-            allow_redirects=False,
-            headers={'User-Agent': 'SQLution-Audit/1.0'},
-            verify=True
-        )
-        
-        if response.status_code != 200:
+        # Reuse middleware's location lookup (which already prefers HTTPS providers)
+        middleware = UserAgentMiddleware()
+        data = middleware.get_location_from_ip(ip_address)
+        if not data:
             return None
-        
-        data = response.json()
-        if data.get('status') != 'success':
-            return None
-        
+
+        # If middleware returned a full formatted location, use it
+        full = data.get('full_location')
+        if full:
+            return full
+
+        # Otherwise normalize and format
         return _format_location_string(data)
     except Exception:
         return None
 
 def _format_location_string(data):
     """Format location data into a location string."""
-    city = data.get('city', 'Unknown')
-    country = data.get('country', 'Unknown')
-    region = data.get('regionName', '')
-    
-    if city == 'Unknown' or country == 'Unknown':
+    # Accept multiple key names depending on provider
+    city = data.get('city') or data.get('town') or data.get('village') or 'Unknown'
+    country = data.get('country') or data.get('country_name') or 'Unknown'
+    region = data.get('regionName') or data.get('region') or data.get('region_name') or ''
+
+    if not city or city == 'Unknown' or not country or country == 'Unknown':
         return None
-    
+
     if region and region != city:
         return f"{city}, {region}, {country}"
     return f"{city}, {country}"

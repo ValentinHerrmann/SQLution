@@ -82,37 +82,52 @@ class UserAgentMiddleware(MiddlewareMixin):
                 # For now, we'll return a development indicator
                 return {'city': 'Development', 'country': 'Local'}
             
-            # Use ip-api.com (free service, no API key required)
-            # Limit: 1000 requests per month for free tier
-            response = requests.get(
-                f'http://ip-api.com/json/{ip}?fields=status,message,country,regionName,city,timezone', 
-                timeout=3
-            )
-            
-            if response.status_code == 200:
-                data = response.json()
-                if data.get('status') == 'success':
-                    city = data.get('city', 'Unknown')
-                    country = data.get('country', 'Unknown')
-                    region = data.get('regionName', '')
-                    
-                    # Provide more detailed location if available
-                    if region and region != city:
-                        location_str = f"{city}, {region}, {country}"
-                    else:
-                        location_str = f"{city}, {country}"
-                    
-                    return {
-                        'city': city,
-                        'country': country,
-                        'region': region,
-                        'full_location': location_str
-                    }
-                else:
-                    # API returned an error
-                    print(f"IP-API error for {ip}: {data.get('message', 'Unknown error')}")
-            else:
-                print(f"HTTP error {response.status_code} when querying location for {ip}")
+            # Prefer HTTPS providers: try ipapi.co first, then fall back to ipwho.is
+            try:
+                url = f'https://ipapi.co/{ip}/json/'
+                resp = requests.get(url, timeout=3, allow_redirects=False, headers={'User-Agent': 'SQLution-Middleware/1.0'})
+                if resp.status_code == 200:
+                    data = resp.json()
+                    # ipapi returns an 'error' key when lookup fails
+                    if not data.get('error'):
+                        city = data.get('city', 'Unknown')
+                        country = data.get('country_name', 'Unknown')
+                        region = data.get('region', '')
+                        if region and region != city:
+                            location_str = f"{city}, {region}, {country}"
+                        else:
+                            location_str = f"{city}, {country}"
+                        return {
+                            'city': city,
+                            'country': country,
+                            'region': region,
+                            'full_location': location_str
+                        }
+                # Fallback to ipwho.is (HTTPS)
+                url2 = f'https://ipwho.is/{ip}'
+                resp2 = requests.get(url2, timeout=3, allow_redirects=False, headers={'User-Agent': 'SQLution-Middleware/1.0'})
+                if resp2.status_code == 200:
+                    data2 = resp2.json()
+                    if data2.get('success') is not False:
+                        city = data2.get('city', 'Unknown')
+                        country = data2.get('country', 'Unknown')
+                        region = data2.get('region', '')
+                        if region and region != city:
+                            location_str = f"{city}, {region}, {country}"
+                        else:
+                            location_str = f"{city}, {country}"
+                        return {
+                            'city': city,
+                            'country': country,
+                            'region': region,
+                            'full_location': location_str
+                        }
+            except requests.exceptions.Timeout:
+                print(f"Timeout when querying location for {ip}")
+            except requests.exceptions.RequestException as e:
+                print(f"Request error when querying location for {ip}: {e}")
+            except Exception as e:
+                print(f"Unexpected error when querying location for {ip}: {e}")
                 
         except requests.exceptions.Timeout:
             print(f"Timeout when querying location for {ip}")
