@@ -115,25 +115,29 @@ class ModelAnalyzer:
     def _extract_primary_keys(self, class_elements: dict, attributes: dict, foreign_keys_map: dict) -> dict:
         """Identify primary keys for each class."""
         pk_map = {}
-        try:
-            for class_id, class_data in class_elements.items():
-                try:
-                    attr_list = class_data.get("data", {}).get("attributes", [])
+        errors = []
 
-                    if attr_list:
-                        first_attr = self._get_attribute(attr_list[0], attributes)
-                        if first_attr:
-                            pk_name, pk_type = parse_attribute(first_attr.get("name", "id"))
-                            pk_map[class_id] = (pk_name, pk_type)
-                    elif class_id.endswith("_mn"):
-                        # Junction table: composite primary key
-                        pk1 = foreign_keys_map[class_id][0][0]
-                        pk2 = foreign_keys_map[class_id][1][0]
-                        pk_map[class_id] = (f"{pk1},{pk2}", "")
-                except Exception as e:
-                    print(f"Error in primary key extraction: {e}")
-        except Exception as e:
-            print(f"Error in _extract_primary_keys: {e}")
+        for class_id, class_data in class_elements.items():
+            try:
+                attr_list = class_data.get("data", {}).get("attributes", [])
+
+                if attr_list:
+                    first_attr = self._get_attribute(attr_list[0], attributes)
+                    if first_attr:
+                        pk_name, pk_type = parse_attribute(first_attr.get("name", "id"))
+                        pk_map[class_id] = (pk_name, pk_type)
+                elif class_id.endswith("_mn"):
+                    # Junction table: composite primary key
+                    pk1 = foreign_keys_map[class_id][0][0]
+                    pk2 = foreign_keys_map[class_id][1][0]
+                    pk_map[class_id] = (f"{pk1},{pk2}", "")
+            except Exception as e:
+                errors.append(f"class_id={class_id}: {e}")
+
+        if errors:
+            raise ValueError(
+                "Errors encountered during primary key extraction: " + "; ".join(errors)
+            )
         return pk_map
 
     @staticmethod
