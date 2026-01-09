@@ -188,15 +188,12 @@ class SQLGenerator:
         sorted_ids = []
         
         while queue:
-            try:
-                node = queue.popleft()
-                sorted_ids.append(node)
-                for neighbor in adjacency_list[node]:
-                    in_degree[neighbor] -= 1
-                    if in_degree[neighbor] == 0:
-                        queue.append(neighbor)
-            except Exception as e:
-                print(f"Error in topological sort: {e}")
+            node = queue.popleft()
+            sorted_ids.append(node)
+            for neighbor in adjacency_list[node]:
+                in_degree[neighbor] -= 1
+                if in_degree[neighbor] == 0:
+                    queue.append(neighbor)
         return sorted_ids
 
     def _build_create_statements(self, sorted_ids: list) -> list:
