@@ -248,7 +248,7 @@ class ModelAnalyzer:
             role += relation["data"]["targetRole"]
         if 'sourceRole' in relation['data']:
             role += relation["data"]["sourceRole"]
-        return role
+        return role.replace(' ', '')
 
     def _extract_primary_keys(self, class_elements: dict, attributes: dict, foreign_keys_map: dict) -> dict:
         """Identify primary keys for each class."""
@@ -371,6 +371,8 @@ class SQLGenerator:
         for role, target_id in fk_list:
             try:
                 target_pk_name, target_pk_type = self.pk_map.get(target_id, ("id", "INTEGER"))
+                if target_pk_type.lower() == 'auto':
+                    target_pk_type = 'INTEGER'
                 attr_defs.append((role, target_pk_type))
                 target_name = self.class_elements[target_id]['data']["name"]
                 constraints.append(
