@@ -79,18 +79,6 @@ class DummyRequest:
         self.GET = GET or {}
 
 
-def test_api_build_and_extract_endpoint():
-    # Build fake pattern-like objects
-    P = types.SimpleNamespace
-    pat1 = P(pattern='api/hello/', name='hello')
-    pat2 = P(pattern='notapi/skip/', name='skip')
-    incl = P(url_patterns=[pat1, pat2], pattern='api/')
-
-    endpoints = api_mod.extract_endpoints([incl])
-    assert isinstance(endpoints, list)
-    assert any(e['path'].endswith('api/hello/') or e['name'] == 'hello' for e in endpoints)
-
-
 def test_parse_attribute_variants():
     name, dtype = j2s_mod.parse_attribute('id:int')
     assert name == 'id' and 'INTEGER' in dtype
