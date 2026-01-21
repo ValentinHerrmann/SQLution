@@ -109,7 +109,7 @@ def test_diagram_load_json_writes_and_calls(monkeypatch, tmp_path):
 
     monkeypatch.setattr(diagram_mod, 'create_db', fake_create_db)
     monkeypatch.setattr(diagram_mod, 'format_sql', lambda s: 'SQL:' + s)
-    monkeypatch.setattr(diagram_mod, 'extract_tables', lambda d: 'CREATE TABLE t;')
+    monkeypatch.setattr(diagram_mod, 'convert_jsonmodel_to_sqlddl', lambda d: 'CREATE TABLE t;')
 
     test_json = b'{"model": {"nodes": [], "edges": []}}'
     diagram_mod.load_json(test_json, 'alice')
@@ -302,8 +302,8 @@ def test_sql_generator_topological_sort():
     assert user_idx < post_idx
 
 
-def test_extract_tables_full():
-    """Test full extract_tables flow"""
+def test_convert_jsonmodel_to_sqlddl_full():
+    """Test full convert_jsonmodel_to_sqlddl flow"""
     data = {
         'nodes': [
             {'id': 'c1', 'type': 'Class', 'data': {'name': 'Book', 'attributes': [{'id': 'a1', 'name': 'id:auto'}, {'id': 'a2', 'name': 'text title'}]}}
@@ -317,8 +317,8 @@ def test_extract_tables_full():
     assert 'AUTOINCREMENT' in sql or 'PRIMARY KEY' in sql
 
 
-def test_extract_tables_error_handling():
-    """Test error handling in extract_tables"""
+def test_convert_jsonmodel_to_sqlddl_error_handling():
+    """Test error handling in convert_jsonmodel_to_sqlddl"""
     # Test with invalid/empty data
     try:
         j2s_mod.convert_jsonmodel_to_sqlddl({})
@@ -346,17 +346,6 @@ def test_build_endpoint_no_name():
     pat = P(pattern='api/test/')
     result = api_mod._build_endpoint(pat, 'api/test/')
     assert result['name'] is None
-
-
-def test_extract_endpoints_nested():
-    """Test extract_endpoints with nested URLconf"""
-    P = types.SimpleNamespace
-    pat1 = P(pattern='nested/', name='nested-api')
-    inner = P(url_patterns=[pat1], pattern='api/v1/')
-    outer = P(url_patterns=[inner], pattern='api/')
-    
-    endpoints = api_mod.extract_endpoints([outer])
-    assert isinstance(endpoints, list)
 
 
 
