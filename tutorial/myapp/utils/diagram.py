@@ -1,8 +1,8 @@
 import json
 
 
-from myapp.utils.utils import convert_jsonmodel_to_sqlddl
-from myapp.utils.json_to_sql import extract_tables
+from myapp.utils.utils import format_sql
+from myapp.utils.json_to_sql import convert_jsonmodel_to_sqlddl
 from myapp.utils.directories import get_user_directory
 from myapp.utils.sqlite_connector import create_db
 
@@ -13,7 +13,7 @@ def load_json(json_bytes, username):
         json_string = json_bytes.decode('utf-8')
         data = json.loads(json_string)
         
-        sql_output = convert_jsonmodel_to_sqlddl(extract_tables(data))
+        sql_output = format_sql(convert_jsonmodel_to_sqlddl(data))
 
         with open(get_user_directory(username)+'/_CreateDB.sql_', "w") as f:
             f.write(sql_output)

@@ -323,7 +323,7 @@ def test_extract_tables_full():
         'edges': []
     }
     
-    sql = j2s_mod.extract_tables(data)
+    sql = j2s_mod.convert_jsonmodel_to_sqlddl(data)
     assert 'CREATE TABLE' in sql
     assert 'Book' in sql
     assert 'AUTOINCREMENT' in sql or 'PRIMARY KEY' in sql
@@ -333,7 +333,7 @@ def test_extract_tables_error_handling():
     """Test error handling in extract_tables"""
     # Test with invalid/empty data
     try:
-        j2s_mod.extract_tables({})
+        j2s_mod.convert_jsonmodel_to_sqlddl({})
         # Should handle gracefully or raise
     except Exception as _:
         pass
