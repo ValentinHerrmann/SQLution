@@ -221,8 +221,8 @@ def test_model_analyzer_basic():
     }
     
     analyzer = j2s_mod.ModelAnalyzer(data)
-    assert 'c1' in analyzer.class_elements
-    assert analyzer.class_elements['c1']['data']['name'] == 'User'
+    assert 'clz-user' in analyzer.class_elements
+    assert analyzer.class_elements['clz-user']['data']['name'] == 'User'
     assert len(analyzer.attributes) == 2
 
 
@@ -236,6 +236,7 @@ def test_model_analyzer_with_relationships():
             ],
             'edges': [
                 {
+                    'id': 'r1',
                     'type': 'ClassUnidirectional',
                     'source': 'c1',
                     'target': 'c2',
@@ -246,9 +247,9 @@ def test_model_analyzer_with_relationships():
     }
     
     analyzer = j2s_mod.ModelAnalyzer(data)
-    assert 'c1' in analyzer.foreign_keys_map
-    assert len(analyzer.foreign_keys_map['c1']) == 1
-    assert analyzer.foreign_keys_map['c1'][0][0] == 'author_id'
+    assert 'clz-post' in analyzer.foreign_keys_map
+    assert len(analyzer.foreign_keys_map['clz-post']) == 1
+    assert analyzer.foreign_keys_map['clz-post'][0][0] == 'author_id'
 
 
 def test_model_analyzer_bidirectional():
@@ -261,6 +262,7 @@ def test_model_analyzer_bidirectional():
             ],
             'edges': [
                 {
+                    'id': 'r1',
                     'type': 'ClassBidirectional',
                     'source': 'c1',
                     'target': 'c2',
@@ -287,7 +289,15 @@ def test_sql_generator_topological_sort():
                 {'id': 'c2', 'type': 'Class', 'data': {'name': 'User', 'attributes': [{'id': 'a2', 'name': 'id:int'}]}}
             ],
             'edges': [
-                {'type': 'ClassUnidirectional', 'source': 'c1', 'target': 'c2', 'data': {'targetRole': 'user_id'}}
+                {
+                    'id': 'r1',
+                    'type': 'ClassUnidirectional', 
+                    'source': 'c1', 
+                    'target': 'c2', 
+                    'data': {
+                        'targetRole': 'user_id'
+                    }
+                }
             ]
         }
     }
@@ -297,8 +307,8 @@ def test_sql_generator_topological_sort():
     sorted_ids = generator._topological_sort()
     
     # User should come before Post (Post depends on User)
-    user_idx = sorted_ids.index('c2')
-    post_idx = sorted_ids.index('c1')
+    user_idx = sorted_ids.index('clz-user')
+    post_idx = sorted_ids.index('clz-post')
     assert user_idx < post_idx
 
 
@@ -867,6 +877,7 @@ def test_json_to_sql_compose_create_table_composite_pk():
             ],
             'edges': [
                 {
+                    'id': 'r1',
                     'type': 'ClassBidirectional',
                     'source': 'c1',
                     'target': 'c2',
