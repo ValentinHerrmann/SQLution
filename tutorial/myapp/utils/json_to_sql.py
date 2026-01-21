@@ -1,4 +1,6 @@
 import collections
+import copy
+import re
 
 # Unterstützte Datentypen in SQLite
 DATATYPE_MAP = {
@@ -29,7 +31,6 @@ class ModelAnalyzer:
 
     def _renamed_element_ids_to_readble_names(self, data: dict) -> dict:
         """Replace element IDs with readable names for easier debugging."""
-        import copy
         
         # Make a deep copy to avoid modifying the original
         data = copy.deepcopy(data)
@@ -39,8 +40,10 @@ class ModelAnalyzer:
         
         # Helper function to normalize names (lowercase, remove spaces)
         def normalize(name: str) -> str:
-            return name.lower().replace(' ', '').replace('_', '')
-        
+            if not isinstance(name, str):
+                name = str(name) if name is not None else ''
+            return re.sub(r'[\s_\-./\\,\'"()\[\]{}:;?!@#$%^&*\+=<>]+', '', name.lower())
+            
         # Build all mappings
         class_id_map, valid_node_ids = self._build_class_id_mapping(model, normalize)
         attr_id_map = self._build_attribute_id_mapping(model, normalize)
@@ -412,7 +415,6 @@ def convert_jsonmodel_to_sqlddl(data: dict) -> str:
     """Convert JSON model to SQL CREATE TABLE statements."""
     try:
         analyzer = ModelAnalyzer(data)
-        analyzer._parse_model(data)
         generator = SQLGenerator(analyzer)
         return generator.generate()
     except Exception as e:
