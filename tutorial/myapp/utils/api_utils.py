@@ -16,6 +16,7 @@ from myapp.utils.diagram import load_json
 from myapp.utils.users import get_logged_in_users_count, get_session_details
 from myapp.utils.utils import timestamp
 from myapp import views_user
+from myapp.utils.json_to_sql import ModelAnalyzer
 
 # Constants
 SQL_DOUBLE_EXT = '.sql.sql'
@@ -238,8 +239,13 @@ def save_diagram_json(user_dir: str, filename: str, data: bytes, process_diagram
     Raises:
         Exception: If file cannot be saved
     """
+    
+    json_string = data.decode('utf-8')
+    jsondict = json.loads(json_string)
+    jsondict = ModelAnalyzer._renamed_element_ids_to_readble_names(jsondict)
+    
     with open(f'{user_dir}/{filename}', 'wb+') as f:
-        f.write(data)
+        f.write(json.dumps(jsondict).encode('utf-8'))
     
     if process_diagram and username:
         load_json(data, username)
