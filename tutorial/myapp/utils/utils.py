@@ -14,7 +14,7 @@ from myapp.models import ZippedFolder
 def timestamp():
     return datetime.now().strftime("[%Y-%m-%d %H:%M:%S]") + "\t"
 
-def format_sql(sql: str) -> str:
+def convert_jsonmodel_to_sqlddl(sql: str) -> str:
     # Normalize whitespace
     sql = re.sub(r'\s+', ' ', sql).strip()
 
