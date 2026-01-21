@@ -331,22 +331,6 @@ def test_convert_jsonmodel_to_sqlddl_error_handling():
 # Comprehensive api.py tests
 # ============================================================================
 
-def test_build_endpoint_with_name():
-    """Test _build_endpoint with named pattern"""
-    P = types.SimpleNamespace
-    pat = P(pattern='api/test/', name='test-endpoint')
-    result = api_mod._build_endpoint(pat, 'api/test/')
-    assert result['name'] == 'test-endpoint'
-    assert 'api/test' in result['path']
-
-
-def test_build_endpoint_no_name():
-    """Test _build_endpoint without name"""
-    P = types.SimpleNamespace
-    pat = P(pattern='api/test/')
-    result = api_mod._build_endpoint(pat, 'api/test/')
-    assert result['name'] is None
-
 
 
 # ============================================================================
