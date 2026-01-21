@@ -3,6 +3,10 @@ More information about SQLution can be found at:
 
 The latest(minor) release is hosted at: [sqlution.de](https://sqlution.de/).
 
+#### Dev
+The OpenAPI configuration can be viewed in Swagger Editor:
+https://editor.swagger.io/?url=https://raw.githubusercontent.com/ValentinHerrmann/SQLution/refs/heads/131-json-to-sql/openapi.yaml
+
 #### Deployment (containerized)
 The repository ships with a Docker/Compose stack (`compose.yaml`) that mirrors the production container. Use it for local testing or for self-hosting on a VM where you control Docker Compose.
 
