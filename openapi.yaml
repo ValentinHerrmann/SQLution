@@ -1,0 +1,682 @@
+openapi: 3.0.3
+info:
+  title: SQLution API
+  description: |
+    SQLution API provides endpoints for managing SQL databases, executing queries, 
+    uploading/downloading database files, and managing database diagrams.
+    
+    ## Authentication
+    Most endpoints require authentication using Django session-based authentication.
+    Users must log in through the web interface before accessing API endpoints.
+    
+    ## Authorization
+    - **db_admin**: Database administrators can manage their own databases
+    - **global_admin**: Global administrators have access to system-wide settings
+    
+  version: 1.0.0
+  contact:
+    name: SQLution Support
+  license:
+    name: License Information
+    url: https://github.com/ValentinHerrmann/SQLution/blob/main/LICENSE
+
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+  - url: https://sqlution.de
+    description: Production server
+
+tags:
+  - name: API Discovery
+    description: Endpoints for discovering available API routes
+  - name: SQL Files
+    description: Manage SQL query files
+  - name: SQL Execution
+    description: Execute SQL queries
+  - name: Database Management
+    description: Upload and download database files
+  - name: Diagrams
+    description: Manage database and editor diagrams
+  - name: System Administration
+    description: System monitoring and administration
+
+security:
+  - sessionAuth: []
+
+paths:
+  /api/:
+    get:
+      tags:
+        - API Discovery
+      summary: List all API endpoints
+      description: Returns a JSON list of all available API endpoints with their paths and names
+      operationId: listEndpoints
+      responses:
+        '200':
+          description: Successful response with list of endpoints
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  endpoints:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        path:
+                          type: string
+                          example: "/api/sql/list"
+                        name:
+                          type: string
+                          example: "api_sql_list"
+                  count:
+                    type: integer
+                    example: 10
+        '500':
+          description: Internal server error
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Could not get endpoints"
+
+  /api/sql/{filename}.sql:
+    get:
+      tags:
+        - SQL Files
+      summary: Get SQL file content
+      description: Retrieve the content of a specific SQL file for the authenticated user
+      operationId: getSqlFile
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: filename
+          in: path
+          required: true
+          description: Name of the SQL file (with or without .sql extension)
+          schema:
+            type: string
+            example: "my_query"
+      responses:
+        '200':
+          description: SQL file content
+          content:
+            text/sql:
+              schema:
+                type: string
+                example: "SELECT * FROM users WHERE id = 1;"
+        '500':
+          description: Error reading file
+          content:
+            text/plain:
+              schema:
+                type: string
+    
+    post:
+      tags:
+        - SQL Files
+      summary: Create or update SQL file
+      description: Create a new SQL file or update an existing one
+      operationId: createSqlFile
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: filename
+          in: path
+          required: true
+          description: Name of the SQL file
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - sql
+              properties:
+                sql:
+                  type: string
+                  example: "SELECT * FROM users;"
+      responses:
+        '200':
+          description: File saved successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "File saved successfully"
+        '500':
+          description: Error saving file
+    
+    put:
+      tags:
+        - SQL Files
+      summary: Update SQL file
+      description: Update an existing SQL file (same as POST)
+      operationId: updateSqlFile
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: filename
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - sql
+              properties:
+                sql:
+                  type: string
+      responses:
+        '200':
+          description: File saved successfully
+        '500':
+          description: Error saving file
+    
+    delete:
+      tags:
+        - SQL Files
+      summary: Delete SQL file
+      description: Delete a specific SQL file
+      operationId: deleteSqlFile
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: filename
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: File deleted successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "File deleted successfully"
+        '500':
+          description: Error deleting file
+
+  /api/sql/list:
+    get:
+      tags:
+        - SQL Files
+      summary: List all SQL files
+      description: Get a list of all SQL files in the user's directory
+      operationId: listSqlFiles
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: List of SQL files
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  files:
+                    type: array
+                    items:
+                      type: string
+                    example: ["query1.sql", "query2.sql", "test.sql"]
+        '405':
+          description: Method not allowed
+        '500':
+          description: Internal error
+
+  /api/sql/all:
+    post:
+      tags:
+        - SQL Files
+      summary: Replace all SQL files
+      description: Delete all existing SQL files and create new ones from the provided list
+      operationId: replaceAllSqlFiles
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - files
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - filename
+                      - sql
+                    properties:
+                      filename:
+                        type: string
+                        example: "my_query.sql"
+                      sql:
+                        type: string
+                        example: "SELECT * FROM users;"
+      responses:
+        '200':
+          description: Files saved successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Files saved successfully"
+        '404':
+          description: Unknown request
+        '500':
+          description: Internal error while saving SQL files
+
+  /api/sql/run:
+    post:
+      tags:
+        - SQL Execution
+      summary: Execute SQL query
+      description: Execute a SQL query and return the results with columns and rows
+      operationId: executeSql
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - sql
+              properties:
+                sql:
+                  type: string
+                  example: "SELECT * FROM users LIMIT 10;"
+      responses:
+        '200':
+          description: Query executed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  columns:
+                    type: array
+                    items:
+                      type: string
+                    example: ["id", "name", "email"]
+                  result:
+                    type: array
+                    items:
+                      type: array
+                      items: {}
+                    example: [[1, "John Doe", "john@example.com"], [2, "Jane Smith", "jane@example.com"]]
+                  error:
+                    type: string
+                    nullable: true
+                    example: null
+        '400':
+          description: Bad request or SQL error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  columns:
+                    type: array
+                    items: {}
+                  result:
+                    type: array
+                    items: {}
+                  error:
+                    type: string
+                    example: "near \"SELEC\": syntax error"
+        '405':
+          description: Method not allowed
+        '500':
+          description: Internal server error
+
+  /api/upload_db/:
+    post:
+      tags:
+        - Database Management
+      summary: Upload database file
+      description: Upload a SQLite database file (binary data in request body)
+      operationId: uploadDatabase
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        '201':
+          description: File saved successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "File saved successfully"
+        '405':
+          description: Method not allowed
+        '500':
+          description: Internal error while uploading database
+
+  /api/db_diagram.json:
+    get:
+      tags:
+        - Diagrams
+      summary: Get database diagram
+      description: Retrieve the database diagram JSON (model.json) for the current user
+      operationId: getDatabaseDiagram
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Database diagram JSON
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Apollon diagram model
+        '500':
+          description: Internal error while handling database diagram JSON
+    
+    post:
+      tags:
+        - Diagrams
+      summary: Update database diagram
+      description: Update the database diagram and generate SQL from it
+      operationId: updateDatabaseDiagram
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Apollon diagram model
+      responses:
+        '200':
+          description: Diagram saved and SQL generated successfully
+        '405':
+          description: Method not allowed
+        '500':
+          description: Internal error while handling database diagram JSON
+
+  /api/editor_diagram.json:
+    get:
+      tags:
+        - Diagrams
+      summary: Get editor diagram
+      description: Retrieve the editor diagram JSON (editor_model.json) for the current user
+      operationId: getEditorDiagram
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Editor diagram JSON
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Editor diagram model
+        '500':
+          description: Internal error while handling editor diagram JSON
+    
+    post:
+      tags:
+        - Diagrams
+      summary: Update editor diagram
+      description: Update the editor diagram JSON
+      operationId: updateEditorDiagram
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Editor diagram model
+      responses:
+        '200':
+          description: Editor diagram saved successfully
+        '405':
+          description: Method not allowed
+        '500':
+          description: Internal error while handling editor diagram JSON
+
+  /api/system-data/:
+    get:
+      tags:
+        - System Administration
+      summary: Get system data
+      description: |
+        Retrieve comprehensive system information including:
+        - User database directory structure and sizes
+        - Disk usage (total, used, free)
+        - RAM usage
+        - CPU usage
+        - Logged-in users count and session details
+        - Recent audit logs
+        
+        **Requires global admin privileges**
+      operationId: getSystemData
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: System data retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  directories:
+                    type: array
+                    items:
+                      type: object
+                    description: User database directory tree with sizes
+                  fullness_percentage:
+                    type: integer
+                    example: 65
+                    description: Disk usage percentage
+                  total_gb:
+                    type: string
+                    example: "500.00"
+                    description: Total disk space in GB
+                  used_gb:
+                    type: string
+                    example: "325.00"
+                    description: Used disk space in GB
+                  free_gb:
+                    type: string
+                    example: "175.00"
+                    description: Free disk space in GB
+                  ram_total:
+                    type: string
+                    example: "16.00"
+                    description: Total RAM in GB
+                  ram_used:
+                    type: string
+                    example: "8.50"
+                    description: Used RAM in GB
+                  ram_free:
+                    type: string
+                    example: "7.50"
+                    description: Available RAM in GB
+                  ram_percentage:
+                    type: integer
+                    example: 53
+                    description: RAM usage percentage
+                  cpu_percentage:
+                    type: integer
+                    example: 25
+                    description: CPU usage percentage
+                  logged_in_users:
+                    type: integer
+                    example: 5
+                    description: Number of currently logged-in users
+                  session_info:
+                    type: array
+                    items:
+                      type: object
+                    description: Detailed session information for each user
+                  recent_audit_logs:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        timestamp:
+                          type: string
+                          example: "2026-01-21 14:30:00"
+                        username:
+                          type: string
+                          example: "john_doe"
+                        action:
+                          type: string
+                          example: "LOGIN"
+                        action_display:
+                          type: string
+                          example: "Login"
+                        ip_address:
+                          type: string
+                          example: "192.168.1.100"
+                        operating_system:
+                          type: string
+                          example: "Windows 10"
+                        location:
+                          type: string
+                          example: "New York, US"
+                        session_id:
+                          type: string
+                          example: "abc123xyz"
+        '403':
+          description: Forbidden - requires global admin privileges
+        '500':
+          description: Internal server error
+
+  /actuator/gateway/routes:
+    get:
+      tags:
+        - System Administration
+      summary: Gateway routes actuator endpoint
+      description: Compatibility endpoint for platform probes expecting Spring Boot actuator
+      operationId: actuatorGatewayRoutes
+      responses:
+        '200':
+          description: Actuator response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  application:
+                    type: string
+                    example: "sqlution"
+                  component:
+                    type: string
+                    example: "gateway"
+                  routes:
+                    type: array
+                    items: {}
+                  status:
+                    type: string
+                    example: "ok"
+        '405':
+          description: Method not allowed
+
+components:
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+      description: Django session-based authentication
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        detail:
+          type: string
+          description: Error message
+        status:
+          type: integer
+          description: HTTP status code
+
+    SqlFile:
+      type: object
+      required:
+        - filename
+        - sql
+      properties:
+        filename:
+          type: string
+          description: Name of the SQL file
+          example: "my_query.sql"
+        sql:
+          type: string
+          description: SQL query content
+          example: "SELECT * FROM users WHERE active = 1;"
+
+    QueryResult:
+      type: object
+      properties:
+        columns:
+          type: array
+          items:
+            type: string
+          description: Column names from the query result
+        result:
+          type: array
+          items:
+            type: array
+            items: {}
+          description: Result rows, each row is an array of values
+        error:
+          type: string
+          nullable: true
+          description: Error message if query failed, null otherwise
+
+    AuditLog:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: When the action occurred
+        username:
+          type: string
+          description: User who performed the action
+        action:
+          type: string
+          description: Action code (LOGIN, LOGOUT, etc.)
+        action_display:
+          type: string
+          description: Human-readable action description
+        ip_address:
+          type: string
+          description: IP address of the user
+        operating_system:
+          type: string
+          description: User's operating system
+        location:
+          type: string
+          description: Geographic location
+        session_id:
+          type: string
+          description: Session identifier
