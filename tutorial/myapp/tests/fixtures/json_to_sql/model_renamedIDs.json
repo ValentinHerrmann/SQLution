@@ -1,0 +1,106 @@
+{
+    "id": "diagram",
+    "version": "4.0.0",
+    "title": "Class Diagram",
+    "type": "ClassDiagram",
+    "nodes": [
+        {
+            "id": "clz-film",
+            "width": 270,
+            "height": 250,
+            "type": "class",
+            "position": {
+                "x": -450,
+                "y": -200
+            },
+            "data": {
+                "name": "Film",
+                "attributes": [
+                    {
+                        "id": "att-film-stringname",
+                        "name": "String name"
+                    },
+                    {
+                        "id": "att-film-stringgenre",
+                        "name": "String Genre"
+                    },
+                    {
+                        "id": "att-film-stringinhaltszusammenfassung",
+                        "name": "String Inhaltszusammenfassung"
+                    },
+                    {
+                        "id": "att-film-intaltersbeschraenkung",
+                        "name": "int Altersbeschraenkung"
+                    },
+                    {
+                        "id": "att-film-intfilmdauerinminuten",
+                        "name": "int Filmdauer_in_Minuten"
+                    },
+                    {
+                        "id": "att-film-stringschauspieler",
+                        "name": "String Schauspieler"
+                    },
+                    {
+                        "id": "att-film-interscheinungsdatum",
+                        "name": "int Erscheinungsdatum"
+                    }
+                ],
+                "methods": []
+            },
+            "measured": {
+                "width": 270,
+                "height": 250
+            }
+        },
+        {
+            "id": "clz-kino",
+            "width": 160,
+            "height": 130,
+            "type": "class",
+            "position": {
+                "x": 160,
+                "y": -180
+            },
+            "data": {
+                "name": "Kino",
+                "methods": [],
+                "attributes": [
+                    {
+                        "id": "att-kino-stringname",
+                        "name": "String name"
+                    },
+                    {
+                        "id": "att-kino-intlaengengrad",
+                        "name": "int Laengengrad"
+                    },
+                    {
+                        "id": "att-kino-intbreitengrad",
+                        "name": "int Breitengrad"
+                    }
+                ]
+            },
+            "measured": {
+                "width": 160,
+                "height": 130
+            }
+        }
+    ],
+    "edges": [
+        {
+            "id": "rel-aktuelllaufendeFilme_clz-film_clz-kino",
+            "source": "clz-film",
+            "target": "clz-kino",
+            "type": "ClassUnidirectional",
+            "sourceHandle": "right",
+            "targetHandle": "left",
+            "data": {
+                "sourceMultiplicity": "n",
+                "sourceRole": "",
+                "targetMultiplicity": "1",
+                "targetRole": "aktuell laufende Filme",
+                "points": []
+            }
+        }
+    ],
+    "assessments": {}
+}

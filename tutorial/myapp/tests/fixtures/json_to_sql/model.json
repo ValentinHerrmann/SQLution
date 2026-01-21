@@ -1,0 +1,156 @@
+{
+    "id": "9d0a069e-413c-42ca-b92a-6629c641b8e0",
+    "version": "4.0.0",
+    "title": "Class Diagram",
+    "type": "ClassDiagram",
+    "nodes": [
+        {
+            "id": "3c8b1468-658a-466a-8911-713a142a3753",
+            "width": 270,
+            "height": 250,
+            "type": "class",
+            "position": {
+                "x": -450,
+                "y": -200
+            },
+            "data": {
+                "name": "Film",
+                "attributes": [
+                    {
+                        "id": "ef6d5ceb-00d3-4983-af27-41bdfa16a26d",
+                        "name": "String name"
+                    },
+                    {
+                        "id": "9554cfe9-e95b-4dfa-a39c-75f863a2d371",
+                        "name": "String Genre"
+                    },
+                    {
+                        "id": "ac27fe02-599e-4e32-abbd-18cc422e446f",
+                        "name": "String Inhaltszusammenfassung"
+                    },
+                    {
+                        "id": "25c0787a-26df-4621-b885-57a60f85ec02",
+                        "name": "int Altersbeschraenkung"
+                    },
+                    {
+                        "id": "d4fa4fae-058f-41a5-a3dd-7a95b65015dd",
+                        "name": "int Filmdauer_in_Minuten"
+                    },
+                    {
+                        "id": "606f4cde-2195-4c1b-a4e2-c1a2bae9b450",
+                        "name": "String Schauspieler"
+                    },
+                    {
+                        "id": "f2ce1910-4f51-4475-b95f-2fe881aa18b2",
+                        "name": "int Erscheinungsdatum"
+                    }
+                ],
+                "methods": []
+            },
+            "measured": {
+                "width": 270,
+                "height": 250
+            }
+        },
+        {
+            "id": "a7a67dc7-2736-4c32-8692-630da2d9a5d8",
+            "width": 160,
+            "height": 130,
+            "type": "class",
+            "position": {
+                "x": 160,
+                "y": -180
+            },
+            "data": {
+                "name": "Kino",
+                "methods": [],
+                "attributes": [
+                    {
+                        "id": "7a0c88b0-6a19-4f97-bfa4-16ea73bf5487",
+                        "name": "String name"
+                    },
+                    {
+                        "id": "de266004-2780-4e65-869e-1859b1f2a494",
+                        "name": "int Laengengrad"
+                    },
+                    {
+                        "id": "72c595bb-633b-4df1-a305-3f38f77a1d20",
+                        "name": "int Breitengrad"
+                    }
+                ]
+            },
+            "measured": {
+                "width": 160,
+                "height": 130
+            }
+        }
+    ],
+    "edges": [
+        {
+            "id": "f93da255-63b3-401c-a41d-a26d1a9425df",
+            "source": "3c8b1468-658a-466a-8911-713a142a3753",
+            "target": "b00f9d5d-7cc4-4ea6-86fb-56e22786d6d9",
+            "type": "ClassBidirectional",
+            "sourceHandle": "right",
+            "targetHandle": "left",
+            "data": {
+                "sourceMultiplicity": "m",
+                "sourceRole": "lehrer_unterrichtet_klasse",
+                "targetMultiplicity": "n",
+                "points": []
+            }
+        },
+        {
+            "id": "52c405e3-4399-4dcb-a815-db22b5174d4f",
+            "source": "1e7b5757-43b9-45bd-b094-5f20fa7e704f",
+            "target": "b00f9d5d-7cc4-4ea6-86fb-56e22786d6d9",
+            "type": "ClassUnidirectional",
+            "sourceHandle": "top",
+            "targetHandle": "bottom",
+            "data": {
+                "sourceMultiplicity": "n",
+                "sourceRole": "klasse",
+                "targetMultiplicity": "1",
+                "points": []
+            }
+        },
+        {
+            "id": "486d071c-79bc-4dcd-bcf0-0356ed5556bf",
+            "source": "f579477f-7a2b-4bca-9f06-b43fd3054a32",
+            "target": "3c8b1468-658a-466a-8911-713a142a3753",
+            "type": "ClassUnidirectional",
+            "sourceHandle": "top",
+            "targetHandle": "bottom",
+            "data": {
+                "points": []
+            }
+        },
+        {
+            "id": "8aa51867-df9c-41cb-ac86-906a1b189c73",
+            "source": "f579477f-7a2b-4bca-9f06-b43fd3054a32",
+            "target": "a7a67dc7-2736-4c32-8692-630da2d9a5d8",
+            "type": "ClassUnidirectional",
+            "sourceHandle": "right-bottom",
+            "targetHandle": "bottom",
+            "data": {
+                "points": []
+            }
+        },
+        {
+            "id": "34cc5d1b-3a9d-4da6-8d1c-d33abcae82f6",
+            "source": "3c8b1468-658a-466a-8911-713a142a3753",
+            "target": "a7a67dc7-2736-4c32-8692-630da2d9a5d8",
+            "type": "ClassUnidirectional",
+            "sourceHandle": "right",
+            "targetHandle": "left",
+            "data": {
+                "sourceMultiplicity": "n",
+                "sourceRole": "",
+                "targetMultiplicity": "1",
+                "targetRole": "aktuell laufende Filme",
+                "points": []
+            }
+        }
+    ],
+    "assessments": {}
+}
