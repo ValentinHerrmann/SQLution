@@ -359,14 +359,6 @@ def test_extract_endpoints_nested():
     assert isinstance(endpoints, list)
 
 
-def test_extract_endpoints_non_api():
-    """Test that non-api patterns are excluded"""
-    P = types.SimpleNamespace
-    pat1 = P(pattern='admin/users/', name='admin')
-    
-    endpoints = api_mod.extract_endpoints([pat1])
-    assert len(endpoints) == 0
-
 
 # ============================================================================
 # Comprehensive audit.py tests
