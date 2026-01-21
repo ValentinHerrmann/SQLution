@@ -8,7 +8,7 @@ from html import escape
 def delete_db(username:str):
     dbname = get_db_name(username)
     if os.path.exists(dbname):
-        os.remove(dbname)
+        os.rename(dbname, dbname + ".bak")
 
 def get_db_name(username:str):
 
@@ -34,7 +34,7 @@ def create_db(sql:str, username:str):
             try:
                 cur.execute(s)
             except sqlite3.Error as e:
-                print(f"SQL error: {e}")
+                raise Exception(f"SQL error during DB creation: {e}")
     with open(dbname, 'rb') as file:
         binary_data = file.read()
         return binary_data
