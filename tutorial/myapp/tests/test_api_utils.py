@@ -496,15 +496,15 @@ class TestLogAndRotate:
         """Test that rotation is called randomly (10% chance)."""
         test_data = {'cpu_percentage': 50}
         
+        mock_rotate.reset_mock()
         # Simulate the 10% chance (randint returns 1)
-        mock_randint.return_value = 1
+        api_utils.rotation_counter = 0  # Reset counter to ensure rotation is attempted
         api_utils.log_and_rotate_system_data(test_data)
-        
         mock_rotate.assert_called_once()
         
         # Simulate the 90% chance (randint returns something else)
         mock_rotate.reset_mock()
-        mock_randint.return_value = 5
+        api_utils.rotation_counter = 5  # Reset counter to ensure rotation is attempted
         api_utils.log_and_rotate_system_data(test_data)
         
         mock_rotate.assert_not_called()
@@ -517,8 +517,7 @@ class TestLogAndRotate:
         mock_rotate.side_effect = Exception('Rotation failed')
         
         # Should not raise exception
-        global rotation_counter
-        rotation_counter = 0  # Reset counter to ensure rotation is attempted
+        api_utils.rotation_counter = 0  # Reset counter to ensure rotation is attempted
         api_utils.log_and_rotate_system_data(test_data)
         
         # CSV logging should still have been called
