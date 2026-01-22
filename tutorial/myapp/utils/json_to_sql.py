@@ -266,7 +266,7 @@ class ModelAnalyzer:
             try:
                 attr_list = class_data.get("data", {}).get("attributes", [])
 
-                if attr_list and len(attr_list)>0:
+                if attr_list and len(attr_list) > 0:
                     first_attr = self._get_attribute(attr_list[0], attributes)
                     if first_attr:
                         pk_name, pk_type = parse_attribute(first_attr.get("name", "id"))
