@@ -1,33 +1,25 @@
 on:
-  # Trigger analysis when pushing to your main branches, and when creating a pull request.
-  push:
+  workflow_run:
+    workflows: ["Tests"]
+    types:
+      - completed
     branches:
       - main
       - master
       - develop
       - 'releases/**'
-  pull_request:
-      types: [opened, synchronize, reopened]
 
 name: SonarQube
 jobs:
   sonarqube:
     runs-on: ubuntu-latest
-    needs: []
-    if: success()
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
-    - name: ⏳ Wait for Tests to Complete
-      uses: lewagon/wait-on-check-action@v1.3.4
-      with:
-        ref: ${{ github.ref }}
-        check-name: 'Run Tests'
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
-        wait-interval: 10
-        
     - uses: actions/checkout@v4
       with:
         # Disabling shallow clones is recommended for improving the relevancy of reporting
         fetch-depth: 0
+        ref: ${{ github.event.workflow_run.head_sha }}
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
