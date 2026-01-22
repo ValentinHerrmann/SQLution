@@ -114,6 +114,22 @@ function toggleIcon(summary) {
 </details>
 
 
+
+
+
+
+
+
+<details>
+    <summary class="collapsible-summary" onclick="toggleIcon(this)">
+        <h5><i class="far fa-caret-square-right details-icon"></i> Tabellenschema (Aufbau der Datenbank)</h5>
+    </summary>
+    <div>
+        <p style="color: var(--text-secondary);">{{ tablescheme|safe }}</p>
+    </div>
+</details>
+
+
 <details>
 <summary class="collapsible-summary" onclick="toggleIcon(this)">
     <h5><i class="far fa-caret-square-right details-icon"></i> Tabellen (max. 5 Zeilen pro Tabelle)</h5>

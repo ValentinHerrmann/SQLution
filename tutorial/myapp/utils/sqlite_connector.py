@@ -118,7 +118,7 @@ def get_table_dict(db_path):
 def generate_html_table(name, columns, pks, fks):
     col_strs = []
     for col, dtype in columns:
-        text = f"{escape(col)} : {escape(dtype)}"
+        text = f"{escape(dtype.replace('INTEGER','INT'))} {escape(col)}"
         if col in pks:
             text = f"<u>{text}</u>"
         if col in fks:
