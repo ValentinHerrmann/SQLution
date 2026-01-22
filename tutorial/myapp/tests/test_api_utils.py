@@ -10,7 +10,7 @@ import sys
 import tempfile
 import shutil
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock, call
+from unittest.mock import Mock, patch
 
 # Ensure `tutorial` package is importable
 tests_dir = os.path.dirname(__file__)
