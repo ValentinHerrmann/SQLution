@@ -117,6 +117,10 @@ jobs:
         files: reports/junit.xml
         check_name: Test Results (Python ${{ matrix.python-version }})
         comment_title: 🧪 Test Results (Python ${{ matrix.python-version }})
+        comment_mode: update last
+        compare_to_earlier_commit: false
+        report_individual_runs: true
+        deduplicate_classes_by_file_name: false
         
   test-summary:
     name: 📋 Test Summary
