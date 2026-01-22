@@ -49,11 +49,17 @@ def rf():
 
 
 @pytest.fixture(autouse=True)
-def bypass_auth_decorators():
+def bypass_auth_decorators(request):
     """
     Automatically bypass Django authentication decorators for all tests.
     This allows tests using RequestFactory to work without full middleware stack.
+    Skip this fixture if the test is marked with 'no_auth_bypass'.
     """
+    # Skip if test is marked with no_auth_bypass
+    if 'no_auth_bypass' in request.keywords:
+        yield
+        return
+        
     with patch('django.contrib.auth.decorators.login_required', lambda f: f), \
          patch('django.contrib.auth.decorators.user_passes_test', lambda test_func, **kwargs: lambda f: f):
         yield

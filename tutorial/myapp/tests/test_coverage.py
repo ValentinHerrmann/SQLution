@@ -11,6 +11,33 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
+# Save original modules before replacing with stubs
+_original_modules = {}
+_stub_module_names = [
+    'myapp.models',
+    'myapp.utils.users',
+    'myapp.utils.utils',
+    'myapp.utils.directories',
+    'myapp.utils.sqlite_connector',
+    'myapp.views_user',
+    'myapp.utils.decorators'
+]
+for mod_name in _stub_module_names:
+    if mod_name in sys.modules:
+        _original_modules[mod_name] = sys.modules[mod_name]
+
+@pytest.fixture(scope='module', autouse=True)
+def cleanup_stub_modules():
+    """Restore original modules after all tests in this module complete."""
+    yield
+    # Restore original modules
+    for mod_name, orig_mod in _original_modules.items():
+        sys.modules[mod_name] = orig_mod
+    # Remove stub modules that didn't exist before
+    for mod_name in _stub_module_names:
+        if mod_name not in _original_modules and mod_name in sys.modules:
+            del sys.modules[mod_name]
+
 # Provide a lightweight fake `myapp.models` module to avoid importing Django ORM
 fake_models = _types.ModuleType('myapp.models')
 class _FakeManager:
