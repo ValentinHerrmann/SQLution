@@ -34,7 +34,7 @@ def create_db(sql:str, username:str):
             try:
                 cur.execute(s)
             except sqlite3.Error as e:
-                raise Exception(f"SQL error during DB creation: {e}")
+                raise sqlite3.DatabaseError(f"SQL error during DB creation: {e}") from e
     with open(dbname, 'rb') as file:
         binary_data = file.read()
         return binary_data

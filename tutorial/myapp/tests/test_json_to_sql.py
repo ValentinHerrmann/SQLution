@@ -84,7 +84,7 @@ class TestJsonToSqlIdRenaming:
             
             # Recursively compare common keys
             for key in actual_keys & expected_keys:
-                is_equal, sub_diffs = self.compare_json_structures(
+                _, sub_diffs = self.compare_json_structures(
                     actual[key], 
                     expected[key], 
                     f"{path}.{key}"
@@ -98,7 +98,7 @@ class TestJsonToSqlIdRenaming:
             
             # Compare each element
             for i, (actual_item, expected_item) in enumerate(zip(actual, expected)):
-                is_equal, sub_diffs = self.compare_json_structures(
+                _, sub_diffs = self.compare_json_structures(
                     actual_item, 
                     expected_item, 
                     f"{path}[{i}]"
@@ -324,10 +324,6 @@ class TestJsonToSqlIdRenaming:
         
         with open(model_file, 'r') as f:
             original_data = json.load(f)
-        
-        # Create a deep copy to compare against
-        import copy
-        original_copy = copy.deepcopy(original_data)
         
         # Process through analyzer
         analyzer = ModelAnalyzer(original_data)

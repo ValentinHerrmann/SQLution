@@ -350,6 +350,8 @@ def collect_system_data() -> Dict[str, Any]:
     return response_data
 
 
+
+rotation_counter = 0
 def log_and_rotate_system_data(response_data: Dict[str, Any]) -> None:
     """
     Log system data to CSV and perform audit log rotation check.
@@ -363,8 +365,9 @@ def log_and_rotate_system_data(response_data: Dict[str, Any]) -> None:
     print(f"{timestamp()}CSV logging completed.")
     
     # Check for audit log rotation (every 10th call to avoid overhead)
-    import random
-    if random.randint(1, 10) == 1:
+    global rotation_counter
+    if rotation_counter == 0:
+        rotation_counter = (rotation_counter+1) % 10
         try:
             print(f"{timestamp()}Checking audit log rotation...")
             views_user.rotate_audit_logs()

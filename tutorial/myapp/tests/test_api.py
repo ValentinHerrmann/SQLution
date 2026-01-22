@@ -28,7 +28,7 @@ class TestApiEndpoints:
         """Test successful retrieval of API endpoints."""
         request = RequestFactory().get('/api/endpoints', SERVER_NAME='testserver')
         
-        with patch('myapp.views.api.get_resolver') as mock_resolver, \
+        with patch('myapp.views.api.get_resolver') as _, \
              patch('myapp.views.api.api_utils.extract_api_endpoints') as mock_extract:
             mock_extract.return_value = [
                 {'path': '/api/sql', 'name': 'api_sql'},
