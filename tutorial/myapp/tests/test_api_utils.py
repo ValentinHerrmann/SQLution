@@ -517,8 +517,9 @@ class TestLogAndRotate:
         mock_rotate.side_effect = Exception('Rotation failed')
         
         # Should not raise exception
-        with patch('random.randint', return_value=1):
-            api_utils.log_and_rotate_system_data(test_data)
+        global rotation_counter
+        rotation_counter = 0  # Reset counter to ensure rotation is attempted
+        api_utils.log_and_rotate_system_data(test_data)
         
         # CSV logging should still have been called
         mock_log_csv.assert_called_once()
