@@ -366,8 +366,8 @@ def log_and_rotate_system_data(response_data: Dict[str, Any]) -> None:
     
     # Check for audit log rotation (every 10th call to avoid overhead)
     global rotation_counter
+    rotation_counter = (rotation_counter + 1) % 10
     if rotation_counter == 0:
-        rotation_counter = (rotation_counter+1) % 10
         try:
             print(f"{timestamp()}Checking audit log rotation...")
             views_user.rotate_audit_logs()
