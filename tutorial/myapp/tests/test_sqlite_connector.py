@@ -119,7 +119,6 @@ class TestCreateDb(unittest.TestCase):
     def test_create_db_with_empty_statements(self):
         """Test creating database with empty statements (should be skipped)."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            db_path = os.path.join(tmpdir, 'datenbank.db')
             
             sql = "CREATE TABLE test (id INTEGER); ; ; "
             
