@@ -2,8 +2,16 @@ name: Tests
 
 on:
   push:
+    branches: [ main, master, develop ]
   pull_request:
+    branches: [ main, master, develop ]
   workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+  statuses: write
 
 jobs:
   test:
