@@ -97,7 +97,7 @@
                 "sourceMultiplicity": "n",
                 "sourceRole": "",
                 "targetMultiplicity": "1",
-                "targetRole": "aktuell laufende Filme",
+                "targetRole": "aktuelllaufendeFilme",
                 "points": []
             }
         }
