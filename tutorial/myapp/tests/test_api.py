@@ -26,7 +26,7 @@ class TestApiEndpoints:
     
     def test_api_endpoints_success(self):
         """Test successful retrieval of API endpoints."""
-        request = RequestFactory().get('/api/endpoints')
+        request = RequestFactory().get('/api/endpoints', SERVER_NAME='testserver')
         
         with patch('myapp.views.api.get_resolver') as mock_resolver, \
              patch('myapp.views.api.api_utils.extract_api_endpoints') as mock_extract:
@@ -45,7 +45,7 @@ class TestApiEndpoints:
     
     def test_api_endpoints_handles_exception(self):
         """Test error handling when endpoint extraction fails."""
-        request = RequestFactory().get('/api/endpoints')
+        request = RequestFactory().get('/api/endpoints', SERVER_NAME='testserver')
         
         with patch('myapp.views.api.get_resolver') as mock_resolver:
             mock_resolver.side_effect = Exception('Resolver error')
@@ -63,7 +63,7 @@ class TestApiSql:
     def mock_user(self):
         """Create a mock user."""
         user = Mock(spec=User)
-        user.username = 'testuser'
+        user.username = 'testuser_admin'
         user.is_authenticated = True
         return user
     
@@ -80,7 +80,7 @@ class TestApiSql:
     @patch('myapp.views.api.api_utils.save_sql_file')
     def test_api_sql_post_success(self, mock_save, mock_get_dir, mock_unlock, mock_user):
         """Test POST request to save SQL file."""
-        mock_get_dir.return_value = '/tmp/testuser'
+        mock_get_dir.return_value = '/tmp/testuser_admin'
         
         request = RequestFactory().post(
             '/api/sql/test.sql',
@@ -93,7 +93,7 @@ class TestApiSql:
         
         assert response.status_code == 200
         assert b"File saved successfully" in response.content
-        mock_save.assert_called_once_with('/tmp/testuser', 'test.sql', 'SELECT 1;')
+        mock_save.assert_called_once_with('/tmp/testuser_admin', 'test.sql', 'SELECT 1;')
         mock_unlock.assert_called()
     
     @patch('myapp.views.api.sqllock_release')
@@ -101,7 +101,7 @@ class TestApiSql:
     @patch('myapp.views.api.api_utils.read_sql_file')
     def test_api_sql_get_success(self, mock_read, mock_get_dir, mock_unlock, mock_user):
         """Test GET request to read SQL file."""
-        mock_get_dir.return_value = '/tmp/testuser'
+        mock_get_dir.return_value = '/tmp/testuser_admin'
         mock_read.return_value = 'SELECT * FROM users;'
         
         request = RequestFactory().get('/api/sql/query.sql')
@@ -112,14 +112,14 @@ class TestApiSql:
         assert response.status_code == 200
         assert response.content == b'SELECT * FROM users;'
         assert response['Content-Type'] == 'text/sql'
-        mock_read.assert_called_once_with('/tmp/testuser', 'query.sql')
+        mock_read.assert_called_once_with('/tmp/testuser_admin', 'query.sql')
     
     @patch('myapp.views.api.sqllock_release')
     @patch('myapp.views.api.get_user_directory')
     @patch('myapp.views.api.api_utils.delete_sql_file')
     def test_api_sql_delete_success(self, mock_delete, mock_get_dir, mock_unlock, mock_user):
         """Test DELETE request to remove SQL file."""
-        mock_get_dir.return_value = '/tmp/testuser'
+        mock_get_dir.return_value = '/tmp/testuser_admin'
         mock_delete.return_value = True
         
         request = RequestFactory().delete('/api/sql/old.sql')
@@ -129,14 +129,14 @@ class TestApiSql:
         
         assert response.status_code == 200
         assert b"File deleted successfully" in response.content
-        mock_delete.assert_called_once_with('/tmp/testuser', 'old.sql')
+        mock_delete.assert_called_once_with('/tmp/testuser_admin', 'old.sql')
     
     @patch('myapp.views.api.sqllock_release')
     @patch('myapp.views.api.get_user_directory')
     @patch('myapp.views.api.api_utils.delete_sql_file')
     def test_api_sql_delete_not_found(self, mock_delete, mock_get_dir, mock_unlock, mock_user):
         """Test DELETE request for non-existent file."""
-        mock_get_dir.return_value = '/tmp/testuser'
+        mock_get_dir.return_value = '/tmp/testuser_admin'
         mock_delete.return_value = False
         
         request = RequestFactory().delete('/api/sql/nonexistent.sql')
@@ -149,9 +149,11 @@ class TestApiSql:
     
     @patch('myapp.views.api.sqllock_release')
     @patch('myapp.views.api.get_user_directory')
-    def test_api_sql_handles_exception(self, mock_get_dir, mock_unlock, mock_user):
+    @patch('myapp.views.api.api_utils.read_sql_file')
+    def test_api_sql_handles_exception(self, mock_read, mock_get_dir, mock_unlock, mock_user):
         """Test error handling in api_sql."""
-        mock_get_dir.side_effect = Exception('Directory error')
+        mock_get_dir.return_value = '/tmp/testuser_admin'
+        mock_read.side_effect = Exception('Read error')
         
         request = RequestFactory().get('/api/sql/test.sql')
         request.user = mock_user
@@ -169,11 +171,11 @@ class TestApiSqlAll:
     @pytest.fixture
     def mock_user(self):
         user = Mock(spec=User)
-        user.username = 'testuser'
+        user.username = 'testuser_admin'
         return user
     
     @patch('myapp.views.api.sqllock_release')
-    @patch('myapp.views.api.sqllock_get')
+    @patch('myapp.utils.directories.sqllock_get')
     @patch('myapp.views.api.get_user_directory')
     @patch('myapp.views.api.api_utils.replace_all_sql_files')
     def test_api_sql_all_post_success(self, mock_replace, mock_get_dir, mock_lock, mock_unlock, mock_user):
@@ -201,11 +203,13 @@ class TestApiSqlAll:
         mock_unlock.assert_called()
     
     @patch('myapp.views.api.sqllock_release')
-    @patch('myapp.views.api.sqllock_get')
+    @patch('myapp.utils.directories.sqllock_get')
     @patch('myapp.views.api.get_user_directory')
-    def test_api_sql_all_handles_exception(self, mock_get_dir, mock_lock, mock_unlock, mock_user):
+    @patch('myapp.views.api.api_utils.replace_all_sql_files')
+    def test_api_sql_all_handles_exception(self, mock_replace, mock_get_dir, mock_lock, mock_unlock, mock_user):
         """Test error handling in api_sql_all."""
-        mock_get_dir.side_effect = Exception('Directory error')
+        mock_get_dir.return_value = '/tmp/testuser_admin'
+        mock_replace.side_effect = Exception('Replace error')
         
         request = RequestFactory().post(
             '/api/sql/all',
@@ -226,11 +230,11 @@ class TestApiSqlList:
     @pytest.fixture
     def mock_user(self):
         user = Mock(spec=User)
-        user.username = 'testuser'
+        user.username = 'testuser_admin'
         return user
     
     @patch('myapp.views.api.sqllock_release')
-    @patch('myapp.views.api.sqllock_get')
+    @patch('myapp.utils.directories.sqllock_get')
     @patch('myapp.views.api.get_user_directory')
     @patch('myapp.views.api.api_utils.list_sql_files')
     def test_api_sql_list_success(self, mock_list, mock_get_dir, mock_lock, mock_unlock, mock_user):
@@ -250,11 +254,13 @@ class TestApiSqlList:
         assert 'query1.sql' in data['files']
     
     @patch('myapp.views.api.sqllock_release')
-    @patch('myapp.views.api.sqllock_get')
+    @patch('myapp.utils.directories.sqllock_get')
     @patch('myapp.views.api.get_user_directory')
-    def test_api_sql_list_handles_exception(self, mock_get_dir, mock_lock, mock_unlock, mock_user):
+    @patch('myapp.views.api.api_utils.list_sql_files')
+    def test_api_sql_list_handles_exception(self, mock_list, mock_get_dir, mock_lock, mock_unlock, mock_user):
         """Test error handling in api_sql_list."""
-        mock_get_dir.side_effect = Exception('Directory error')
+        mock_get_dir.return_value = '/tmp/testuser_admin'
+        mock_list.side_effect = Exception('List error')
         
         request = RequestFactory().get('/api/sql/list')
         request.user = mock_user
@@ -271,7 +277,7 @@ class TestApiRunSql:
     @pytest.fixture
     def mock_user(self):
         user = Mock(spec=User)
-        user.username = 'testuser'
+        user.username = 'testuser_admin'
         return user
     
     @patch('myapp.views.api.api_utils.execute_sql_query')
@@ -368,14 +374,14 @@ class TestApiUploadDb:
     @pytest.fixture
     def mock_user(self):
         user = Mock(spec=User)
-        user.username = 'testuser'
+        user.username = 'testuser_admin'
         return user
     
     @patch('myapp.views.api.get_user_directory')
     @patch('myapp.views.api.api_utils.save_database_file')
     def test_api_upload_db_success(self, mock_save, mock_get_dir, mock_user):
         """Test successful database upload."""
-        mock_get_dir.return_value = '/tmp/testuser'
+        mock_get_dir.return_value = '/tmp/testuser_admin'
         
         db_data = b'\x00\x01\x02\x03\x04\x05'
         request = RequestFactory().post(
@@ -389,14 +395,16 @@ class TestApiUploadDb:
         
         assert response.status_code == 201
         assert b"File saved successfully" in response.content
-        mock_save.assert_called_once_with('/tmp/testuser', db_data)
+        mock_save.assert_called_once_with('/tmp/testuser_admin', db_data)
     
     @patch('myapp.views.api.get_user_directory')
-    def test_api_upload_db_handles_exception(self, mock_get_dir, mock_user):
+    @patch('myapp.views.api.api_utils.save_database_file')
+    def test_api_upload_db_handles_exception(self, mock_save, mock_get_dir, mock_user):
         """Test error handling in api_upload_db."""
-        mock_get_dir.side_effect = Exception('Directory error')
+        mock_get_dir.return_value = '/tmp/testuser_admin'
+        mock_save.side_effect = Exception('Save error')
         
-        request = RequestFactory().post('/api/upload/db', data=b'data')
+        request = RequestFactory().post('/api/upload/db', data=b'data', content_type='application/octet-stream')
         request.user = mock_user
         
         response = api.api_upload_db(request)
@@ -411,16 +419,16 @@ class TestApiDbDiagramJson:
     @pytest.fixture
     def mock_user(self):
         user = Mock(spec=User)
-        user.username = 'testuser'
+        user.username = 'testuser_admin'
         return user
     
     @patch('myapp.views.api.sqllock_release')
-    @patch('myapp.views.api.sqllock_get')
+    @patch('myapp.utils.directories.sqllock_get')
     @patch('myapp.views.api.get_user_directory')
     @patch('myapp.views.api.api_utils.read_diagram_json')
     def test_api_db_diagram_json_get(self, mock_read, mock_get_dir, mock_lock, mock_unlock, mock_user):
         """Test GET request for database diagram."""
-        mock_get_dir.return_value = '/tmp/testuser'
+        mock_get_dir.return_value = '/tmp/testuser_admin'
         mock_read.return_value = b'{"id": "diagram", "nodes": []}'
         
         request = RequestFactory().get('/api/diagram/db')
@@ -430,15 +438,15 @@ class TestApiDbDiagramJson:
         
         assert response.status_code == 200
         assert response['Content-Type'] == 'application/json'
-        mock_read.assert_called_once_with('/tmp/testuser', 'model.json')
+        mock_read.assert_called_once_with('/tmp/testuser_admin', 'model.json')
     
     @patch('myapp.views.api.sqllock_release')
-    @patch('myapp.views.api.sqllock_get')
+    @patch('myapp.utils.directories.sqllock_get')
     @patch('myapp.views.api.get_user_directory')
     @patch('myapp.views.api.api_utils.save_diagram_json')
     def test_api_db_diagram_json_post(self, mock_save, mock_get_dir, mock_lock, mock_unlock, mock_user):
         """Test POST request to save database diagram."""
-        mock_get_dir.return_value = '/tmp/testuser'
+        mock_get_dir.return_value = '/tmp/testuser_admin'
         
         diagram_data = b'{"id": "diagram", "nodes": []}'
         request = RequestFactory().post(
@@ -452,11 +460,11 @@ class TestApiDbDiagramJson:
         
         assert response.status_code == 200
         mock_save.assert_called_once_with(
-            '/tmp/testuser', 
+            '/tmp/testuser_admin', 
             'model.json', 
             diagram_data,
             process_diagram=True,
-            username='testuser'
+            username='testuser_admin'
         )
 
 
@@ -466,16 +474,16 @@ class TestApiEditorDiagramJson:
     @pytest.fixture
     def mock_user(self):
         user = Mock(spec=User)
-        user.username = 'testuser'
+        user.username = 'testuser_admin'
         return user
     
     @patch('myapp.views.api.sqllock_release')
-    @patch('myapp.views.api.sqllock_get')
+    @patch('myapp.utils.directories.sqllock_get')
     @patch('myapp.views.api.get_user_directory')
     @patch('myapp.views.api.api_utils.read_diagram_json')
     def test_api_editor_diagram_json_get(self, mock_read, mock_get_dir, mock_lock, mock_unlock, mock_user):
         """Test GET request for editor diagram."""
-        mock_get_dir.return_value = '/tmp/testuser'
+        mock_get_dir.return_value = '/tmp/testuser_admin'
         mock_read.return_value = b'{"id": "editor", "nodes": []}'
         
         request = RequestFactory().get('/api/diagram/editor')
@@ -485,15 +493,15 @@ class TestApiEditorDiagramJson:
         
         assert response.status_code == 200
         assert response['Content-Type'] == 'application/json'
-        mock_read.assert_called_once_with('/tmp/testuser', 'editor_model.json')
+        mock_read.assert_called_once_with('/tmp/testuser_admin', 'editor_model.json')
     
     @patch('myapp.views.api.sqllock_release')
-    @patch('myapp.views.api.sqllock_get')
+    @patch('myapp.utils.directories.sqllock_get')
     @patch('myapp.views.api.get_user_directory')
     @patch('myapp.views.api.api_utils.save_diagram_json')
     def test_api_editor_diagram_json_post(self, mock_save, mock_get_dir, mock_lock, mock_unlock, mock_user):
         """Test POST request to save editor diagram."""
-        mock_get_dir.return_value = '/tmp/testuser'
+        mock_get_dir.return_value = '/tmp/testuser_admin'
         
         diagram_data = b'{"id": "editor", "nodes": []}'
         request = RequestFactory().post(
@@ -507,7 +515,7 @@ class TestApiEditorDiagramJson:
         
         assert response.status_code == 200
         # Editor diagram doesn't process, just saves
-        mock_save.assert_called_once_with('/tmp/testuser', 'editor_model.json', diagram_data)
+        mock_save.assert_called_once_with('/tmp/testuser_admin', 'editor_model.json', diagram_data)
 
 
 class TestGetSystemData:

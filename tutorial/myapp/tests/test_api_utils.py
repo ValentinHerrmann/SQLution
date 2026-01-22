@@ -311,7 +311,7 @@ class TestDiagramOperations:
     def test_read_diagram_json(self):
         """Test reading diagram JSON file."""
         with tempfile.TemporaryDirectory() as temp_dir:
-            test_data = b'{"id": "diagram", "nodes": []}'
+            test_data = b'{"id": "diagram", "nodes": [], "edges": []}'
             file_path = os.path.join(temp_dir, 'model.json')
             
             with open(file_path, 'wb') as f:
@@ -323,7 +323,7 @@ class TestDiagramOperations:
     def test_save_diagram_json_without_processing(self):
         """Test saving diagram JSON without processing."""
         with tempfile.TemporaryDirectory() as temp_dir:
-            test_data = b'{"id": "diagram", "nodes": []}'
+            test_data = b'{"id": "diagram", "nodes": [], "edges": []}'
             
             api_utils.save_diagram_json(temp_dir, 'editor_model.json', test_data)
             
@@ -338,7 +338,7 @@ class TestDiagramOperations:
     def test_save_diagram_json_with_processing(self, mock_load_json):
         """Test saving diagram JSON with processing."""
         with tempfile.TemporaryDirectory() as temp_dir:
-            test_data = b'{"id": "diagram", "nodes": []}'
+            test_data = b'{"id": "diagram", "nodes": [], "edges": []}'
             
             api_utils.save_diagram_json(
                 temp_dir, 
