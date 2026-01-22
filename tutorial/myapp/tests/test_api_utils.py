@@ -4,7 +4,6 @@ Tests all business logic functions extracted from API views.
 """
 
 import pytest
-import json
 import os
 import sys
 import tempfile
