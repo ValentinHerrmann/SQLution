@@ -26,7 +26,7 @@ def create_db(sql:str, username:str):
         return None
     delete_db(username)  # Delete the old database if it exists
 
-    with sqlite3.connect(dbname,autocommit=True) as con:
+    with sqlite3.connect(dbname, isolation_level=None) as con:
         cur = con.cursor()
         for s in sql.split(';'):
             if s.strip() == '':
@@ -44,7 +44,7 @@ def runSql(sql:str, username:str):
     dbname = get_db_name(username)
     if dbname is None:
         raise Exception('No database name provided')
-    with sqlite3.connect(dbname,autocommit=True) as con:
+    with sqlite3.connect(dbname, isolation_level=None) as con:
         cur = con.cursor()
         for s in sql.split(';'):
             if s.strip() == '':
