@@ -9,7 +9,7 @@ import os
 import sys
 from unittest.mock import Mock, patch, MagicMock
 from django.test import RequestFactory
-from django.contrib.auth.models import User, AnonymousUser
+from django.contrib.auth.models import User
 from django.http import HttpResponse, JsonResponse
 
 # Ensure `tutorial` package is importable
