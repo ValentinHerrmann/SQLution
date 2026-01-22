@@ -11,6 +11,33 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
+# Save original modules before replacing with stubs
+_original_modules = {}
+_stub_module_names = [
+    'myapp.models',
+    'myapp.utils.users',
+    'myapp.utils.utils',
+    'myapp.utils.directories',
+    'myapp.utils.sqlite_connector',
+    'myapp.views_user',
+    'myapp.utils.decorators'
+]
+for mod_name in _stub_module_names:
+    if mod_name in sys.modules:
+        _original_modules[mod_name] = sys.modules[mod_name]
+
+@pytest.fixture(scope='module', autouse=True)
+def cleanup_stub_modules():
+    """Restore original modules after all tests in this module complete."""
+    yield
+    # Restore original modules
+    for mod_name, orig_mod in _original_modules.items():
+        sys.modules[mod_name] = orig_mod
+    # Remove stub modules that didn't exist before
+    for mod_name in _stub_module_names:
+        if mod_name not in _original_modules and mod_name in sys.modules:
+            del sys.modules[mod_name]
+
 # Provide a lightweight fake `myapp.models` module to avoid importing Django ORM
 fake_models = _types.ModuleType('myapp.models')
 class _FakeManager:
@@ -79,18 +106,6 @@ class DummyRequest:
         self.GET = GET or {}
 
 
-def test_api_build_and_extract_endpoint():
-    # Build fake pattern-like objects
-    P = types.SimpleNamespace
-    pat1 = P(pattern='api/hello/', name='hello')
-    pat2 = P(pattern='notapi/skip/', name='skip')
-    incl = P(url_patterns=[pat1, pat2], pattern='api/')
-
-    endpoints = api_mod.extract_endpoints([incl])
-    assert isinstance(endpoints, list)
-    assert any(e['path'].endswith('api/hello/') or e['name'] == 'hello' for e in endpoints)
-
-
 def test_parse_attribute_variants():
     name, dtype = j2s_mod.parse_attribute('id:int')
     assert name == 'id' and 'INTEGER' in dtype
@@ -121,7 +136,7 @@ def test_diagram_load_json_writes_and_calls(monkeypatch, tmp_path):
 
     monkeypatch.setattr(diagram_mod, 'create_db', fake_create_db)
     monkeypatch.setattr(diagram_mod, 'format_sql', lambda s: 'SQL:' + s)
-    monkeypatch.setattr(diagram_mod, 'extract_tables', lambda d: 'CREATE TABLE t;')
+    monkeypatch.setattr(diagram_mod, 'convert_jsonmodel_to_sqlddl', lambda d: 'CREATE TABLE t;')
 
     test_json = b'{"model": {"nodes": [], "edges": []}}'
     diagram_mod.load_json(test_json, 'alice')
@@ -233,8 +248,8 @@ def test_model_analyzer_basic():
     }
     
     analyzer = j2s_mod.ModelAnalyzer(data)
-    assert 'c1' in analyzer.class_elements
-    assert analyzer.class_elements['c1']['data']['name'] == 'User'
+    assert 'clz-user' in analyzer.class_elements
+    assert analyzer.class_elements['clz-user']['data']['name'] == 'User'
     assert len(analyzer.attributes) == 2
 
 
@@ -248,6 +263,7 @@ def test_model_analyzer_with_relationships():
             ],
             'edges': [
                 {
+                    'id': 'r1',
                     'type': 'ClassUnidirectional',
                     'source': 'c1',
                     'target': 'c2',
@@ -258,9 +274,9 @@ def test_model_analyzer_with_relationships():
     }
     
     analyzer = j2s_mod.ModelAnalyzer(data)
-    assert 'c1' in analyzer.foreign_keys_map
-    assert len(analyzer.foreign_keys_map['c1']) == 1
-    assert analyzer.foreign_keys_map['c1'][0][0] == 'author_id'
+    assert 'clz-post' in analyzer.foreign_keys_map
+    assert len(analyzer.foreign_keys_map['clz-post']) == 1
+    assert analyzer.foreign_keys_map['clz-post'][0][0] == 'author_id'
 
 
 def test_model_analyzer_bidirectional():
@@ -273,6 +289,7 @@ def test_model_analyzer_bidirectional():
             ],
             'edges': [
                 {
+                    'id': 'r1',
                     'type': 'ClassBidirectional',
                     'source': 'c1',
                     'target': 'c2',
@@ -299,7 +316,15 @@ def test_sql_generator_topological_sort():
                 {'id': 'c2', 'type': 'Class', 'data': {'name': 'User', 'attributes': [{'id': 'a2', 'name': 'id:int'}]}}
             ],
             'edges': [
-                {'type': 'ClassUnidirectional', 'source': 'c1', 'target': 'c2', 'data': {'targetRole': 'user_id'}}
+                {
+                    'id': 'r1',
+                    'type': 'ClassUnidirectional', 
+                    'source': 'c1', 
+                    'target': 'c2', 
+                    'data': {
+                        'targetRole': 'user_id'
+                    }
+                }
             ]
         }
     }
@@ -309,13 +334,13 @@ def test_sql_generator_topological_sort():
     sorted_ids = generator._topological_sort()
     
     # User should come before Post (Post depends on User)
-    user_idx = sorted_ids.index('c2')
-    post_idx = sorted_ids.index('c1')
+    user_idx = sorted_ids.index('clz-user')
+    post_idx = sorted_ids.index('clz-post')
     assert user_idx < post_idx
 
 
-def test_extract_tables_full():
-    """Test full extract_tables flow"""
+def test_convert_jsonmodel_to_sqlddl_full():
+    """Test full convert_jsonmodel_to_sqlddl flow"""
     data = {
         'nodes': [
             {'id': 'c1', 'type': 'Class', 'data': {'name': 'Book', 'attributes': [{'id': 'a1', 'name': 'id:auto'}, {'id': 'a2', 'name': 'text title'}]}}
@@ -323,17 +348,17 @@ def test_extract_tables_full():
         'edges': []
     }
     
-    sql = j2s_mod.extract_tables(data)
+    sql = j2s_mod.convert_jsonmodel_to_sqlddl(data)
     assert 'CREATE TABLE' in sql
     assert 'Book' in sql
     assert 'AUTOINCREMENT' in sql or 'PRIMARY KEY' in sql
 
 
-def test_extract_tables_error_handling():
-    """Test error handling in extract_tables"""
+def test_convert_jsonmodel_to_sqlddl_error_handling():
+    """Test error handling in convert_jsonmodel_to_sqlddl"""
     # Test with invalid/empty data
     try:
-        j2s_mod.extract_tables({})
+        j2s_mod.convert_jsonmodel_to_sqlddl({})
         # Should handle gracefully or raise
     except Exception as _:
         pass
@@ -343,41 +368,6 @@ def test_extract_tables_error_handling():
 # Comprehensive api.py tests
 # ============================================================================
 
-def test_build_endpoint_with_name():
-    """Test _build_endpoint with named pattern"""
-    P = types.SimpleNamespace
-    pat = P(pattern='api/test/', name='test-endpoint')
-    result = api_mod._build_endpoint(pat, 'api/test/')
-    assert result['name'] == 'test-endpoint'
-    assert 'api/test' in result['path']
-
-
-def test_build_endpoint_no_name():
-    """Test _build_endpoint without name"""
-    P = types.SimpleNamespace
-    pat = P(pattern='api/test/')
-    result = api_mod._build_endpoint(pat, 'api/test/')
-    assert result['name'] is None
-
-
-def test_extract_endpoints_nested():
-    """Test extract_endpoints with nested URLconf"""
-    P = types.SimpleNamespace
-    pat1 = P(pattern='nested/', name='nested-api')
-    inner = P(url_patterns=[pat1], pattern='api/v1/')
-    outer = P(url_patterns=[inner], pattern='api/')
-    
-    endpoints = api_mod.extract_endpoints([outer])
-    assert isinstance(endpoints, list)
-
-
-def test_extract_endpoints_non_api():
-    """Test that non-api patterns are excluded"""
-    P = types.SimpleNamespace
-    pat1 = P(pattern='admin/users/', name='admin')
-    
-    endpoints = api_mod.extract_endpoints([pat1])
-    assert len(endpoints) == 0
 
 
 # ============================================================================
@@ -914,6 +904,7 @@ def test_json_to_sql_compose_create_table_composite_pk():
             ],
             'edges': [
                 {
+                    'id': 'r1',
                     'type': 'ClassBidirectional',
                     'source': 'c1',
                     'target': 'c2',

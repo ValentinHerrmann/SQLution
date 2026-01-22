@@ -1,0 +1,28 @@
+[run]
+relative_files = true
+source = tutorial
+omit = 
+    */tests/*
+    */test_*.py
+    */__pycache__/*
+    */migrations/*
+    */venv/*
+    */.venv/*
+    tutorial/debug_png.py
+    tutorial/manage.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise AssertionError
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    @abstractmethod
+
+[html]
+directory = reports/htmlcov
+
+[xml]
+output = reports/coverage.xml

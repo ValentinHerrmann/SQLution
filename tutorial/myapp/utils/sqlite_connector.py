@@ -8,7 +8,7 @@ from html import escape
 def delete_db(username:str):
     dbname = get_db_name(username)
     if os.path.exists(dbname):
-        os.remove(dbname)
+        os.rename(dbname, dbname + ".bak")
 
 def get_db_name(username:str):
 
@@ -26,7 +26,7 @@ def create_db(sql:str, username:str):
         return None
     delete_db(username)  # Delete the old database if it exists
 
-    with sqlite3.connect(dbname,autocommit=True) as con:
+    with sqlite3.connect(dbname, isolation_level=None) as con:
         cur = con.cursor()
         for s in sql.split(';'):
             if s.strip() == '':
@@ -34,7 +34,7 @@ def create_db(sql:str, username:str):
             try:
                 cur.execute(s)
             except sqlite3.Error as e:
-                print(f"SQL error: {e}")
+                raise sqlite3.DatabaseError(f"SQL error during DB creation: {e}") from e
     with open(dbname, 'rb') as file:
         binary_data = file.read()
         return binary_data
@@ -44,7 +44,7 @@ def runSql(sql:str, username:str):
     dbname = get_db_name(username)
     if dbname is None:
         raise Exception('No database name provided')
-    with sqlite3.connect(dbname,autocommit=True) as con:
+    with sqlite3.connect(dbname, isolation_level=None) as con:
         cur = con.cursor()
         for s in sql.split(';'):
             if s.strip() == '':

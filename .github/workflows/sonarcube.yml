@@ -21,7 +21,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: '3.13'
 
     - name: Cache pip
       uses: actions/cache@v4
@@ -52,5 +52,7 @@ jobs:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         # Ensure Sonar scanner can find the generated reports
         SONAR_PROPERTIES: |
+          sonar.python.version=3.13
           sonar.python.coverage.reportPaths=reports/coverage.xml
           sonar.python.xunit.reportPath=reports/junit.xml
+          sonar.exclusions=tutorial/myapp/staticfiles/ace-min-noconflict/**,tutorial/myapp/staticfiles/apollon/assets/**
