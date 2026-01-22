@@ -378,8 +378,8 @@ class TestGenerateHtmlTable(unittest.TestCase):
         result = sqlite_connector.generate_html_table('users', columns, pks, fks)
         
         assert 'users' in result
-        assert 'id : INTEGER' in result
-        assert 'name : TEXT' in result
+        assert 'INT id' in result
+        assert 'TEXT name' in result
     
     def test_generate_html_with_primary_key(self):
         """Test generating HTML with primary key (underlined)."""
@@ -389,8 +389,8 @@ class TestGenerateHtmlTable(unittest.TestCase):
         
         result = sqlite_connector.generate_html_table('users', columns, pks, fks)
         
-        assert '<u>id : INTEGER</u>' in result
-        assert 'name : TEXT' in result
+        assert '<u>INT id</u>' in result
+        assert 'TEXT name' in result
     
     def test_generate_html_with_foreign_key(self):
         """Test generating HTML with foreign key (dotted underline)."""
@@ -400,7 +400,7 @@ class TestGenerateHtmlTable(unittest.TestCase):
         
         result = sqlite_connector.generate_html_table('posts', columns, pks, fks)
         
-        assert "<u class='dotted'>user_id : INTEGER</u>" in result
+        assert "<u class='dotted'>INT user_id</u>" in result
     
     def test_generate_html_escapes_special_chars(self):
         """Test that HTML special characters are escaped."""

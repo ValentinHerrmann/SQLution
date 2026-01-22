@@ -91,12 +91,16 @@ def overview(request):
             return "%3.1f %s" % (num, 'PB')
 
         upload_max_human = human_readable(upload_max_bytes) if upload_max_bytes else None
+        
+        
+        tablescheme = convert_sqlite_master_to_html(request.user.username)
 
         return render(request, html_template, {
             'models': tables,
             'functions': sql,
             'upload_max_bytes': upload_max_bytes,
             'upload_max_human': upload_max_human,
+            'tablescheme': tablescheme,
         })
     except Exception as e:
         print(f"Error in overview view: {e}")
@@ -105,6 +109,7 @@ def overview(request):
             'functions': [],
             'upload_max_bytes': None,
             'upload_max_human': None,
+            'tablescheme': []
         })
 
 
