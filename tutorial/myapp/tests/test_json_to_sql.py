@@ -334,5 +334,82 @@ class TestJsonToSqlIdRenaming:
         assert len(analyzer.class_elements) > 0, "Analyzer should have processed classes"
 
 
+class TestExtractAttributeName:
+    """Test suite for _extract_attribute_name method."""
+    
+    @pytest.fixture
+    def analyzer(self):
+        """Create a ModelAnalyzer instance with minimal data."""
+        minimal_data = {
+            "nodes": [],
+            "edges": []
+        }
+        return ModelAnalyzer(minimal_data)
+    
+    def test_extract_attribute_name_with_string_prefix(self, analyzer):
+        """Test extraction of attribute name with String prefix."""
+        assert analyzer._extract_attribute_name("String name") == "name"
+        assert analyzer._extract_attribute_name("String firstName") == "firstName"
+        assert analyzer._extract_attribute_name("String last_name") == "last_name"
+    
+    def test_extract_attribute_name_with_int_prefix(self, analyzer):
+        """Test extraction of attribute name with int prefix."""
+        assert analyzer._extract_attribute_name("int age") == "age"
+        assert analyzer._extract_attribute_name("int count") == "count"
+        assert analyzer._extract_attribute_name("int user_id") == "user_id"
+    
+    def test_extract_attribute_name_with_integer_prefix(self, analyzer):
+        """Test extraction of attribute name with Integer prefix."""
+        assert analyzer._extract_attribute_name("Integer age") == "age"
+        assert analyzer._extract_attribute_name("Integer maxValue") == "maxValue"
+    
+    def test_extract_attribute_name_with_float_prefix(self, analyzer):
+        """Test extraction of attribute name with float prefix."""
+        assert analyzer._extract_attribute_name("float price") == "price"
+        assert analyzer._extract_attribute_name("float salary") == "salary"
+    
+    def test_extract_attribute_name_with_double_prefix(self, analyzer):
+        """Test extraction of attribute name with double prefix."""
+        assert analyzer._extract_attribute_name("double amount") == "amount"
+        assert analyzer._extract_attribute_name("double total") == "total"
+    
+    def test_extract_attribute_name_with_bool_prefix(self, analyzer):
+        """Test extraction of attribute name with bool prefix."""
+        assert analyzer._extract_attribute_name("bool isActive") == "isActive"
+        assert analyzer._extract_attribute_name("bool hasAccess") == "hasAccess"
+    
+    def test_extract_attribute_name_with_boolean_prefix(self, analyzer):
+        """Test extraction of attribute name with boolean prefix."""
+        assert analyzer._extract_attribute_name("boolean isActive") == "isActive"
+        assert analyzer._extract_attribute_name("boolean hasPermission") == "hasPermission"
+    
+    def test_extract_attribute_name_no_prefix(self, analyzer):
+        """Test extraction when no type prefix is present."""
+        assert analyzer._extract_attribute_name("username") == "username"
+        assert analyzer._extract_attribute_name("email") == "email"
+        assert analyzer._extract_attribute_name("camelCaseName") == "camelCaseName"
+    
+    def test_extract_attribute_name_type_in_middle(self, analyzer):
+        """Test that type prefix only removed from start, not middle."""
+        assert analyzer._extract_attribute_name("myString value") == "myString value"
+        assert analyzer._extract_attribute_name("hasint property") == "hasint property"
+    
+    def test_extract_attribute_name_empty_string(self, analyzer):
+        """Test extraction with empty string."""
+        assert analyzer._extract_attribute_name("") == ""
+    
+    def test_extract_attribute_name_only_type(self, analyzer):
+        """Test extraction when input is only the type prefix."""
+        assert analyzer._extract_attribute_name("String ") == ""
+        assert analyzer._extract_attribute_name("int ") == ""
+    
+    def test_extract_attribute_name_case_sensitive(self, analyzer):
+        """Test that prefix matching is case-sensitive."""
+        # Should not match if case is wrong
+        assert analyzer._extract_attribute_name("string name") == "string name"
+        assert analyzer._extract_attribute_name("INT count") == "INT count"
+        assert analyzer._extract_attribute_name("BOOLEAN flag") == "BOOLEAN flag"
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])
