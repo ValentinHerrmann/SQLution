@@ -50,10 +50,12 @@ jobs:
     - name: 🧪 Run tests with coverage
       env:
         PYTHONPATH: ${{ github.workspace }}/tutorial
+      working-directory: tutorial
       run: |
         mkdir -p reports
         pytest \
-          --cov=tutorial \
+          --cov=. \
+          --cov-config=../.coveragerc \
           --cov-report=xml:reports/coverage.xml \
           --cov-report=html:reports/htmlcov \
           --cov-report=term-missing \
@@ -67,7 +69,7 @@ jobs:
     - name: 📊 Coverage Report
       uses: orgoro/coverage@v3.2
       with:
-        coverageFile: reports/coverage.xml
+        coverageFile: tutorial/reports/coverage.xml
         token: ${{ secrets.GITHUB_TOKEN }}
         thresholdAll: 0.0
         thresholdNew: 0.0
@@ -76,7 +78,7 @@ jobs:
     - name: 📈 Test Summary
       uses: test-summary/action@v2
       with:
-        paths: reports/junit.xml
+        paths: tutorial/reports/junit.xml
       if: always()
 
     - name: 💬 Add Coverage Comment
@@ -86,10 +88,12 @@ jobs:
         COVERAGE_DATA_BRANCH: coverage-data
         MINIMUM_GREEN: 80
         MINIMUM_ORANGE: 60
+        COVERAGE_PATH: tutorial
       if: github.event_name == 'pull_request'
 
     - name: 📊 Coverage Badge
       if: matrix.python-version == '3.11' && github.ref == 'refs/heads/main'
+      working-directory: tutorial
       run: |
         pip install coverage-badge
         coverage-badge -o reports/coverage.svg -f
@@ -98,7 +102,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: coverage-report-python-${{ matrix.python-version }}
-        path: reports/
+        path: tutorial/reports/
         retention-days: 30
       if: always()
 
@@ -106,7 +110,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: test-results-python-${{ matrix.python-version }}
-        path: reports/junit.xml
+        path: tutorial/reports/junit.xml
         retention-days: 30
       if: always()
 
@@ -114,7 +118,7 @@ jobs:
       uses: EnricoMi/publish-unit-test-result-action@v2
       if: always() && github.event_name == 'pull_request'
       with:
-        files: reports/junit.xml
+        files: tutorial/reports/junit.xml
         check_name: Test Results (Python ${{ matrix.python-version }})
         comment_title: 🧪 Test Results (Python ${{ matrix.python-version }})
         comment_mode: update last
