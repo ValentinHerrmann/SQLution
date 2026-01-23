@@ -325,11 +325,11 @@ class SQLGenerator:
                 except Exception as e:
                     print(f"Error building adjacency list: {e}")
 
-        return self._kahn_sort(in_degree, adjacency_list)
+        return self._kahn_sort(in_degree, adjacency_list, list(self.class_elements.keys()))
 
     @staticmethod
-    def _kahn_sort(in_degree: dict, adjacency_list: dict) -> list:
-        """Kahn's algorithm for topological sorting."""
+    def _kahn_sort(in_degree: dict, adjacency_list: dict, all_nodes: list) -> list:
+        """Kahn's algorithm for topological sorting with cycle detection."""
         queue = collections.deque(cid for cid, deg in in_degree.items() if deg == 0)
         sorted_ids = []
         
@@ -340,6 +340,15 @@ class SQLGenerator:
                 in_degree[neighbor] -= 1
                 if in_degree[neighbor] == 0:
                     queue.append(neighbor)
+        
+        # If not all nodes were processed, there's a cycle or disconnected components
+        # Add remaining nodes to maintain completeness
+        if len(sorted_ids) < len(all_nodes):
+            remaining = [node for node in all_nodes if node not in sorted_ids]
+            print(f"Warning: Circular dependencies or disconnected components detected. "
+                  f"Adding {len(remaining)} remaining tables: {remaining}")
+            sorted_ids.extend(remaining)
+        
         return sorted_ids
 
     def _build_create_statements(self, sorted_ids: list) -> list:
