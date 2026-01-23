@@ -76,8 +76,10 @@ def parse_table_schema(create_sql):
         col_match = re.match(r'^"?(\w+)"?\s+([\w()]+)', part)
         if col_match and not part.upper().startswith(("PRIMARY KEY", "FOREIGN KEY", "CONSTRAINT")):
             col_name, col_type = col_match.groups()
+            if col_type.upper() == "INTEGER" and "PRIMARY KEY AUTOINCREMENT" in part.upper():
+                col_type = 'AUTO'
             columns.append((col_name, col_type))
-
+            
             # Inline Primärschlüssel
             if re.search(r'\bPRIMARY\s+KEY\b', part, re.IGNORECASE):
                 primary_keys.add(col_name)
