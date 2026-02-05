@@ -406,12 +406,10 @@ async function addSQLFileDialog(sql='') {
         } else {
             console.error("Fehler beim Erstellen der SQL Datei.", resp.status, resp.statusText);
             showAlertDialog("Fehler beim Erstellen der SQL Datei.", "fas fa-exclamation-triangle");
-            ret = false;
         }
     } catch (err) {
         console.error('Error creating file:', err);
         showAlertDialog("Fehler beim Erstellen der SQL Datei.", "fas fa-exclamation-triangle");
-        ret = false;
     }
     await loadFileList();
     return ret;
