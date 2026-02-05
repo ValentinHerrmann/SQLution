@@ -53,7 +53,7 @@ async function on_delBtn_click(e,f) {
   const ok = await globalThis.showConfirmDialog(
       `Datei "${f}" wirklich löschen?`,
       "fas fa-trash",
-      "var(--text-danger)"
+      "var(--accent-danger)"
   );
   if (ok) {
     await deleteFile(f);
@@ -73,7 +73,7 @@ async function on_rnBtn_click(e,f) {
       sql = editor.getValue();
     }
     if(await addSQLFileDialog(sql)) {
-      deleteFile(f);
+      await deleteFile(f);
     }
   }
 }
@@ -356,6 +356,7 @@ async function addSQLFileDialog(sql='') {
   let filename = prompt('Dateiname');
   if (!filename) return;
   if (!filename.toLowerCase().endsWith('.sql')) filename += '.sql';
+  let ret = false
   try {
     const base = filename.replace(/\.sql$/i, '');
     const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
@@ -372,18 +373,19 @@ async function addSQLFileDialog(sql='') {
 
     if (resp.ok) {
       console.debug("File created successfully: " + filename);
-      return true;
+      ret = true;
     } else {
       console.error("Fehler beim Erstellen der SQL Datei.", resp.status, resp.statusText);
       showAlertDialog("Fehler beim Erstellen der SQL Datei.", "fas fa-exclamation-triangle");
-      return false;
+      ret = false;
     }
   } catch (err) {
     console.error('Error creating file:', err);
     showAlertDialog("Fehler beim Erstellen der SQL Datei.", "fas fa-exclamation-triangle");
-    return false;
+    ret = false;
   }
   await loadFileList();
+  return ret;
 }
 
 
@@ -509,7 +511,7 @@ async function runSqlFromEditor() {
     renderResultsTable(columns, rows, resultsContainer);
     setEditorHalf();
     successContainer.style.display = 'block';
-    successContainer.innerHTML = `<div style="padding:2px;color:var(--accent-success);"><i class="fas fa-check-circle" aria-hidden="true" style="margin-right:6px;"></i>Abfrage erfolgreich ausgeführt.</div>`;
+    successContainer.innerHTML = `<div style="padding:2px;color:var(--text-success);"><i class="fas fa-check-circle" aria-hidden="true" style="margin-right:6px;"></i>Abfrage erfolgreich ausgeführt.</div>`;
   } catch (err) {
     console.error('Run SQL error', err);
     successContainer.style.display = 'block';
