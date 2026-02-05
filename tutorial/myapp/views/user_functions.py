@@ -47,6 +47,9 @@ def user_functions_execute(request):
         # Get the list of tables in the database
         sqlfile = request.GET.get("file")
 
+        # If no SQL file was specified, return a clear error instead of causing an UnboundLocalError.
+        if not sqlfile:
+            return HttpResponse("No SQL file specified.", status=400)
         if sqlfile is not None and sqlfile != '':
             dir = get_user_directory(request.user.username)
             suffix = get_user_suffix(request.user.username)
