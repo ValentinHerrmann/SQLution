@@ -6,6 +6,27 @@ The latest(minor) release is hosted at: [sqlution.de](https://sqlution.de/).
 #### Dev
 The OpenAPI configuration can be viewed in [Swagger Editor](https://editor.swagger.io/?url=https://raw.githubusercontent.com/ValentinHerrmann/SQLution/HEAD/openapi.yaml).
 
+**🚀 Quick Start for Development:**
+```bash
+# Start the development environment with hot reload
+./dev-start.sh
+
+# Access at http://localhost:8000
+# Default credentials: admin/admin
+```
+
+For complete development setup with hot reload, VS Code dev containers, debugging, and more, see:
+- **[DEV_SETUP.md](README/DEV_SETUP.md)** - Complete development guide
+- **[DEV_QUICKREF.md](README/DEV_QUICKREF.md)** - Quick reference card
+
+The development environment includes:
+- 🔥 Hot reload for Python, templates, and static files
+- 🐛 Remote debugging support with debugpy
+- 📦 VS Code dev container integration
+- 🛠️ Helper scripts for common tasks
+- 🗄️ Persistent database and user files
+- ⚡ Fast iteration without container rebuilds
+
 
 #### Deployment (containerized)
 The repository ships with a Docker/Compose stack (`compose.yaml`) that mirrors the production container. Use it for local testing or for self-hosting on a VM where you control Docker Compose.
