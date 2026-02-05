@@ -36,7 +36,7 @@ def overview(request):
         tables = []
 
         cursor = runSql("SELECT name FROM sqlite_master WHERE type='table' AND NOT name LIKE 'sqlite_%';", request.user.username)
-        if(cursor is None):
+        if cursor is None:
             return render(request, html_template, {
                 'models': None,
                 'functions': None

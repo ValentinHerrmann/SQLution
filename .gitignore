@@ -173,6 +173,7 @@ cython_debug/
 .pypirc
 tutorial/myapp/static/
 user_databases/*
+user_databases/
 static/
 tutorial/staticfiles/
 last_launched.txt

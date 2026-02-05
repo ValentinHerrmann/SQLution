@@ -149,6 +149,27 @@ class TestApiSql:
     
     @patch('myapp.views.api.sqllock_release')
     @patch('myapp.views.api.get_user_directory')
+    @patch('myapp.views.api.api_utils.save_sql_file')
+    def test_api_sql_put_success(self, mock_save, mock_get_dir, mock_unlock, mock_user):
+        """Test PUT request to save SQL file (alternative to POST)."""
+        mock_get_dir.return_value = '/tmp/testuser_admin'
+
+        request = RequestFactory().put(
+            '/api/sql/test.sql',
+            data=json.dumps({'sql': 'UPDATE users SET active=1;'}),
+            content_type='application/json'
+        )
+        request.user = mock_user
+
+        response = api.api_sql(request, 'test.sql')
+
+        assert response.status_code == 200
+        assert b"File saved successfully" in response.content
+        mock_save.assert_called_once_with('/tmp/testuser_admin', 'test.sql', 'UPDATE users SET active=1;')
+        mock_unlock.assert_called()
+
+    @patch('myapp.views.api.sqllock_release')
+    @patch('myapp.views.api.get_user_directory')
     @patch('myapp.views.api.api_utils.read_sql_file')
     def test_api_sql_handles_exception(self, mock_read, mock_get_dir, mock_unlock, mock_user):
         """Test error handling in api_sql."""
@@ -256,6 +277,21 @@ class TestApiSqlList:
     @patch('myapp.views.api.sqllock_release')
     @patch('myapp.utils.directories.sqllock_get')
     @patch('myapp.views.api.get_user_directory')
+    def test_api_sql_list_method_not_allowed(self, mock_get_dir, mock_lock, mock_unlock, mock_user):
+        """Test POST request to list endpoint returns 405."""
+        mock_get_dir.return_value = '/tmp/testuser_admin'
+
+        request = RequestFactory().post('/api/sql/list')
+        request.user = mock_user
+
+        response = api.api_sql_list(request)
+
+        # The @require_http_methods decorator returns 405 automatically
+        assert response.status_code == 405
+
+    @patch('myapp.views.api.sqllock_release')
+    @patch('myapp.utils.directories.sqllock_get')
+    @patch('myapp.views.api.get_user_directory')
     @patch('myapp.views.api.api_utils.list_sql_files')
     def test_api_sql_list_handles_exception(self, mock_list, mock_get_dir, mock_lock, mock_unlock, mock_user):
         """Test error handling in api_sql_list."""
@@ -304,6 +340,16 @@ class TestApiRunSql:
         assert len(data['result']) == 2
         assert data['error'] is None
     
+    def test_api_run_sql_method_not_allowed(self, mock_user):
+        """Test GET request to run endpoint returns 405."""
+        request = RequestFactory().get('/api/run')
+        request.user = mock_user
+
+        response = api.api_run_sql(request)
+
+        # The @require_http_methods decorator returns 405 automatically
+        assert response.status_code == 405
+
     @patch('myapp.views.api.api_utils.execute_sql_query')
     def test_api_run_sql_empty_sql(self, mock_execute, mock_user):
         """Test execution with empty SQL."""
@@ -398,6 +444,19 @@ class TestApiUploadDb:
         mock_save.assert_called_once_with('/tmp/testuser_admin', db_data)
     
     @patch('myapp.views.api.get_user_directory')
+    def test_api_upload_db_method_not_allowed(self, mock_get_dir, mock_user):
+        """Test GET request to upload endpoint returns 405."""
+        mock_get_dir.return_value = '/tmp/testuser_admin'
+
+        request = RequestFactory().get('/api/upload/db')
+        request.user = mock_user
+
+        response = api.api_upload_db(request)
+
+        # The @require_http_methods decorator returns 405 automatically
+        assert response.status_code == 405
+
+    @patch('myapp.views.api.get_user_directory')
     @patch('myapp.views.api.api_utils.save_database_file')
     def test_api_upload_db_handles_exception(self, mock_save, mock_get_dir, mock_user):
         """Test error handling in api_upload_db."""
@@ -467,6 +526,38 @@ class TestApiDbDiagramJson:
             username='testuser_admin'
         )
 
+    @patch('myapp.views.api.sqllock_release')
+    @patch('myapp.utils.directories.sqllock_get')
+    @patch('myapp.views.api.get_user_directory')
+    def test_api_db_diagram_json_method_not_allowed(self, mock_get_dir, mock_lock, mock_unlock, mock_user):
+        """Test DELETE request to diagram endpoint returns 405."""
+        mock_get_dir.return_value = '/tmp/testuser_admin'
+
+        request = RequestFactory().delete('/api/diagram/db')
+        request.user = mock_user
+
+        response = api.api_db_diagram_json(request)
+
+        assert response.status_code == 405
+        assert response.content == b""
+
+    @patch('myapp.views.api.sqllock_release')
+    @patch('myapp.utils.directories.sqllock_get')
+    @patch('myapp.views.api.get_user_directory')
+    @patch('myapp.views.api.api_utils.read_diagram_json')
+    def test_api_db_diagram_json_handles_exception(self, mock_read, mock_get_dir, mock_lock, mock_unlock, mock_user):
+        """Test error handling in api_db_diagram_json."""
+        mock_get_dir.return_value = '/tmp/testuser_admin'
+        mock_read.side_effect = Exception('Read error')
+
+        request = RequestFactory().get('/api/diagram/db')
+        request.user = mock_user
+
+        response = api.api_db_diagram_json(request)
+
+        assert response.status_code == 500
+        assert b"Internal error while handling database diagram JSON" in response.content
+
 
 class TestApiEditorDiagramJson:
     """Tests for api_editor_diagram_json view (editor diagram)."""
@@ -516,6 +607,38 @@ class TestApiEditorDiagramJson:
         assert response.status_code == 200
         # Editor diagram doesn't process, just saves
         mock_save.assert_called_once_with('/tmp/testuser_admin', 'editor_model.json', diagram_data)
+
+    @patch('myapp.views.api.sqllock_release')
+    @patch('myapp.utils.directories.sqllock_get')
+    @patch('myapp.views.api.get_user_directory')
+    def test_api_editor_diagram_json_method_not_allowed(self, mock_get_dir, mock_lock, mock_unlock, mock_user):
+        """Test PUT request to editor diagram endpoint returns 405."""
+        mock_get_dir.return_value = '/tmp/testuser_admin'
+
+        request = RequestFactory().put('/api/diagram/editor')
+        request.user = mock_user
+
+        response = api.api_editor_diagram_json(request)
+
+        assert response.status_code == 405
+        assert response.content == b""
+
+    @patch('myapp.views.api.sqllock_release')
+    @patch('myapp.utils.directories.sqllock_get')
+    @patch('myapp.views.api.get_user_directory')
+    @patch('myapp.views.api.api_utils.read_diagram_json')
+    def test_api_editor_diagram_json_handles_exception(self, mock_read, mock_get_dir, mock_lock, mock_unlock, mock_user):
+        """Test error handling in api_editor_diagram_json."""
+        mock_get_dir.return_value = '/tmp/testuser_admin'
+        mock_read.side_effect = Exception('Read error')
+
+        request = RequestFactory().get('/api/diagram/editor')
+        request.user = mock_user
+
+        response = api.api_editor_diagram_json(request)
+
+        assert response.status_code == 500
+        assert b"Internal error while handling editor diagram JSON" in response.content
 
 
 class TestGetSystemData:
