@@ -13,9 +13,9 @@ ENV PYTHONUNBUFFERED=1
 COPY requirements.txt ./requirements.txt
 RUN python -m pip install --no-cache-dir -r requirements.txt
 
-WORKDIR /app
-# Copy only the source directories needed at runtime to avoid bringing
+WORKDIR /appded at runtime to avoid bringing
 # along tooling artifacts or secrets.
+# Copy only the source directories nee
 COPY tutorial /app/tutorial
 COPY VERSION ./VERSION
 

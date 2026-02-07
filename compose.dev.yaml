@@ -1,0 +1,75 @@
+services:
+  sqlution-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: sqlution-dev
+    ports:
+      - "8000:8000"
+      - "5678:5678"  # debugpy port
+    environment:
+      # Django settings
+      DEBUG_MODE: "True"
+      DEVELOPMENT_MODE: "True"
+      SECRET_KEY: "${SECRET_KEY:-dev-secret-key-please-change-in-production}"
+      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1,0.0.0.0,sqlution-dev"
+      DJANGO_STATIC_URL: "/app-static/"
+      SQLUTION_DB_DIR: "/data"
+
+      # Python/Django settings for development
+      PYTHONUNBUFFERED: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+
+      # Upload limits (in bytes)
+      FILE_UPLOAD_MAX_MEMORY_SIZE: "${FILE_UPLOAD_MAX_MEMORY_SIZE:-104857600}"
+      DATA_UPLOAD_MAX_MEMORY_SIZE: "${DATA_UPLOAD_MAX_MEMORY_SIZE:-104857600}"
+
+      # Development flags
+      DJANGO_SETTINGS_MODULE: "tutorial.settings"
+      WAIT_FOR_DEBUGGER: "${WAIT_FOR_DEBUGGER:-1}"
+      SQL_DEBUG: "${SQL_DEBUG:-INFO}"
+
+    volumes:
+      # Mount the entire project for hot reload
+      - .:/workspace:cached
+
+      # Persist database data
+      - sqlution-dev-db:/data
+
+      # Mount user databases
+      - ${USER_DATABASES_PATH:-./tutorial/user_databases}:/workspace/tutorial/user_databases:cached
+
+      # Mount the dev entrypoint
+      - ./docker/dev-entrypoint.sh:/entrypoint.sh:ro
+
+      # Python cache (for faster restarts)
+      - dev-python-cache:/home/devuser/.cache
+
+      # Exclude directories that shouldn't be mounted
+      - /workspace/.git
+      - /workspace/.pytest_cache
+      - /workspace/__pycache__
+
+    # Use the development entrypoint script
+    entrypoint: ["/bin/bash", "/entrypoint.sh"]
+
+    # Restart policy
+    restart: unless-stopped
+
+    # Keep container running
+    stdin_open: true
+    tty: true
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  sqlution-dev-db:
+    driver: local
+  dev-python-cache:
+    driver: local

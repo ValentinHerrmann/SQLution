@@ -2,6 +2,30 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "Start Django Container",
+            "type": "shell",
+            "command": "${workspaceFolder}/dev-start.sh",
+            "isBackground": true,
+            "problemMatcher": {
+                "pattern": {
+                    "regexp": "^(.*)$",
+                    "file": 1,
+                    "location": 2,
+                    "message": 3
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": "Starting development server",
+                    "endsPattern": "Quit the server with"
+                }
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "focus": false
+            }
+        },
+        {
             "label": "build sql ide",
             "type": "shell",
             "command": "SOURCE='${workspaceFolder}/../DataSpark_SQL-IDE'; if [ -d \"$SOURCE\" ]; then cd \"$SOURCE\" && rm -rf dist dist-embedded && npm run build; else echo '[sql-ide] Source repository not found, skipping build'; fi",
@@ -164,6 +188,115 @@
             "label": "docker-stop: debug",
             "type": "shell",
             "command": "docker rm -f sqlution-dev >/dev/null 2>&1 || true"
+        },
+        {
+            "label": "Dev: Start Development Server",
+            "type": "shell",
+            "command": "${workspaceFolder}/dev-start.sh",
+            "problemMatcher": [],
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "Dev: Stop Development Server",
+            "type": "shell",
+            "command": "${workspaceFolder}/dev-stop.sh",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "Dev: View Logs",
+            "type": "shell",
+            "command": "${workspaceFolder}/dev-logs.sh",
+            "problemMatcher": [],
+            "isBackground": true,
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "Dev: Open Shell",
+            "type": "shell",
+            "command": "${workspaceFolder}/dev-shell.sh",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "Dev: Run Migrations",
+            "type": "shell",
+            "command": "${workspaceFolder}/dev-manage.sh migrate",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "Dev: Make Migrations",
+            "type": "shell",
+            "command": "${workspaceFolder}/dev-manage.sh makemigrations",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "Dev: Run Tests",
+            "type": "shell",
+            "command": "${workspaceFolder}/dev-manage.sh test",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "Dev: Create Superuser",
+            "type": "shell",
+            "command": "${workspaceFolder}/dev-manage.sh createsuperuser",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "Dev: Django Shell",
+            "type": "shell",
+            "command": "${workspaceFolder}/dev-manage.sh shell",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "Dev: Collect Static Files",
+            "type": "shell",
+            "command": "${workspaceFolder}/dev-manage.sh collectstatic --noinput",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
         }
     ]
 }

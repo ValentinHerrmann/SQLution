@@ -181,4 +181,14 @@ app-static
 
 tutorial/myapp/staticfiles/_sql-ide/
 resource_logs.csv
-.idea/*
+
+# Development environment files
+.env
+.env.local
+.env.*.local
+*.log
+django.log
+
+# Dev container volumes
+.devcontainer/.cache/
+

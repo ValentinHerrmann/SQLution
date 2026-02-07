@@ -1,0 +1,46 @@
+# Development Dockerfile with hot reload support
+FROM python:3.12-slim
+
+EXPOSE 8000 5678
+
+# Keeps Python from generating .pyc files in the container
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Turns off buffering for easier container logging
+ENV PYTHONUNBUFFERED=1
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    vim \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install pip requirements
+COPY requirements.txt /tmp/requirements.txt
+RUN python -m pip install --no-cache-dir -r /tmp/requirements.txt
+
+# Install development dependencies
+RUN python -m pip install --no-cache-dir \
+    debugpy \
+    watchdog \
+    black \
+    flake8 \
+    ipython \
+    django-extensions
+
+# Create app user
+RUN useradd -m -u 1000 -s /bin/bash devuser
+
+# Set up workspace
+WORKDIR /workspace
+
+# Create directory for static files
+RUN mkdir -p /workspace/tutorial/staticfiles && \
+    chown -R devuser:devuser /workspace
+
+# Switch to non-root user
+USER devuser
+
+# Default command (can be overridden)
+CMD ["python", "tutorial/manage.py", "runserver", "0.0.0.0:8000"]

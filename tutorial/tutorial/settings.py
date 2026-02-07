@@ -32,10 +32,21 @@ SECRET_KEY = os.getenv('SECRET_KEY') or 'sqlution-insecure-placeholder'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG_MODE', 'False').lower() in ('true', '1', 'yes')
 
+# Development mode detection
+IS_DEVELOPMENT = DEBUG and os.getenv('DEVELOPMENT_MODE', 'False').lower() in ('true', '1', 'yes')
+
 ALLOWED_HOSTS = [host.strip() for host in os.getenv(
     'DJANGO_ALLOWED_HOSTS',
     'www.sqlution.de,sqlution.de,127.0.0.1,localhost'
 ).split(',') if host.strip()]
+
+# In development, allow docker internal networking
+if IS_DEVELOPMENT:
+    ALLOWED_HOSTS.extend(['0.0.0.0', 'sqlution-dev'])
+    # Disable some security features for easier development
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
 
 
 # Application definition
@@ -175,7 +186,14 @@ STATICFILES_DIRS = [
     ) if os.path.isdir(path)
 ]
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+# Use different storage backend for development (no compression for faster reload)
+if IS_DEVELOPMENT:
+    STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+    # Enable static file serving in development
+    WHITENOISE_AUTOREFRESH = True
+    WHITENOISE_USE_FINDERS = True
+else:
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 LOGIN_REDIRECT_URL = '/logged_in/'
 
@@ -211,3 +229,72 @@ AXES_FAILURE_LIMIT = 20
 AXES_COOLOFF_TIME = 2
 
 AXES_ONLY_USER_FAILURES = True
+
+# Logging configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{levelname}] {asctime} {module} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose' if IS_DEVELOPMENT else 'simple',
+        },
+        'file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'django.log'),
+            'maxBytes': 1024 * 1024 * 10,  # 10 MB
+            'backupCount': 5,
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'] if IS_DEVELOPMENT else ['console', 'file'],
+            'level': 'INFO' if IS_DEVELOPMENT else 'WARNING',
+            'propagate': False,
+        },
+        'django.server': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'myapp': {
+            'handlers': ['console'] if IS_DEVELOPMENT else ['console', 'file'],
+            'level': 'DEBUG' if IS_DEVELOPMENT else 'INFO',
+            'propagate': False,
+        },
+    },
+}
+
+# Development-specific settings
+if IS_DEVELOPMENT:
+    # Show SQL queries in console (useful for debugging)
+    LOGGING['loggers']['django.db.backends'] = {
+        'handlers': ['console'],
+        'level': os.getenv('SQL_DEBUG', 'INFO'),  # Set SQL_DEBUG=DEBUG to see queries
+        'propagate': False,
+    }
+
+    # Enable Django Debug Toolbar if installed
+    try:
+        import debug_toolbar
+        INSTALLED_APPS.append('debug_toolbar')
+        MIDDLEWARE.insert(0, 'debug_toolbar.middleware.DebugToolbarMiddleware')
+        INTERNAL_IPS = ['127.0.0.1', 'localhost']
+        # Allow debug toolbar in Docker
+        import socket
+        hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
+        INTERNAL_IPS += [ip[: ip.rfind(".")] + ".1" for ip in ips]
+    except ImportError:
+        pass
+

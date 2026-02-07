@@ -1,0 +1,6 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Django Development" type="CompoundRunConfigurationType">
+    <toRun name="Start Container" type="ShellConfigurationType" />
+    <method v="2" />
+  </configuration>
+</component>
