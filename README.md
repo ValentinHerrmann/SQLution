@@ -3,6 +3,11 @@ More information about SQLution can be found at:
 
 The latest(minor) release is hosted at: [sqlution.de](https://sqlution.de/).
 
+
+### Github Activities
+
+![Alt](https://repobeats.axiom.co/api/embed/fd2fc369a878b70d0fc980b9a2935fd4c967a6c3.svg "Repobeats analytics image")
+
 #### Dev
 The OpenAPI configuration can be viewed in [Swagger Editor](https://editor.swagger.io/?url=https://raw.githubusercontent.com/ValentinHerrmann/SQLution/HEAD/openapi.yaml).
 
