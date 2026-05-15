@@ -108,7 +108,32 @@ function renderResultsTable(columns, rows, resultsContainer) {
 async function runSqlFromEditor() {
     const editor = globalThis.sqlAceEditor;
     if (!editor) return;
-    const sql = editor.getValue();
+    var sql = editor.getValue();
+
+    // if files contains "<<filename>>" once or more, load content from /api/sql/filename and replace in sql (only if filename exists in file list)
+    const filePattern = /<<([^(>>)]+?)>>/g;
+    let match;
+    while ((match = filePattern.exec(sql)) !== null) {
+        const filename = match[1].trim();
+        try {
+            const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+            const headers = { };
+            if (csrftoken) headers['X-CSRFToken'] = csrftoken;
+            const resp = await fetch(`/api/sql/${encodeURIComponent(filename)}`, {
+                method: 'GET',
+                headers: headers
+            });
+            if (resp.ok) {
+                const fileContent = await resp.text();
+                sql = sql.replaceAll(`<<${filename}>>`, fileContent.replaceAll('\r\n', ' ').replaceAll('\n', ' ').replaceAll('\r', ' ')); // Normalize newlines
+            } else {
+                console.warn(`File ${filename} not found, skipping replacement.`);
+            }
+        } catch (e) {
+            console.error(`Error fetching file ${filename}:`, e);
+        }
+    } 
+
 
     const proceed = await warnIfDDL(sql);
     if(!proceed) {
