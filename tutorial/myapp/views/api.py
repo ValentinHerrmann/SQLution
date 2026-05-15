@@ -213,4 +213,18 @@ def get_system_data(request) -> HttpResponse:
         print(f"{timestamp()}Error in get_system_data: {e}")
         return HttpResponse("Internal error while collecting system data", status=500)
 
-
+@require_http_methods(['POST'])
+@login_required
+def api_resolve_subqueries(request) -> HttpResponse:
+    try: 
+        body_unicode = request.body.decode('utf-8')
+        body = json.loads(body_unicode)
+        sql = body.get('sql', '')
+        sql = api_utils.resolve_subqueries(sql, request.user.username)
+        return HttpResponse(sql, content_type="text/sql", status=200)
+    except RecursionError as re:
+        print(f"RecursionError in resolve_subqueries: {re}")
+        return HttpResponse("Error: Maximum subquery nesting depth reached. Possible circular reference detected.", status=400)
+    except Exception as e:
+        print(f"{timestamp()}Error in resolve_subqueries: {e}")
+        return HttpResponse("Internal error while resolving subqueries", status=500)

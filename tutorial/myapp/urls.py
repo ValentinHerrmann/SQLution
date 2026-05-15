@@ -52,4 +52,5 @@ urlpatterns = [
     path('api/upload_db/', api.api_upload_db, name='api_upload_db'),
     path('api/editor_diagram.json', api.api_editor_diagram_json, name='api_editor_diagram_json'),
     path('api/db_diagram.json', api.api_db_diagram_json, name='api_db_diagram_json'),
+    path('api/sql/resolve_subqueries', api.api_resolve_subqueries, name='api_resolve_subqueries'),
 ]

@@ -17,6 +17,7 @@ from myapp.utils.users import get_logged_in_users_count, get_session_details
 from myapp.utils.utils import timestamp
 from myapp import views_user
 from myapp.utils.json_to_sql import ModelAnalyzer
+import re
 
 # Constants
 SQL_DOUBLE_EXT = '.sql.sql'
@@ -373,3 +374,23 @@ def log_and_rotate_system_data(response_data: Dict[str, Any]) -> None:
         except Exception as e:
             print(f"{timestamp()}Error during audit log rotation check: {e}")
     rotation_counter = (rotation_counter + 1) % 10
+
+
+
+def resolve_subqueries(sql:str, username:str, max_depth:int = 20) -> str:
+    for i in range(max_depth):
+        extFiles = re.findall(r'<<([^(>>)]+?)>>', sql)
+        if not extFiles or len(extFiles) == 0:
+            return sql
+        for ext in extFiles:
+            extPath = fullpath(get_user_directory(username), ext.replace('.sql','')+'.sql')
+            if os.path.exists(extPath):
+                with open(extPath, "r") as f:
+                    extSql = f.read()
+                    # replace line break with one whitespace
+                    # as system independant as possible
+                    extSql = extSql.replace('\r\n', ' ').replace('\n', ' ').replace('\r', ' ')
+                    sql = sql.replace(f'<<{ext}>>', extSql)
+            else:
+                raise Exception(f"Fehler: Eingebundene SQL-Datei '{ext}.sql' nicht gefunden.")
+    raise RecursionError("Fehler: Maximale Subquery-Verschachtelungstiefe erreicht: " + str(max_depth))

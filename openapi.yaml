@@ -344,6 +344,49 @@ paths:
         '500':
           description: Internal server error
 
+  /api/sql/resolve_subqueries:
+    post:
+      tags:
+        - SQL Execution
+      summary: Resolve SQL subqueries
+      description: Replace <<filename>> references with SQL content for the authenticated user
+      operationId: resolveSqlSubqueries
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - sql
+              properties:
+                sql:
+                  type: string
+                  example: "SELECT * FROM <<common_filters>>;"
+      responses:
+        '200':
+          description: SQL with subqueries resolved
+          content:
+            text/sql:
+              schema:
+                type: string
+                example: "SELECT * FROM (SELECT * FROM users WHERE active = 1);"
+        '400':
+          description: Maximum subquery nesting depth reached
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Error: Maximum subquery nesting depth reached. Possible circular reference detected."
+        '500':
+          description: Internal error while resolving subqueries
+          content:
+            text/plain:
+              schema:
+                type: string
+
   /api/upload_db/:
     post:
       tags:
