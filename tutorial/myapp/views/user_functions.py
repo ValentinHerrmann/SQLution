@@ -9,6 +9,8 @@ from django.contrib import messages
 from django.shortcuts import redirect
 from myapp.utils.decorators import *
 from myapp.utils.directories import *
+from myapp.utils.api_utils import *
+import re
 import os
 
 
@@ -62,6 +64,14 @@ def user_functions_execute(request):
             with open(fullpath(dir,f"{sqlfile}.sql"), "r") as f:
                 sql = f.read()
                 sql += ';'
+
+            try:
+
+                sql = resolve_subqueries(sql, request.user.username)  # Resolve subqueries before extracting inputs and dropdowns
+            except RecursionError as e:
+                print(f"RecursionError in resolve_subqueries: {e}")
+                return HttpResponse("Error: Maximum subquery nesting depth reached. Possible circular reference detected.", status=400)
+
             inputs = re.findall(r'{([^}]+)}\w?[^\[]', sql)
 
             inputs = list(dict.fromkeys(inputs))

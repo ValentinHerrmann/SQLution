@@ -108,7 +108,26 @@ function renderResultsTable(columns, rows, resultsContainer) {
 async function runSqlFromEditor() {
     const editor = globalThis.sqlAceEditor;
     if (!editor) return;
-    const sql = editor.getValue();
+    var sql = editor.getValue();
+    try {
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+        const headers = { 'Content-Type': 'application/json' };
+        if (csrftoken) {
+            headers['X-CSRFToken'] = csrftoken;
+        }
+        const resp = await fetch('/api/sql/resolve_subqueries', {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({ sql: sql })
+        });
+        if (resp.ok) {
+            sql = await resp.text();    
+        } else {
+        console.error(`Error resolving subqueries: `, resp.status);
+        }
+    } catch (e) {
+        console.error(`Error resolving subqueries:`, e);
+    }
 
     const proceed = await warnIfDDL(sql);
     if(!proceed) {
