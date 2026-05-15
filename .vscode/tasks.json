@@ -45,7 +45,7 @@
         {
             "label": "venv",
             "type": "shell",
-            "command": "source ${workspaceFolder}/.venv/bin/activate ; pip install -r ${workspaceFolder}/requirements.txt",
+            "command": "${workspaceFolder}/.venv/bin/python -m pip install -r ${workspaceFolder}/requirements.txt",
             "dependsOn": [
                 "copy sql ide",
                 "copy apollon"
@@ -54,7 +54,7 @@
         {
             "label": "makemigrations",
             "type": "shell",
-            "command": "python3 ${workspaceFolder}/tutorial/manage.py makemigrations",
+            "command": "${workspaceFolder}/.venv/bin/python ${workspaceFolder}/tutorial/manage.py makemigrations",
             "dependsOn": [
                 "venv"
             ]
@@ -62,7 +62,7 @@
         {
             "label": "migrate",
             "type": "shell",
-            "command": "python3 '${workspaceFolder}/tutorial/manage.py' migrate",
+            "command": "${workspaceFolder}/.venv/bin/python ${workspaceFolder}/tutorial/manage.py migrate",
             "dependsOn": [
                 "makemigrations"
             ]
@@ -70,13 +70,15 @@
         {
             "label": "collectstatic",
             "type": "shell",
-            "command": "python3 '${workspaceFolder}/tutorial/manage.py' collectstatic --noinput",
+            "command": "${workspaceFolder}/.venv/bin/python ${workspaceFolder}/tutorial/manage.py collectstatic --noinput",
             "dependsOn": [
                 "migrate"
             ]
         },
         {
             "label": "PreLaunchRoutine",
+            "type": "shell",
+            "command": "${workspaceFolder}/.venv/bin/python -m pip install -r ${workspaceFolder}/requirements.txt",
             "dependsOn": [
                 "collectstatic"
             ]
@@ -84,13 +86,13 @@
         {
             "label": "venv_simple",
             "type": "shell",
-            "command": "source ${workspaceFolder}/.venv/bin/activate ; pip install -r ${workspaceFolder}/requirements.txt",
+            "command": "${workspaceFolder}/.venv/bin/python -m pip install -r ${workspaceFolder}/requirements.txt",
             "dependsOn": []
         },
         {
             "label": "makemigrations_simple",
             "type": "shell",
-            "command": "python3 ${workspaceFolder}/tutorial/manage.py makemigrations",
+            "command": "${workspaceFolder}/.venv/bin/python ${workspaceFolder}/tutorial/manage.py makemigrations",
             "dependsOn": [
                 "venv_simple"
             ]
@@ -98,7 +100,7 @@
         {
             "label": "migrate_simple",
             "type": "shell",
-            "command": "python3 '${workspaceFolder}/tutorial/manage.py' migrate",
+            "command": "${workspaceFolder}/.venv/bin/python ${workspaceFolder}/tutorial/manage.py migrate",
             "dependsOn": [
                 "makemigrations_simple"
             ]
@@ -106,7 +108,7 @@
         {
             "label": "collectstatic_simple",
             "type": "shell",
-            "command": "python3 '${workspaceFolder}/tutorial/manage.py' collectstatic --noinput",
+            "command": "${workspaceFolder}/.venv/bin/python ${workspaceFolder}/tutorial/manage.py collectstatic --noinput",
             "dependsOn": [
                 "migrate_simple"
             ]
@@ -114,7 +116,7 @@
         {
             "label": "PreLaunchRoutine_simple",
             "type": "shell",
-            "command": "source ${workspaceFolder}/.venv/bin/activate ; pip install -r ${workspaceFolder}/requirements.txt ; python3 ${workspaceFolder}/tutorial/manage.py makemigrations  ; python3 ${workspaceFolder}/tutorial/manage.py migrate ; python3 '${workspaceFolder}/tutorial/manage.py' collectstatic --noinput"
+            "command": "${workspaceFolder}/.venv/bin/python -m pip install -r ${workspaceFolder}/requirements.txt ; ${workspaceFolder}/.venv/bin/python ${workspaceFolder}/tutorial/manage.py makemigrations ; ${workspaceFolder}/.venv/bin/python ${workspaceFolder}/tutorial/manage.py migrate ; ${workspaceFolder}/.venv/bin/python ${workspaceFolder}/tutorial/manage.py collectstatic --noinput"
         },
         {
             "type": "docker-build",

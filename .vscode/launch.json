@@ -5,6 +5,7 @@
             "name": "Django Full",
             "type": "debugpy",
             "request": "launch",
+            "python": "${workspaceFolder}/.venv/bin/python",
             "args": [
                 "runserver",
                 "localhost:8000"
@@ -23,6 +24,7 @@
             "name": "Django Basic",
             "type": "debugpy",
             "request": "launch",
+            "python": "${workspaceFolder}/.venv/bin/python",
             "args": [
                 "runserver",
                 "localhost:8000"
@@ -35,6 +37,7 @@
             "name": "Django Simple",
             "type": "debugpy",
             "request": "launch",
+            "python": "${workspaceFolder}/.venv/bin/python",
             "args": [
                 "runserver",
                 "localhost:8000"
