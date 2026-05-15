@@ -62,6 +62,21 @@ def user_functions_execute(request):
             with open(fullpath(dir,f"{sqlfile}.sql"), "r") as f:
                 sql = f.read()
                 sql += ';'
+
+            extFiles = re.findall(r'<<([^(>>)]+?)>>', sql)
+            for ext in extFiles:
+                extPath = fullpath(get_user_directory(request.user.username), ext.replace('.sql','')+'.sql')
+                if os.path.exists(extPath):
+                    with open(extPath, "r") as f:
+                        extSql = f.read()
+                        # replace line break with one whitespace
+                        # as system independant as possible
+                        extSql = extSql.replace('\r\n', ' ').replace('\n', ' ').replace('\r', ' ')
+                        sql = sql.replace(f'<<{ext}>>', extSql)
+                else:
+                    raise Exception(f"Fehler: Eingebundene SQL-Datei '{ext}.sql' nicht gefunden.")
+            
+
             inputs = re.findall(r'{([^}]+)}\w?[^\[]', sql)
 
             inputs = list(dict.fromkeys(inputs))
