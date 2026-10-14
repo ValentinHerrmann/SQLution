@@ -10,6 +10,7 @@ from django.shortcuts import redirect
 from myapp.utils.decorators import *
 from myapp.utils.directories import *
 from myapp.utils.api_utils import *
+from myapp.utils.pdf_export import build_result_pdf, pdf_filename
 import re
 import os
 
@@ -141,7 +142,8 @@ def user_functions_execute(request):
                 except Exception as e:
                     error = str(e)
             sql = sql.replace("\n", "<br>")
-        return render_user_fun_exec(request, sql, inputs, sqlfile, result, error, columns, dropdowns, inpVals if 'inpVals' in locals() else {})
+        export = request.POST.get('export') or request.GET.get('export')
+        return render_user_fun_exec(request, sql, inputs, sqlfile, result, error, columns, dropdowns, inpVals if 'inpVals' in locals() else {}, export)
     except Exception as e:
         error = str(e)
         response = HttpResponse(error, content_type='text/plain')
@@ -149,13 +151,18 @@ def user_functions_execute(request):
         return response
 
 
-def render_user_fun_exec(request, sql, inputs, sqlfile, result, error, columns, dropdowns, inpVals=None):
+def render_user_fun_exec(request, sql, inputs, sqlfile, result, error, columns, dropdowns, inpVals=None, export=None):
     result = remove_nones_from_sqlresult(result)
+    title = sqlfile.split('_')[1] if '_' in sqlfile else sqlfile
+    if export == 'pdf' and columns and not error:
+        response = HttpResponse(build_result_pdf(title, columns, result), content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{pdf_filename(title)}"'
+        return response
     return render(request, 'user_functions_execute.html', {
         'inputs': inputs,
         'dropdowns': dropdowns,
         'query': sql,
-        'title': sqlfile.split('_')[1] if '_' in sqlfile else sqlfile,
+        'title': title,
         'result': result,
         'error': error,
         'columns': columns,
