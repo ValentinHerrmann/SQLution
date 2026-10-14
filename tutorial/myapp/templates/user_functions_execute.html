@@ -37,8 +37,15 @@
         {% if columns and inputs|length == 0 and dropdowns|length == 0 %}
         {% else %}
             <button type="submit" class="btn btn-primary" style="margin-bottom: 20px; margin-top: 20px;">Ausführen</button>
+            {% if columns %}
+            <button type="submit" name="export" value="pdf" class="btn btn-primary" style="margin-bottom: 20px; margin-top: 20px;"><i class="fas fa-file-pdf"></i> PDF exportieren</button>
+            {% endif %}
         {% endif %}
 </form>
+
+{% if columns and inputs|length == 0 and dropdowns|length == 0 %}
+    <a href="?file={{ request.GET.file|urlencode }}&export=pdf" class="btn btn-primary" style="margin-bottom: 20px; margin-top: 20px;"><i class="fas fa-file-pdf"></i> PDF exportieren</a>
+{% endif %}
 
 
 

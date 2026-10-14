@@ -35,15 +35,15 @@ During image build the Dockerfile runs `collectstatic`, so the runtime container
 	- `build_image`: updates the `VERSION` file, builds/pushes `ghcr.io/<owner>/sqlution`, tags both the commit SHA and the branch/ref.
 	- `stop`: SSHes into the production host, stops/removes the running container, and garbage-collects old `sqlution` images.
 	- `launch`: pulls the freshly built image on the server and runs it with the required environment.
-- Required GitHub **secrets**: `DEPLOY_USER`, `DEPLOY_SSH_KEY`, `DEPLOY_REGISTRY_USER`, `DEPLOY_REGISTRY_TOKEN`, `DJANGO_SECRET_KEY`.
-- Required GitHub **variables**: `DEPLOY_HOST`, `DEPLOY_PORT` (optional, defaults to `22`), `DEPLOY_APP_DIR`, `DJANGO_ALLOWED_HOSTS`, `DJANGO_STATIC_URL` (defaults to `/app-static/`).
+- Required GitHub **secrets**: `SSH_HOST_IP` (environment secret with the SSH host's IP address, set per `dev`/`production` environment), `DEPLOY_USER`, `DEPLOY_SSH_KEY`, `DEPLOY_REGISTRY_USER`, `DEPLOY_REGISTRY_TOKEN`, `DJANGO_SECRET_KEY`.
+- Required GitHub **variables**: `DEPLOY_PORT` (optional, defaults to `22`), `DEPLOY_APP_DIR`, `DJANGO_ALLOWED_HOSTS`, `DJANGO_STATIC_URL` (defaults to `/app-static/`).
 - Runtime configuration: the container exposes port `8000`, mounts the persistent `sqlution-db` volume plus `${DEPLOY_APP_DIR}/user_databases`, and picks up `SECRET_KEY`, `DJANGO_ALLOWED_HOSTS`, `DJANGO_STATIC_URL`, and `SQLUTION_DB_DIR` from the workflow.
 - Restart policy: deployments run the container with Docker's `--restart unless-stopped` flag so Debian-based hosts automatically bring it back after a reboot.
 - Manual deploys: run the workflow from the Actions tab, select *Run workflow*, and optionally provide `deploy_ref` to deploy a specific branch or tag.
 
 ##### Using the workflow from a fork
 - Fork owners must replicate the same **secrets/variables** listed above inside their fork’s repository settings (Settings ▸ Secrets and variables ▸ Actions).
-- Secrets go under *Repository secrets*; variables go under *Repository variables*. Keep the identifiers identical (`DEPLOY_USER`, `DEPLOY_HOST`, …) so the workflow continues to resolve them via `${{ secrets.X }}` / `${{ vars.X }}`.
+- Secrets go under *Repository secrets*; variables go under *Repository variables*. Keep the identifiers identical (`DEPLOY_USER`, `SSH_HOST_IP`, …) so the workflow continues to resolve them via `${{ secrets.X }}` / `${{ vars.X }}`.
 - Provide the `DEPLOY_APP_DIR` pointing to the directory on your server where the repo should live (e.g. `/opt/sqlution`).
 - Ensure the target server has Docker installed, SSH key-based auth enabled for `DEPLOY_USER`, and network access to GHCR.
 - If you need multiple environments, duplicate the workflow file or extend it with additional jobs keyed to different `environment:` names and corresponding secrets/variables.
