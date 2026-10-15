@@ -25,12 +25,12 @@
         {
             "label": "build apollon",
             "type": "shell",
-            "command": "SOURCE='${workspaceFolder}/../DataSpark_Apollon'; if [ -d \"$SOURCE\" ]; then cd \"$SOURCE\" && npm run build; else echo '[apollon] Source repository not found, skipping build'; fi"
+            "command": "SOURCE='${workspaceFolder}/../SQLution_Apollon2'; if [ -d \"$SOURCE\" ]; then cd \"$SOURCE\" && pnpm install && pnpm run build:sqlution; else echo '[apollon] Source repository not found, skipping build'; fi"
         },
         {
             "label": "copy apollon",
             "type": "shell",
-            "command": "SOURCE='${workspaceFolder}/../DataSpark_Apollon/dist'; TARGET='${workspaceFolder}/tutorial/myapp/staticfiles/apollon'; if [ -d \"$SOURCE\" ]; then mkdir -p \"$TARGET\" && cp -a \"$SOURCE\"/. \"$TARGET\"/; else echo '[apollon] Build artifacts not found, skipping copy'; fi",
+            "command": "SOURCE='${workspaceFolder}/../SQLution_Apollon2/standalone/sqlution-embed/dist'; TARGET='${workspaceFolder}/tutorial/myapp/staticfiles/apollon'; if [ -d \"$SOURCE\" ]; then mkdir -p \"$TARGET\" && rm -rf \"$TARGET/chunks\" \"$TARGET/assets\" && cp -a \"$SOURCE\"/. \"$TARGET\"/; else echo '[apollon] Build artifacts not found, skipping copy'; fi",
             "dependsOn": [
                 "build apollon"
             ]
