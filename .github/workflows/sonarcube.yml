@@ -55,4 +55,4 @@ jobs:
           sonar.python.version=3.13
           sonar.python.coverage.reportPaths=reports/coverage.xml
           sonar.python.xunit.reportPath=reports/junit.xml
-          sonar.exclusions=tutorial/myapp/staticfiles/ace-min-noconflict/**,tutorial/myapp/staticfiles/apollon/assets/**
+          sonar.exclusions=tutorial/myapp/staticfiles/ace-min-noconflict/**,tutorial/myapp/staticfiles/apollon/assets/**,tutorial/myapp/staticfiles/apollon/chunks/**,tutorial/myapp/staticfiles/apollon/apollon-sqlution.*
