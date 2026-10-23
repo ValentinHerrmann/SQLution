@@ -117,26 +117,30 @@ async function triggerUpload() {
   }
 
   let reader = new FileReader()
-  reader.onload = async function (event) {
-    try {
-      await loadIntoEditor(JSON.parse(event.target.result))
-      // The uploaded diagram is not on the server yet.
-      markApollonUnsaved()
-      await showAlertDialog(
-        "Klassendiagramm wurde erfolgreich in den Editor geladen.",
-        "fas fa-check-square",
-        "var(--accent-success)"
-      )
-    } catch (err) {
-      showAlertDialog(
-        "Fehler beim Laden der JSON-Datei: " + err.message,
-        "fas fa-exclamation-triangle",
-        "var(--accent-danger)"
-      )
-    }
+  reader.onload = function (event) {
+    loadUploadedFile(event.target.result)
   }
   reader.readAsText(file, "utf-8")
   fileInput.value = null
+}
+
+async function loadUploadedFile(text) {
+  try {
+    await loadIntoEditor(JSON.parse(text))
+    // The uploaded diagram is not on the server yet.
+    markApollonUnsaved()
+    await showAlertDialog(
+      "Klassendiagramm wurde erfolgreich in den Editor geladen.",
+      "fas fa-check-square",
+      "var(--accent-success)"
+    )
+  } catch (err) {
+    showAlertDialog(
+      "Fehler beim Laden der JSON-Datei: " + err.message,
+      "fas fa-exclamation-triangle",
+      "var(--accent-danger)"
+    )
+  }
 }
 
 // Resolves to true when the diagram was stored on the server.
@@ -155,18 +159,19 @@ async function saveDiagram(force = false) {
   }
 
   let csrftoken = document.querySelector("[name=csrfmiddlewaretoken]").value
-  let response
+  let saved = false
   try {
-    response = await fetch("/api/editor_diagram.json", {
+    let response = await fetch("/api/editor_diagram.json", {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-CSRFToken": csrftoken },
       body: JSON.stringify(json),
     })
+    saved = response.ok
   } catch (err) {
-    response = null
+    console.warn("Apollon save failed", err)
   }
 
-  if (response?.ok) {
+  if (saved) {
     markApollonClean(json)
     if (!force) {
       await showAlertDialog(
@@ -250,7 +255,7 @@ async function downloadExport(exporter, filename, label) {
 
 async function downloadJson() {
   await downloadExport(
-    async function (bridge) {
+    function (bridge) {
       return new Blob([JSON.stringify(bridge.model())], {
         type: "application/json",
       })

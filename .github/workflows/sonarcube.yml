@@ -50,9 +50,5 @@ jobs:
       uses: SonarSource/sonarqube-scan-action@v6.0.0 # Ex: v4.1.0 or sha1, See the latest version at https://github.com/marketplace/actions/official-sonarqube-scan
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        # Ensure Sonar scanner can find the generated reports
-        SONAR_PROPERTIES: |
-          sonar.python.version=3.13
-          sonar.python.coverage.reportPaths=reports/coverage.xml
-          sonar.python.xunit.reportPath=reports/junit.xml
-          sonar.exclusions=tutorial/myapp/staticfiles/ace-min-noconflict/**,tutorial/myapp/staticfiles/apollon/assets/**,tutorial/myapp/staticfiles/apollon/chunks/**,tutorial/myapp/staticfiles/apollon/apollon-sqlution.*
+        # Analysis scope, report paths and Python version live in
+        # sonar-project.properties (the scan action does not read SONAR_PROPERTIES).
