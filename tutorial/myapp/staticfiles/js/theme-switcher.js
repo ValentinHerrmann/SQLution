@@ -51,10 +51,6 @@ class ThemeSwitcher {
         
         this.currentTheme = theme;
         localStorage.setItem('theme', theme);
-
-        if (typeof apollon !== 'undefined' && apollon) {
-            apollon.setTheming(theme);
-        }  
         
         // Update toggle button text and icon
         this.updateToggleButton();

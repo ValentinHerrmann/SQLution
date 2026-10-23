@@ -1,31 +1,16 @@
-:root {
-  --apollon2-primary: var(--accent-primary);
-  --apollon2-primary-contrast: var(--text-primary);
-  --apollon2-secondary: var(--text-muted);
-  --apollon2-background: var(--bg-secondary);
-  --apollon2-background-variant: var(--bg-secondary);
-  --apollon2-gray: var(--bg-tertiary);
-  --apollon2-grid: var(--shadow-light);
-}
-
-[data-theme="dark"] {
-  --apollon2-primary: var(--accent-primary);
-  --apollon2-primary-contrast: var(--text-primary);
-  --apollon2-secondary: var(--text-muted);
-  --apollon2-background: var(--bg-secondary);
-  --apollon2-background-variant: var(--bg-secondary);
-  --apollon2-gray: var(--bg-tertiary);
-  --apollon2-grid: var(--shadow-light);
-}
-
-[data-theme="light"] {
-  --apollon2-primary: var(--accent-primary);
-  --apollon2-primary-contrast: var(--text-primary);
-  --apollon2-secondary: var(--text-muted);
-  --apollon2-background: var(--bg-secondary);
-  --apollon2-background-variant: var(--bg-secondary);
-  --apollon2-gray: var(--bg-tertiary);
-  --apollon2-grid: var(--shadow-light);
+/* Map SQLution's palette onto Apollon's public --apollon-* theme tokens.
+   SQLution's own variables already switch with data-theme, and the editor
+   follows data-theme on <html>, so one mapping serves both themes. */
+#div-apollon {
+  --apollon-primary: var(--accent-primary);
+  --apollon-foreground: var(--text-primary);
+  --apollon-secondary: var(--text-muted);
+  --apollon-background: var(--bg-secondary);
+  --apollon-background-variant: var(--bg-secondary);
+  --apollon-surface: var(--bg-primary);
+  --apollon-border: var(--border-color);
+  --apollon-gray: var(--bg-tertiary);
+  --apollon-grid: var(--shadow-light);
 }
 
 #div-full-page {
@@ -60,18 +45,15 @@
   color: var(--text-primary);
 }
 
-
-/* Improve class frame visibility */
-.apollon-editor svg .apollon-node rect,
-.apollon-editor svg .apollon-node path {
-  stroke-width: 1.25px;
-  stroke: var(--text-secondary);
-}
-
-.apollon-editor svg .apollon-node text {
-  fill: var(--text-primary);
-}
-
-.apollon-editor svg .apollon-node .apollon-divider {
-  stroke: var(--border-color);
+/* The editor fills its card; as a flex item it would otherwise shrink to
+   zero width inside the centred #div-apollon container. */
+#div-apollon > [data-apollon-sqlution] {
+  flex: 1 1 auto;
+  align-self: stretch;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  /* Edge labels inherit the host font; use the editor's bundled Inter so they
+     match the node text (and the SVG/PNG/PDF exports). */
+  font-family: Inter, system-ui, sans-serif;
 }

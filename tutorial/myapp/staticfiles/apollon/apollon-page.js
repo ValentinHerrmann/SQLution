@@ -15,123 +15,60 @@ let apollonReady = (globalThis.apollon2Ready =
     }
   }))
 
-function convSideNames(legacyname) {
-  switch (legacyname.toLowerCase()) {
-    case "up":
-      return "top"
-    case "down":
-      return "bottom"
-    case "left":
-      return "left"
-    case "right":
-      return "right"
-    default:
-      return legacyname.toLowerCase()
-  }
+// Tracks edits made in the editor since the diagram was last loaded or saved,
+// so leaving the page only asks to save when there is something to lose.
+// Compares user-editable content only: sizes and edge geometry are derived
+// by the editor and may be corrected right after a load.
+let apollonDirty = false
+let apollonBaseline = null
+
+function apollonContentKey(model) {
+  return JSON.stringify({
+    nodes: (model.nodes || []).map(function (n) {
+      return [n.id, n.type, Math.round(n.position?.x), Math.round(n.position?.y), n.data]
+    }),
+    edges: (model.edges || []).map(function (e) {
+      let data = { ...e.data }
+      delete data.points
+      return [e.id, e.type, e.source, e.target, e.sourceHandle, e.targetHandle, data]
+    }),
+  })
 }
 
-async function convertLegacyApollonModel(model) {
-  if (!model || model.nodes || model.edges) {
-    return model
-  }
+function markApollonClean(model) {
+  apollonBaseline = apollonContentKey(model)
+  apollonDirty = false
+}
 
-  let version = "4.0.0"
-  let type = (model.type || "")
-  let title = "Class Diagram"
+// For diagrams that are in the editor but not on the server yet.
+function markApollonUnsaved() {
+  apollonBaseline = ""
+  apollonDirty = true
+}
 
-  let elements = model.elements || {}
-  let relationships = model.relationships || {}
-
-  let nodes = []
-  let edges = []
-
-  // Collect attributes and methods keyed by owner
-  let attrByOwner = {}
-  let methodByOwner = {}
-
-  Object.keys(elements).forEach(function (key) {
-    let el = elements[key]
-    if (!el?.type) return
-    let type = (el.type || "")
-    if (type === "ClassAttribute") {
-      let owner = el.owner
-      attrByOwner[owner] = attrByOwner[owner] || []
-      attrByOwner[owner].push({ id: el.id, name: el.name || "" })
-    } else if (type === "ClassMethod") {
-      let ownerMeth = el.owner
-      methodByOwner[ownerMeth] = methodByOwner[ownerMeth] || []
-      methodByOwner[ownerMeth].push({ id: el.id, name: el.name || "" })
+apollonReady.then(function (bridge) {
+  markApollonClean(bridge.model())
+  bridge.onModelChange(function (model) {
+    if (apollonBaseline !== null) {
+      apollonDirty = apollonContentKey(model) !== apollonBaseline
     }
   })
+})
 
-  Object.keys(elements).forEach(function (key) {
-    let el = elements[key]
-    if (!el?.type) return
-    let type = (el.type || "")
-    if (type.toLowerCase() === "class") {
-      let width = el.bounds?.width || 160
-      let height = el.bounds?.height || 70
-      nodes.push({
-        id: el.id,
-        type: "class",
-        position: { x: el.bounds?.x || 0, y: el.bounds?.y || 0 },
-        width: width,
-        height: height,
-        data: {
-          name: el.name || "",
-          attributes: attrByOwner[el.id] || [],
-          methods: methodByOwner[el.id] || [],
-        },
-        measured: { width: width, height: height },
+// Loads a diagram (Apollon v2, v3 or v4 JSON) into the editor and takes it as
+// the new unchanged state once the editor has settled.
+async function loadIntoEditor(json) {
+  let bridge = await apollonReady
+  apollonBaseline = null
+  try {
+    bridge.loadModel(json)
+  } finally {
+    await new Promise(function (resolve) {
+      requestAnimationFrame(function () {
+        setTimeout(resolve, 100)
       })
-    }
-  })
-
-  Object.keys(relationships).forEach(function (key) {
-    let rel = relationships[key]
-    if (!rel?.type) return
-    let type = (rel.type || "ClassBidirectional")
-    let data = {}
-    if (rel.source?.multiplicity) { data.sourceMultiplicity = rel.source.multiplicity }
-    if (rel.source?.role) { data.sourceRole = rel.source.role }
-    if (rel.target?.multiplicity) { data.targetMultiplicity = rel.target.multiplicity }
-    if (rel.target?.role) { data.targetRole = rel.target.role }
-    if (Array.isArray(rel.path)) { data.points = rel.path }
-
-    let edge = {
-      id: rel.id,
-      type: type,
-      source: rel.source?.element,
-      target: rel.target?.element,
-      data: data,
-      sourceHandle: convSideNames(rel.source?.direction) || "right",
-      targetHandle: convSideNames(rel.target?.direction) || "left"
-    }
-    edges.push(edge)
-  })
-
-  let data = { version: version, type: type, title: title, nodes: nodes, edges: edges, assessments: {} };
-  return data;
-}
-
-// Forces a redraw by reloading a snapshot after a short delay, emulating the user download/reupload workaround.
-async function refreshApollonEditor(bridge, modelOverride) {
-  let snapshot
-  try {
-    snapshot = JSON.parse(JSON.stringify(modelOverride || bridge.model()))
-  } catch (e) {
-    console.warn("Apollon refresh: failed to copy model", e)
-    return
-  }
-
-  await new Promise(function (resolve) {
-    requestAnimationFrame(resolve)
-  })
-
-  try {
-    bridge.loadModel(snapshot)
-  } catch (e) {
-    console.warn("Apollon refresh: failed to reload model", e)
+    })
+    markApollonClean(bridge.model())
   }
 }
 
@@ -147,14 +84,14 @@ document.addEventListener("DOMContentLoaded", function () {
   dropZone.addEventListener("drop", function (e) {
     e.preventDefault()
     fileInput.files = e.dataTransfer.files
-    triggerUpload()
+    void triggerUpload()
   })
 })
 
 async function triggerUpload() {
   let fileInput = document.getElementById("json_file")
   if (fileInput.files.length < 1) {
-    showAlertDialog(
+    void showAlertDialog(
       "Keine Datei zum Upload ausgewählt. Wähle mit 'Browse...' eine Datei zum Upload aus oder ziehe sie per Drag'n'Drop in den gestrichelten Kasten."
     )
     return
@@ -170,7 +107,7 @@ async function triggerUpload() {
 
   let file = fileInput.files[0]
   if (UPLOAD_MAX_BYTES && file.size > UPLOAD_MAX_BYTES) {
-    showAlertDialog(
+    void showAlertDialog(
       "Datei ist zu groß. Maximale Dateigröße: " + UPLOAD_MAX_HUMAN,
       "fas fa-exclamation-triangle",
       "var(--accent-warning)"
@@ -180,70 +117,78 @@ async function triggerUpload() {
   }
 
   let reader = new FileReader()
-  reader.onload = async function (event) {
-    try {
-      let json = JSON.parse(event.target.result)
-      json = await convertLegacyApollonModel(json)
-      let bridge = await apollonReady
-      bridge.loadModel(json)
-      await refreshApollonEditor(bridge, json)
-      sessionStorage.setItem('loaded_model', JSON.stringify(bridge.model()));
-      await showAlertDialog(
-        "Klassendiagramm wurde erfolgreich in den Editor geladen.",
-        "fas fa-check-square",
-        "var(--accent-success)"
-      )
-      //globalThis.location.reload()
-    } catch (err) {
-      showAlertDialog(
-        "Fehler beim Laden der JSON-Datei: " + err.message,
-        "fas fa-exclamation-triangle",
-        "var(--accent-danger)"
-      )
-    }
+  reader.onload = function (event) {
+    void loadUploadedFile(event.target.result)
   }
   reader.readAsText(file, "utf-8")
   fileInput.value = null
 }
 
+async function loadUploadedFile(text) {
+  try {
+    await loadIntoEditor(JSON.parse(text))
+    // The uploaded diagram is not on the server yet.
+    markApollonUnsaved()
+    await showAlertDialog(
+      "Klassendiagramm wurde erfolgreich in den Editor geladen.",
+      "fas fa-check-square",
+      "var(--accent-success)"
+    )
+  } catch (err) {
+    void showAlertDialog(
+      "Fehler beim Laden der JSON-Datei: " + err.message,
+      "fas fa-exclamation-triangle",
+      "var(--accent-danger)"
+    )
+  }
+}
 
-
-async function saveDiagram(force=false) {
+// Resolves to true when the diagram was stored on the server.
+async function saveDiagram(force = false) {
   let bridge = await apollonReady
   let json = bridge.model()
 
-  if(!force) {
+  if (!force) {
     let confirmed = await showConfirmDialog(
       "Klassendiagramm auf dem Server speichern? Bestehendes Diagramm wird überschrieben, die Datenbank bleibt unverändert. Wenn du die Seite wechselst, ohne zu speichern, gehen deine Änderungen verloren!",
       "fas fa-save"
     )
     if (!confirmed) {
-      return
+      return false
     }
   }
 
   let csrftoken = document.querySelector("[name=csrfmiddlewaretoken]").value
-  fetch("/api/editor_diagram.json", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "X-CSRFToken": csrftoken },
-    body: JSON.stringify(json),
-  }).then(async function (response) {
-    if (response.ok) {
-      if(!force) {
-        await showAlertDialog(
-          "Klassendiagramm wurde erfolgreich auf dem Server gespeichert.",
-          "fas fa-check-square",
-          "var(--accent-success)"
-        )
-      }
-    } else {
-      showAlertDialog(
-        "Fehler beim Speichern des Klassendiagramms auf dem Server. Überprüfe, ob das Format deines Diagramms korrekt ist!",
-        "fas fa-exclamation-triangle",
-        "var(--accent-danger)"
+  let saved = false
+  try {
+    let response = await fetch("/api/editor_diagram.json", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-CSRFToken": csrftoken },
+      body: JSON.stringify(json),
+    })
+    saved = response.ok
+  } catch (err) {
+    console.warn("Apollon save failed", err)
+  }
+
+  if (saved) {
+    markApollonClean(json)
+    if (!force) {
+      await showAlertDialog(
+        "Klassendiagramm wurde erfolgreich auf dem Server gespeichert.",
+        "fas fa-check-square",
+        "var(--accent-success)"
       )
     }
-  })
+    return true
+  }
+
+  await showAlertDialog(
+    "Fehler beim Speichern des Klassendiagramms auf dem Server. Überprüfe, ob das Format deines Diagramms korrekt ist!",
+    "fas fa-exclamation-triangle",
+    "var(--accent-danger)"
+  )
+  return false
 }
 
 async function loadToDB() {
@@ -261,93 +206,99 @@ async function loadToDB() {
   await saveDiagram(true)
 
   let csrftoken = document.querySelector("[name=csrfmiddlewaretoken]").value
-  fetch("/api/db_diagram.json", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "X-CSRFToken": csrftoken },
-    body: JSON.stringify(json),
-  }).then(async function (response) {
-    if (response.ok) {
-      await showAlertDialog(
-        "Klassendiagramm wurde als Datenbank geladen. Überprüfe in der Übersicht, ob automatisch Fehler korrigiert wurden!",
-        "fas fa-check-square",
-        "var(--accent-success)"
-      )
-      globalThis.location.href = "/overview?open=2"
-    } else {
-      showAlertDialog(
-        "Fehler beim Laden des Klassendiagramms als Datenbank. Überprüfe, ob das Format deines Diagramms korrekt ist!",
-        "fas fa-exclamation-triangle",
-        "var(--accent-danger)"
-      )
-    }
-  })
+  let loaded = false
+  try {
+    let response = await fetch("/api/db_diagram.json", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-CSRFToken": csrftoken },
+      body: JSON.stringify(json),
+    })
+    loaded = response.ok
+  } catch (err) {
+    console.warn("Apollon diagram to DB failed", err)
+  }
+
+  if (loaded) {
+    await showAlertDialog(
+      "Klassendiagramm wurde als Datenbank geladen. Überprüfe in der Übersicht, ob automatisch Fehler korrigiert wurden!",
+      "fas fa-check-square",
+      "var(--accent-success)"
+    )
+    globalThis.location.href = "/overview?open=2"
+  } else {
+    await showAlertDialog(
+      "Fehler beim Laden des Klassendiagramms als Datenbank. Überprüfe, ob das Format deines Diagramms korrekt ist!",
+      "fas fa-exclamation-triangle",
+      "var(--accent-danger)"
+    )
+  }
+}
+
+function downloadBlob(blob, filename) {
+  let url = URL.createObjectURL(blob)
+  let a = document.createElement("a")
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+}
+
+async function downloadExport(exporter, filename, label) {
+  try {
+    let bridge = await apollonReady
+    downloadBlob(await exporter(bridge), filename)
+  } catch (err) {
+    console.warn("Apollon export failed", err)
+    void showAlertDialog(
+      label + " Export fehlgeschlagen: " + err.message,
+      "fas fa-exclamation-triangle",
+      "var(--accent-warning)"
+    )
+  }
 }
 
 async function downloadJson() {
-  let bridge = await apollonReady
-  let json = bridge.model()
-
-  let blob = new Blob([JSON.stringify(json)], { type: "application/json" })
-  let url = URL.createObjectURL(blob)
-  let a = document.createElement("a")
-  a.href = url
-  a.download = "diagram.json"
-  document.body.appendChild(a)
-  a.click()
-  a.remove()
-  URL.revokeObjectURL(url)
+  await downloadExport(
+    function (bridge) {
+      return new Blob([JSON.stringify(bridge.model())], {
+        type: "application/json",
+      })
+    },
+    "diagram.json",
+    "JSON"
+  )
 }
 
 async function downloadSvg() {
-  let bridge = await apollonReady
-  let blob = await bridge.exportSvg()
-  let url = URL.createObjectURL(blob)
-  let a = document.createElement("a")
-  a.href = url
-  a.download = "diagram.svg"
-  document.body.appendChild(a)
-  a.click()
-  a.remove()
-  URL.revokeObjectURL(url)
+  await downloadExport(
+    function (bridge) {
+      return bridge.exportSvg()
+    },
+    "diagram.svg",
+    "SVG"
+  )
 }
 
 async function downloadPng() {
-  let bridge = await apollonReady
-  let svgBlob = await bridge.exportSvg()
-  let svgText = await svgBlob.text()
-  let img = new Image()
-  let svgUrl = URL.createObjectURL(new Blob([svgText], { type: "image/svg+xml" }))
-  img.onload = function () {
-    let canvas = document.createElement("canvas")
-    canvas.width = img.width
-    canvas.height = img.height
-    let ctx = canvas.getContext("2d")
-    if (ctx) {
-      ctx.drawImage(img, 0, 0)
-      canvas.toBlob(function (blob) {
-        if (!blob) {
-          return
-        }
-        let url = URL.createObjectURL(blob)
-        let a = document.createElement("a")
-        a.href = url
-        a.download = "diagram.png"
-        document.body.appendChild(a)
-        a.click()
-        a.remove()
-        URL.revokeObjectURL(url)
-      })
-    }
-    URL.revokeObjectURL(svgUrl)
-  }
-  img.onerror = function () {
-    showAlertDialog(
-      "PNG Export fehlgeschlagen. Bitte nutze SVG.",
-      "fas fa-exclamation-triangle",
-      "orange"
-    )
-  }
-  img.src = svgUrl
+  await downloadExport(
+    function (bridge) {
+      return bridge.exportPng()
+    },
+    "diagram.png",
+    "PNG"
+  )
+}
+
+async function downloadPdf() {
+  await downloadExport(
+    function (bridge) {
+      return bridge.exportPdf()
+    },
+    "diagram.pdf",
+    "PDF"
+  )
 }
 
 async function loadDbToEditor() {
@@ -358,9 +309,8 @@ async function loadDbToEditor() {
   if (!confirmation) {
     return
   }
-  loadDBJsonFromServer()
+  void loadDBJsonFromServer()
 }
-
 
 async function loadDBJsonFromServer() {
   let csrftoken = document.querySelector("[name=csrfmiddlewaretoken]").value
@@ -373,18 +323,16 @@ async function loadDBJsonFromServer() {
     })
     .then(async function (data) {
       try {
-        let json = await convertLegacyApollonModel(data)
-        let bridge = await apollonReady
-        bridge.loadModel(json)
-        await refreshApollonEditor(bridge, json)
-        sessionStorage.setItem('loaded_model', JSON.stringify(bridge.model()));
-          showAlertDialog(
-            "Datenbank-Klassendiagramm erfolgreich in den Editor geladen.",
-            "fas fa-check-square",
-            "var(--accent-success)"
-          )
+        await loadIntoEditor(data)
+        // The editor now differs from the diagram saved on the server.
+        markApollonUnsaved()
+        void showAlertDialog(
+          "Datenbank-Klassendiagramm erfolgreich in den Editor geladen.",
+          "fas fa-check-square",
+          "var(--accent-success)"
+        )
       } catch (err) {
-        showAlertDialog(
+        void showAlertDialog(
           "Fehler beim Laden des Diagramms: " + err.message,
           "fas fa-exclamation-triangle",
           "var(--accent-danger)"
@@ -392,15 +340,13 @@ async function loadDBJsonFromServer() {
       }
     })
     .catch(function () {
-      showAlertDialog(
+      void showAlertDialog(
         "Es konnte kein bestehendes Klassendiagramm vom Server geladen werden. Wenn du noch nie ein Klassendiagramm als Datenbank importiert hast, ist das normal. Ansonsten kannst du die Seite neu laden, dann erscheint dein Diagramm automatisch.",
         "fas fa-exclamation-triangle",
         "var(--accent-warning)"
       )
     })
 }
-
-
 
 async function loadEditorJsonFromServer(manuallyTriggered) {
   let csrftoken = document.querySelector("[name=csrfmiddlewaretoken]").value
@@ -413,20 +359,16 @@ async function loadEditorJsonFromServer(manuallyTriggered) {
     })
     .then(async function (data) {
       try {
-        let json = await convertLegacyApollonModel(data)
-        let bridge = await apollonReady
-        bridge.loadModel(json)
-        await refreshApollonEditor(bridge, json)
-        sessionStorage.setItem('loaded_model', JSON.stringify(bridge.model()));
+        await loadIntoEditor(data)
         if (manuallyTriggered) {
-          showAlertDialog(
+          void showAlertDialog(
             "Gespeichertes Klassendiagramm erfolgreich in den Editor geladen.",
             "fas fa-check-square",
             "var(--accent-success)"
           )
         }
       } catch (err) {
-        showAlertDialog(
+        void showAlertDialog(
           "Fehler beim Laden des Diagramms: " + err.message,
           "fas fa-exclamation-triangle",
           "var(--accent-danger)"
@@ -434,7 +376,7 @@ async function loadEditorJsonFromServer(manuallyTriggered) {
       }
     })
     .catch(function () {
-      showAlertDialog(
+      void showAlertDialog(
         "Es konnte kein bestehendes Klassendiagramm vom Server geladen werden. Wenn du noch nie ein Klassendiagramm als Datenbank importiert hast, ist das normal. Ansonsten kannst du die Seite neu laden, dann erscheint dein Diagramm automatisch.",
         "fas fa-exclamation-triangle",
         "orange"
@@ -442,12 +384,17 @@ async function loadEditorJsonFromServer(manuallyTriggered) {
     })
 }
 
-loadEditorJsonFromServer(false)
+// Wait for DOMContentLoaded: the dialog helpers come from the sqlution.js
+// module, which only runs after this classic script.
+document.addEventListener("DOMContentLoaded", function () {
+  void loadEditorJsonFromServer(false)
+})
 
-// Save the current diagram before navigating away so changes are not lost.
+// Offer to save unsaved changes before navigating away so they are not lost.
 let apollonNavigationSaveInProgress = false
 
 function shouldInterceptApollonNavigation(anchor, event) {
+  if (!apollonDirty) return false
   if (!anchor?.href) return false
   if (event && (event.ctrlKey || event.metaKey || event.button === 1)) return false
   if (anchor.hasAttribute("download")) return false
@@ -475,6 +422,5 @@ document.addEventListener("click", function (event) {
   let anchor = event.target.closest("a")
   if (!shouldInterceptApollonNavigation(anchor, event)) return
   event.preventDefault()
-  saveDiagramAndNavigate(anchor.href)
+  void saveDiagramAndNavigate(anchor.href)
 })
-
