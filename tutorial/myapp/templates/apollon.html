@@ -68,6 +68,7 @@ SQLution - Klassendiagramm
               <button id="upload-uml-btn" class="btn btn-primary" onclick="triggerUpload(true)"><i class="fas fa-upload" aria-hidden="true"></i> *.json</button>
               <form id="uploadForm" method="post" action="{% url 'upload_json' %}" enctype="multipart/form-data">
                 {% csrf_token %}
+                <label for="json_file" class="sr-only">Klassendiagramm als JSON-Datei hochladen</label>
                 <input id="json_file" type="file" name="json_file" accept=".json" required>
                 {% if upload_max_human %}
                   <div style="font-size:0.8em; margin-top:6px;">Maximale Dateigröße: {{ upload_max_human }}</div>

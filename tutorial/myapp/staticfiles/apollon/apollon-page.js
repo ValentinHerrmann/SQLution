@@ -28,7 +28,7 @@ function apollonContentKey(model) {
       return [n.id, n.type, Math.round(n.position?.x), Math.round(n.position?.y), n.data]
     }),
     edges: (model.edges || []).map(function (e) {
-      let data = Object.assign({}, e.data)
+      let data = { ...e.data }
       delete data.points
       return [e.id, e.type, e.source, e.target, e.sourceHandle, e.targetHandle, data]
     }),
@@ -84,14 +84,14 @@ document.addEventListener("DOMContentLoaded", function () {
   dropZone.addEventListener("drop", function (e) {
     e.preventDefault()
     fileInput.files = e.dataTransfer.files
-    triggerUpload()
+    void triggerUpload()
   })
 })
 
 async function triggerUpload() {
   let fileInput = document.getElementById("json_file")
   if (fileInput.files.length < 1) {
-    showAlertDialog(
+    void showAlertDialog(
       "Keine Datei zum Upload ausgewählt. Wähle mit 'Browse...' eine Datei zum Upload aus oder ziehe sie per Drag'n'Drop in den gestrichelten Kasten."
     )
     return
@@ -107,7 +107,7 @@ async function triggerUpload() {
 
   let file = fileInput.files[0]
   if (UPLOAD_MAX_BYTES && file.size > UPLOAD_MAX_BYTES) {
-    showAlertDialog(
+    void showAlertDialog(
       "Datei ist zu groß. Maximale Dateigröße: " + UPLOAD_MAX_HUMAN,
       "fas fa-exclamation-triangle",
       "var(--accent-warning)"
@@ -118,7 +118,7 @@ async function triggerUpload() {
 
   let reader = new FileReader()
   reader.onload = function (event) {
-    loadUploadedFile(event.target.result)
+    void loadUploadedFile(event.target.result)
   }
   reader.readAsText(file, "utf-8")
   fileInput.value = null
@@ -135,7 +135,7 @@ async function loadUploadedFile(text) {
       "var(--accent-success)"
     )
   } catch (err) {
-    showAlertDialog(
+    void showAlertDialog(
       "Fehler beim Laden der JSON-Datei: " + err.message,
       "fas fa-exclamation-triangle",
       "var(--accent-danger)"
@@ -206,26 +206,32 @@ async function loadToDB() {
   await saveDiagram(true)
 
   let csrftoken = document.querySelector("[name=csrfmiddlewaretoken]").value
-  fetch("/api/db_diagram.json", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "X-CSRFToken": csrftoken },
-    body: JSON.stringify(json),
-  }).then(async function (response) {
-    if (response.ok) {
-      await showAlertDialog(
-        "Klassendiagramm wurde als Datenbank geladen. Überprüfe in der Übersicht, ob automatisch Fehler korrigiert wurden!",
-        "fas fa-check-square",
-        "var(--accent-success)"
-      )
-      globalThis.location.href = "/overview?open=2"
-    } else {
-      showAlertDialog(
-        "Fehler beim Laden des Klassendiagramms als Datenbank. Überprüfe, ob das Format deines Diagramms korrekt ist!",
-        "fas fa-exclamation-triangle",
-        "var(--accent-danger)"
-      )
-    }
-  })
+  let loaded = false
+  try {
+    let response = await fetch("/api/db_diagram.json", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-CSRFToken": csrftoken },
+      body: JSON.stringify(json),
+    })
+    loaded = response.ok
+  } catch (err) {
+    console.warn("Apollon diagram to DB failed", err)
+  }
+
+  if (loaded) {
+    await showAlertDialog(
+      "Klassendiagramm wurde als Datenbank geladen. Überprüfe in der Übersicht, ob automatisch Fehler korrigiert wurden!",
+      "fas fa-check-square",
+      "var(--accent-success)"
+    )
+    globalThis.location.href = "/overview?open=2"
+  } else {
+    await showAlertDialog(
+      "Fehler beim Laden des Klassendiagramms als Datenbank. Überprüfe, ob das Format deines Diagramms korrekt ist!",
+      "fas fa-exclamation-triangle",
+      "var(--accent-danger)"
+    )
+  }
 }
 
 function downloadBlob(blob, filename) {
@@ -245,7 +251,7 @@ async function downloadExport(exporter, filename, label) {
     downloadBlob(await exporter(bridge), filename)
   } catch (err) {
     console.warn("Apollon export failed", err)
-    showAlertDialog(
+    void showAlertDialog(
       label + " Export fehlgeschlagen: " + err.message,
       "fas fa-exclamation-triangle",
       "var(--accent-warning)"
@@ -303,7 +309,7 @@ async function loadDbToEditor() {
   if (!confirmation) {
     return
   }
-  loadDBJsonFromServer()
+  void loadDBJsonFromServer()
 }
 
 async function loadDBJsonFromServer() {
@@ -320,13 +326,13 @@ async function loadDBJsonFromServer() {
         await loadIntoEditor(data)
         // The editor now differs from the diagram saved on the server.
         markApollonUnsaved()
-        showAlertDialog(
+        void showAlertDialog(
           "Datenbank-Klassendiagramm erfolgreich in den Editor geladen.",
           "fas fa-check-square",
           "var(--accent-success)"
         )
       } catch (err) {
-        showAlertDialog(
+        void showAlertDialog(
           "Fehler beim Laden des Diagramms: " + err.message,
           "fas fa-exclamation-triangle",
           "var(--accent-danger)"
@@ -334,7 +340,7 @@ async function loadDBJsonFromServer() {
       }
     })
     .catch(function () {
-      showAlertDialog(
+      void showAlertDialog(
         "Es konnte kein bestehendes Klassendiagramm vom Server geladen werden. Wenn du noch nie ein Klassendiagramm als Datenbank importiert hast, ist das normal. Ansonsten kannst du die Seite neu laden, dann erscheint dein Diagramm automatisch.",
         "fas fa-exclamation-triangle",
         "var(--accent-warning)"
@@ -355,14 +361,14 @@ async function loadEditorJsonFromServer(manuallyTriggered) {
       try {
         await loadIntoEditor(data)
         if (manuallyTriggered) {
-          showAlertDialog(
+          void showAlertDialog(
             "Gespeichertes Klassendiagramm erfolgreich in den Editor geladen.",
             "fas fa-check-square",
             "var(--accent-success)"
           )
         }
       } catch (err) {
-        showAlertDialog(
+        void showAlertDialog(
           "Fehler beim Laden des Diagramms: " + err.message,
           "fas fa-exclamation-triangle",
           "var(--accent-danger)"
@@ -370,7 +376,7 @@ async function loadEditorJsonFromServer(manuallyTriggered) {
       }
     })
     .catch(function () {
-      showAlertDialog(
+      void showAlertDialog(
         "Es konnte kein bestehendes Klassendiagramm vom Server geladen werden. Wenn du noch nie ein Klassendiagramm als Datenbank importiert hast, ist das normal. Ansonsten kannst du die Seite neu laden, dann erscheint dein Diagramm automatisch.",
         "fas fa-exclamation-triangle",
         "orange"
@@ -381,7 +387,7 @@ async function loadEditorJsonFromServer(manuallyTriggered) {
 // Wait for DOMContentLoaded: the dialog helpers come from the sqlution.js
 // module, which only runs after this classic script.
 document.addEventListener("DOMContentLoaded", function () {
-  loadEditorJsonFromServer(false)
+  void loadEditorJsonFromServer(false)
 })
 
 // Offer to save unsaved changes before navigating away so they are not lost.
@@ -416,5 +422,5 @@ document.addEventListener("click", function (event) {
   let anchor = event.target.closest("a")
   if (!shouldInterceptApollonNavigation(anchor, event)) return
   event.preventDefault()
-  saveDiagramAndNavigate(anchor.href)
+  void saveDiagramAndNavigate(anchor.href)
 })
