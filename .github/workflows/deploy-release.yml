@@ -92,34 +92,9 @@ jobs:
         run: |
           echo "image=${{ steps.meta.outputs.image_ref }}" >> "$GITHUB_OUTPUT"
 
-  stop:
-    name: Stop running Container
-    permissions:
-      contents: read
-    environment:
-      name: production
-      url: https://sqlution.de
-    runs-on: ubuntu-latest
-    env:
-      SQLUTION_IMAGE: ${{ needs.build_image.outputs.image_ref }}
-    steps:
-      - name: Stop application over SSH
-        uses: appleboy/ssh-action@v0.1.7
-        with:
-          host: ${{ secrets.SSH_HOST_IP }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          port: ${{ secrets.DEPLOY_PORT || '22' }}
-          envs: SQLUTION_IMAGE
-          script: |
-            set -euo pipefail
-            docker container stop sqlution-app || true
-            docker container rm sqlution-app || true
-            docker images 'ghcr.io/*/sqlution' --format '{{.ID}}' | xargs -r docker rmi || true
-
   launch:
     name: Launch Container
-    needs: [build_image, stop]
+    needs: [build_image]
     permissions:
       contents: read
     runs-on: ubuntu-latest
@@ -171,17 +146,22 @@ jobs:
             set -euo pipefail
             cd "${DEPLOY_APP_DIR}"
             echo "Launching ${SQLUTION_IMAGE}"
+            # Swap containers only now (image already pulled) to keep downtime to a few seconds
+            docker container stop sqlution-app || true
+            docker container rm sqlution-app || true
             docker run -d \
               --restart unless-stopped \
               --name sqlution-app \
-              -p 8000:8000 \
+              -p 127.0.0.1:8000:8000 \
               -e SECRET_KEY="${DJANGO_SECRET_KEY}" \
               -e DEBUG_MODE="${DJANGO_DEBUG_MODE}" \
               -e DJANGO_ALLOWED_HOSTS="${DJANGO_ALLOWED_HOSTS}" \
               -e DJANGO_STATIC_URL="${DJANGO_STATIC_URL}" \
-                -e SQLUTION_DB_DIR='/data' \
-                -e FILE_UPLOAD_MAX_MEMORY_SIZE="${FILE_UPLOAD_MAX_MEMORY_SIZE}" \
-                -e DATA_UPLOAD_MAX_MEMORY_SIZE="${DATA_UPLOAD_MAX_MEMORY_SIZE}" \
+              -e SQLUTION_DB_DIR='/data' \
+              -e FILE_UPLOAD_MAX_MEMORY_SIZE="${FILE_UPLOAD_MAX_MEMORY_SIZE}" \
+              -e DATA_UPLOAD_MAX_MEMORY_SIZE="${DATA_UPLOAD_MAX_MEMORY_SIZE}" \
               -v sqlution-db:/data \
               -v "${DEPLOY_APP_DIR}/user_databases:/app/tutorial/user_databases" \
               "${SQLUTION_IMAGE}"
+            # Remove old images; docker rmi skips the one used by the running container
+            docker images 'ghcr.io/*/sqlution' --format '{{.ID}}' | xargs -r docker rmi || true

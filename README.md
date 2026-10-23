@@ -26,20 +26,23 @@ During image build the Dockerfile runs `collectstatic`, so the runtime container
 
 > **Static files**
 >
-> The app serves its own static assets via WhiteNoise from inside the container. To avoid clashes with legacy host-side `/static/` aliases (for example if an external nginx still owns that URL), deployments now set `DJANGO_STATIC_URL=/app-static/`. If you already proxy `/static/` directly to the Django container you can override this variable ( Compose/`docker run` both expose it ).
+> The app serves its own static assets via WhiteNoise from inside the container. Deployments set `DJANGO_STATIC_URL=/app-static/` by default; you can override this variable ( Compose/`docker run` both expose it ).
 
-#### GitHub Actions deployment workflow
-- Workflow name: `Deploy` (`.github/workflows/deploy-on-release.yml`).
-- Triggers: published GitHub Releases or manual `workflow_dispatch` with optional `deploy_ref` (branch/tag) input.
+> **Reverse proxy**
+>
+> TLS termination and routing are handled by a Caddy reverse proxy on the host, which is configured outside this repository. It forwards `sqlution.de`/`www.sqlution.de` → `127.0.0.1:8000` and `dev.sqlution.de` → `127.0.0.1:8001`. The deployed containers therefore publish their port on loopback only (`-p 127.0.0.1:…`); the workflows do not touch the proxy configuration.
+
+#### GitHub Actions deployment workflows
+- `Deploy Release` (`.github/workflows/deploy-release.yml`): deploys production (`sqlution-app`, `127.0.0.1:8000`). Triggers: published GitHub Releases or manual `workflow_dispatch` with the required `deploy_tag` input.
+- `Deploy Dev` (`.github/workflows/deploy-pr.yml`): deploys dev (`sqlution-app-dev`, `127.0.0.1:8001`). Triggers: non-draft pull requests from this repository or manual `workflow_dispatch` with optional `deploy_ref` (branch/tag) input.
 - Jobs:
-	- `build_image`: updates the `VERSION` file, builds/pushes `ghcr.io/<owner>/sqlution`, tags both the commit SHA and the branch/ref.
-	- `stop`: SSHes into the production host, stops/removes the running container, and garbage-collects old `sqlution` images.
-	- `launch`: pulls the freshly built image on the server and runs it with the required environment.
+	- `build_image`: updates the `VERSION` file and builds/pushes `ghcr.io/<owner>/sqlution`.
+	- `launch`: pulls the freshly built image on the server, then stops/removes the old container and runs the new one with the required environment (downtime is limited to the container swap). The release workflow afterwards garbage-collects old `sqlution` images.
 - Required GitHub **secrets**: `SSH_HOST_IP` (environment secret with the SSH host's IP address, set per `dev`/`production` environment), `DEPLOY_USER`, `DEPLOY_SSH_KEY`, `DEPLOY_REGISTRY_USER`, `DEPLOY_REGISTRY_TOKEN`, `DJANGO_SECRET_KEY`.
 - Required GitHub **variables**: `DEPLOY_PORT` (optional, defaults to `22`), `DEPLOY_APP_DIR`, `DJANGO_ALLOWED_HOSTS`, `DJANGO_STATIC_URL` (defaults to `/app-static/`).
 - Runtime configuration: the container exposes port `8000`, mounts the persistent `sqlution-db` volume plus `${DEPLOY_APP_DIR}/user_databases`, and picks up `SECRET_KEY`, `DJANGO_ALLOWED_HOSTS`, `DJANGO_STATIC_URL`, and `SQLUTION_DB_DIR` from the workflow.
 - Restart policy: deployments run the container with Docker's `--restart unless-stopped` flag so Debian-based hosts automatically bring it back after a reboot.
-- Manual deploys: run the workflow from the Actions tab, select *Run workflow*, and optionally provide `deploy_ref` to deploy a specific branch or tag.
+- Manual deploys: run the workflow from the Actions tab, select *Run workflow*, and provide `deploy_tag` (`Deploy Release`) or optionally `deploy_ref` (`Deploy Dev`) to deploy a specific tag or branch.
 
 ##### Using the workflow from a fork
 - Fork owners must replicate the same **secrets/variables** listed above inside their fork’s repository settings (Settings ▸ Secrets and variables ▸ Actions).
@@ -60,7 +63,7 @@ During image build the Dockerfile runs `collectstatic`, so the runtime container
 3. Run the container manually (mirrors the workflow defaults and restart policy):
 	```bash
 	docker run -d --restart unless-stopped --name sqlution-app \
-	  -p 8000:8000 \
+	  -p 127.0.0.1:8000:8000 \
 	  -e SECRET_KEY='...' \
 	  -e DJANGO_ALLOWED_HOSTS='sqlution.de,www.sqlution.de' \
 	  -e DJANGO_STATIC_URL='/app-static/' \
