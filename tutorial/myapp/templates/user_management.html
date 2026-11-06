@@ -15,12 +15,6 @@ SQLution - Accountverwaltung
   .um-modal ul { max-height: 220px; overflow-y: auto; }
   #prefix-feedback.ok { color: #28a745; }
   #prefix-feedback.bad { color: #dc3545; }
-  @media print {
-    body * { visibility: hidden; }
-    #password-box, #password-box * { visibility: visible; }
-    #password-box { position: absolute; left: 0; top: 0; width: 100%; }
-    #password-box .no-print { display: none; }
-  }
 </style>
 
 <div class="container-fluid mt-2">
@@ -35,26 +29,7 @@ SQLution - Accountverwaltung
     <div class="alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'success' %}alert-success{% elif message.tags == 'warning' %}alert-warning{% else %}alert-info{% endif %}" role="alert">{{ message }}</div>
   {% endfor %}
 
-  {% if new_passwords %}
-    <div class="card um-card border-warning" id="password-box">
-      <div class="card-body">
-        <h5 class="card-title">Zugangsdaten</h5>
-        <p class="mb-2"><strong>Diese Passwörter werden nur jetzt angezeigt.</strong> Lade sie herunter oder drucke sie aus, bevor du die Seite verlässt.</p>
-        <table class="table table-sm" id="password-table">
-          <thead><tr><th>Nutzername</th><th>Passwort</th></tr></thead>
-          <tbody>
-            {% for username, password in new_passwords %}
-              <tr><td><code>{{ username }}</code></td><td><code>{{ password }}</code></td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
-        <div class="no-print">
-          <button type="button" class="btn btn-primary btn-sm" id="download-passwords"><i class="fas fa-file-csv"></i> Als CSV herunterladen</button>
-          <button type="button" class="btn btn-outline-primary btn-sm" onclick="window.print()"><i class="fas fa-print"></i> Drucken</button>
-        </div>
-      </div>
-    </div>
-  {% endif %}
+  {% include "_password_box.html" %}
 
   <div class="row">
     <!-- Role & prefixes -->
@@ -218,7 +193,7 @@ SQLution - Accountverwaltung
                 <tr data-course="{{ row.prefix }}" data-username="{{ row.user.username }}" data-id="{{ row.user.pk }}">
                   <td><label for="select-{{ row.user.pk }}" class="sr-only">{{ row.user.username }} auswählen</label><input type="checkbox" id="select-{{ row.user.pk }}" name="ids" value="{{ row.user.pk }}" class="row-select"></td>
                   <td>
-                    <strong>{{ row.user.username }}</strong>{% if row.online %}<span class="um-online" title="Gerade eingeloggt"></span>{% endif %}
+                    {% if row.db_user_of %}<span class="um-hint" title="Nutzer des Projekts {{ row.db_user_of }}">&#8627;</span> {% endif %}<strong>{{ row.user.username }}</strong>{% if row.online %}<span class="um-online" title="Gerade eingeloggt"></span>{% endif %}
                     {% if row.is_group_admin %}<span class="badge badge-info">{{ group_admin_name }}</span>{% endif %}
                     {% if row.cascade %}<span class="cascade-data" hidden>{{ row.cascade|join:"," }}</span>{% endif %}
                   </td>
@@ -321,8 +296,8 @@ SQLution - Accountverwaltung
     });
     const box = document.getElementById('delete-cascade');
     if (cascade.length) {
-      box.textContent = 'Achtung: Darunter sind Gruppenadmins. Alle ' + cascade.length +
-        ' von ihnen betreuten Accounts werden ebenfalls gelöscht: ' + cascade.join(', ');
+      box.textContent = 'Achtung: ' + cascade.length + ' weitere Accounts (betreute Accounts von Gruppenadmins ' +
+        'bzw. Nutzer der Projekte) werden ebenfalls gelöscht: ' + cascade.join(', ');
       box.style.display = '';
     } else {
       box.style.display = 'none';
@@ -427,24 +402,6 @@ SQLution - Accountverwaltung
   prefixInput.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(checkPrefix, 300); });
   updateMode();
   checkPrefix();
-
-  // ---- passwords as CSV ----
-  const dl = document.getElementById('download-passwords');
-  if (dl) dl.addEventListener('click', () => {
-    const lines = [['Nutzername', 'Passwort']];
-    document.querySelectorAll('#password-table tbody tr').forEach(tr => {
-      lines.push(Array.from(tr.querySelectorAll('td')).map(td => td.textContent.trim()));
-    });
-    const csv = '\uFEFF' + lines.map(l => l.map(v => '"' + v.replaceAll('"', '""') + '"').join(';')).join('\r\n');
-    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'zugangsdaten.csv';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  });
 })();
 </script>
 {% endblock %}

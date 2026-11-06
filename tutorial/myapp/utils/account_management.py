@@ -500,8 +500,13 @@ def _remove_review_copies_of(user_id):
             _remove_directory(os.path.join(REVIEW_ROOT, entry))
 
 
+def owns_data_folder(user) -> bool:
+    """'<base>_admin' and '<base>' own their data folder. db-users ('<base>_<name>') only use it."""
+    return user.username.endswith(ACCOUNT_SUFFIX) or '_' not in user.username
+
+
 def accounts_affected_by_deletion(user) -> list:
-    """`user`, accounts sharing its data folder, and (for group admins) all managed accounts, recursively."""
+    """`user`, the db-users of its data folder (if it owns one), and (for group admins) all managed accounts, recursively."""
     affected = []
     seen = set()
 
@@ -510,9 +515,10 @@ def accounts_affected_by_deletion(user) -> list:
             return
         seen.add(u.pk)
         affected.append(u)
-        base = get_user_home_directory(u.username).rstrip('/').split('/')[-1]
-        for sibling in User.objects.filter(username__istartswith=f"{base}_").exclude(pk=u.pk):
-            visit(sibling)
+        if owns_data_folder(u):
+            base = get_user_home_directory(u.username).rstrip('/').split('/')[-1]
+            for sibling in User.objects.filter(username__istartswith=f"{base}_").exclude(pk=u.pk):
+                visit(sibling)
         for managed in User.objects.filter(profile__managed_by=u):
             visit(managed)
 
@@ -532,7 +538,7 @@ def _collect_deletion_targets(users) -> list:
 
 
 def _check_deletable(to_delete, actor):
-    """Never delete the global admin, the acting account, or anything sharing its data folder."""
+    """Never delete the global admin, the acting account, or the owner of its data folder."""
     protected = {GLOBAL_ADMIN_USERNAME}
     actor_home = None
     if actor is not None:
@@ -541,7 +547,7 @@ def _check_deletable(to_delete, actor):
     for u in to_delete:
         if u.username in protected:
             raise AccountManagementError(f'„{u.username}“ kann hier nicht gelöscht werden.')
-        if actor_home and get_user_home_directory(u.username) == actor_home:
+        if actor_home and owns_data_folder(u) and get_user_home_directory(u.username) == actor_home:
             raise AccountManagementError(f'„{u.username}“ teilt sich den Datenordner mit deinem Account.')
 
 
@@ -560,10 +566,11 @@ def _purge_account(user):
 
     end_sessions([user])
     home = get_user_home_directory(user.username)
-    _remove_directory(home)
+    if owns_data_folder(user):  # a db-user's folder is its db-admin's project
+        _remove_directory(home)
+        _delete_zipped_folders(home)
     _remove_directory(get_review_directory(user.pk))  # the account's own review slot (if it reviewed others)
     _remove_review_copies_of(user.pk)                  # copies of this account in other reviewers' slots
-    _delete_zipped_folders(home)
     AccessAttempt.objects.filter(username=user.username).delete()
     user.delete()  # profile is removed by CASCADE; AuditLog rows keep the username
 
@@ -571,7 +578,8 @@ def _purge_account(user):
 def delete_accounts(users, actor=None) -> list:
     """Delete accounts without leaving data behind (login audit logs are kept on purpose).
 
-    Deleting a group admin also deletes every account they manage.
+    Deleting a group admin also deletes every account they manage, deleting a db-admin
+    also deletes its db-users. Deleting a db-user keeps the project it uses.
     Returns the deleted usernames.
     """
     to_delete = _collect_deletion_targets(users)

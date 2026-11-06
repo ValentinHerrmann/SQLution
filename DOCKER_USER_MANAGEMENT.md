@@ -45,6 +45,20 @@ Day-to-day account management happens in the app at `/user_management/` ("Accoun
 - **Deleting** asks you to type `LÖSCHEN`. It removes the account, its data folder, its sessions, review copies and brute-force records. Login audit logs are kept. Deleting a group admin also deletes every account they manage.
 - **Review**: copies an account's project into a separate review slot (`user_databases/~review/<id>/`) and switches the teacher's session to it. The student's original and the teacher's own project are never changed. Use "Zurück zu meinem Projekt" in the banner to leave.
 
+### Nutzer & Freigaben (db-users)
+
+Once a db-admin account (`<name>_admin`) exists, its owner works independently under "Nutzer & Freigaben" (`/db_users/`):
+
+- **db-users**: the db-admin creates accounts `<name>_<nutzer>` (e.g. `gruppe1_kasse`). They use the db-admin's project but can only run the released queries under "Nutzerfunktionen". Passwords are shown once (CSV/print), like in the Accountverwaltung. db-users can be locked, unlocked, given new passwords and deleted. Deleting a db-user keeps the project. db-users inherit the teacher, course prefix and scheduled dates of their db-admin, so the teacher sees them (listed below their db-admin) and deleting the db-admin deletes them too.
+- **Freigaben**: a matrix of queries × db-users ("Alle" also covers db-users created later). New queries are visible to nobody but the db-admin. The settings are stored in `_zugriff.json` in the project folder, using the short names (`kasse`), so they are part of the project zip:
+
+  ```json
+  {"Preise": "*", "Umsatz": ["kasse"]}
+  ```
+
+- **Old projects**: the old file-name convention (`kasse_Umsatz.sql` visible only to `<name>_kasse`, files without `_` visible to everyone) is gone. The first time a project without `_zugriff.json` is opened, it is converted once: `kasse_Umsatz.sql` becomes `Umsatz.sql` released to `kasse`, `<<kasse_Umsatz>>` references are rewritten, and every renamed or changed file is backed up as `<name>.sql_bak` first. If the new name is taken, the file keeps its old name. Uploading an old project zip (without `_zugriff.json`) converts it the same way.
+- Not available for db-admins whose name contains a further `_` (e.g. `max_mueller_admin`, see issue #89), and not while reviewing someone else's project.
+
 ### Scheduled locks and deletions
 
 Scheduled locks and deletions are applied automatically: at most once a minute while the app receives requests, before every login, and immediately for a logged-in user whose time has passed. To apply them on a fixed schedule as well (for example from cron), run:

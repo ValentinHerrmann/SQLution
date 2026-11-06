@@ -11,6 +11,7 @@ from myapp.utils.decorators import *
 from myapp.utils.directories import *
 from myapp.utils.api_utils import *
 from myapp.utils.pdf_export import build_result_pdf, pdf_filename
+from myapp.utils import query_access
 import re
 import os
 
@@ -20,15 +21,13 @@ import os
 def user_functions(request):
     dir = get_user_directory(request.user.username)
     suffix = get_user_suffix(request.user.username)
-    sql_files = []
-    if os.path.exists(dir):
-        accessAllowed = lambda x: suffix=='' or '_' not in x or x.startswith(suffix+'_')
-        sql_files = [file[:-4] for file in os.listdir(dir) if file.endswith('.sql') and accessAllowed(file)]
-    sql_files.sort()
+    if suffix == '':
+        sql_files = query_access.list_converted_queries(dir)  # db-admin: everything
+    else:
+        sql_files = query_access.visible_queries(dir, suffix)  # db-user: what the db-admin released
 
-    removePrefix = lambda x: x.split('_')[1] if '_' in x else x 
     get_category = lambda x: x.split(' - ')[0] if ' - ' in x else 'Allgemein'
-    sqlfiledict = [{'file': file, 'name': removePrefix(file), 'category': get_category( removePrefix(file)) } for file in sql_files]
+    sqlfiledict = [{'file': file, 'name': file, 'category': get_category(file) } for file in sql_files]
 
     context = {'data': {}}
     for entry in sqlfiledict:
@@ -56,8 +55,7 @@ def user_functions_execute(request):
         if sqlfile is not None and sqlfile != '':
             dir = get_user_directory(request.user.username)
             suffix = get_user_suffix(request.user.username)
-            accessAllowed = lambda x: suffix=='' or '_' not in x or x.startswith(suffix+'_')
-            if not accessAllowed(sqlfile+'.sql'):
+            if suffix != '' and not query_access.can_see(query_access.load_access(dir), sqlfile, suffix):
                 logout(request)
                 messages.error(request, 'Du hast versucht auf eine SQL-Abfrage zuzugreifen, auf die du nicht zugreifen darfst. Du wurdest aus Sicherheitsgründen abgemeldet.')
                 return redirect('login')
@@ -153,7 +151,7 @@ def user_functions_execute(request):
 
 def render_user_fun_exec(request, sql, inputs, sqlfile, result, error, columns, dropdowns, inpVals=None, export=None):
     result = remove_nones_from_sqlresult(result)
-    title = sqlfile.split('_')[1] if '_' in sqlfile else sqlfile
+    title = sqlfile
     if export == 'pdf' and columns and not error:
         response = HttpResponse(build_result_pdf(title, columns, result), content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="{pdf_filename(title)}"'

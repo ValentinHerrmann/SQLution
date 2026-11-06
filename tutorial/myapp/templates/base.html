@@ -77,6 +77,11 @@
             {% endif %}
           </li>
           <li class="nav-item">
+            {% if can_manage_db_users %}
+              <a class="nav-link {% if request.resolver_match.url_name == 'db_users' %}active{% endif %}" href="{% url 'db_users' %}">Nutzer & Freigaben</a>
+            {% endif %}
+          </li>
+          <li class="nav-item">
             {% if can_manage_accounts %}
               <a class="nav-link {% if request.resolver_match.url_name == 'user_management' %}active{% endif %}" href="{% url 'user_management' %}">Accountverwaltung</a>
             {% endif %}

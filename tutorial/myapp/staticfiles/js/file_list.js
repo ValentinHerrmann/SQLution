@@ -57,15 +57,43 @@ async function on_rnBtn_click(e, f) {
         "far fa-edit"
     );
     if (ok) {
-        let sql = '';
-        const editor = globalThis.sqlAceEditor;
-        if (editor) {
-            sql = editor.getValue();
+        let newName = prompt('Neuer Dateiname', f.replace(/\.sql$/i, ''));
+        if (!newName) return;
+        if (!newName.toLowerCase().endsWith('.sql')) newName += '.sql';
+        if (await renameFile(f, newName) && filenameOnLoad === f) {
+            filenameOnLoad = newName;
         }
-        if (await addSQLFileDialog(sql)) {
-            await deleteFile(f);
-        }
+        await loadFileList();
     }
+}
+
+/**
+ * Renames a SQL file on the server. Its visibility for db-users moves along.
+ * @param {string} oldName - Current filename
+ * @param {string} newName - New filename
+ * @returns {Promise<boolean>} True if the rename was successful
+ */
+async function renameFile(oldName, newName) {
+    try {
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+        const headers = { "Content-Type": "application/json" };
+        if (csrftoken) headers['X-CSRFToken'] = csrftoken;
+        const resp = await fetch('/api/sql/rename', {
+            method: "POST",
+            headers: headers,
+            body: JSON.stringify({ old: oldName, new: newName })
+        });
+        if (resp.ok) return true;
+        if (resp.status === 409) {
+            showAlertDialog(`Eine Datei "${newName}" gibt es schon.`, "fas fa-exclamation-triangle", "var(--accent-danger)");
+        } else {
+            showAlertDialog("Fehler beim Umbenennen der SQL Datei.", "fas fa-exclamation-triangle", "var(--accent-danger)");
+        }
+    } catch (err) {
+        console.error('Rename error', err);
+        showAlertDialog("Fehler beim Umbenennen der SQL Datei.", "fas fa-exclamation-triangle", "var(--accent-danger)");
+    }
+    return false;
 }
 
 /**

@@ -53,8 +53,9 @@ def user_management(request):
     rows = []
     for user in accounts:
         profile = get_profile(user)
+        owns_folder = am.owns_data_folder(user)
         cascade = []
-        if user.pk in group_admin_ids:
+        if user.pk in group_admin_ids or owns_folder:
             cascade = [u.username for u in am.accounts_affected_by_deletion(user) if u.pk != user.pk]
         rows.append({
             'user': user,
@@ -63,7 +64,11 @@ def user_management(request):
             'online': str(user.pk) in online,
             'is_group_admin': user.pk in group_admin_ids,
             'cascade': cascade,
+            # db-users ('<base>_<name>') are listed right below the account whose project they use
+            'db_user_of': '' if owns_folder else user.username.split('_', 1)[0],
         })
+    rows.sort(key=lambda r: (r['db_user_of'] or r['user'].username.removesuffix(am.ACCOUNT_SUFFIX),
+                             r['db_user_of'] != '', r['user'].username))
 
     if global_admin:
         prefixes = AccountPrefix.objects.select_related('owner').all()
