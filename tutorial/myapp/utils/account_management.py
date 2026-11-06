@@ -262,6 +262,84 @@ def _validate_future(value, label, now, errors):
         errors.append(f'„{label}“ muss in der Zukunft liegen.')
 
 
+def _check_create_inputs(actor, result, prefix, shared_password, delete_at, lock_at):
+    """Validate everything except the individual names; errors go into `result`."""
+    now = timezone.now()
+    _validate_future(delete_at, 'Automatisch löschen am', now, result.errors)
+    _validate_future(lock_at, 'Sperren am', now, result.errors)
+    if prefix:
+        check = check_prefix(actor, prefix)
+        if not check.valid or not check.free:
+            result.errors.append(check.message)
+            result.prefix_suggestion = check.suggestion
+    if shared_password:
+        result.errors += [f'Gemeinsames Passwort: {m}' for m in validate_shared_password(shared_password)]
+
+
+def _name_error(actor, raw, base, seen, check_availability):
+    """The error message for one requested name, or None if the name can be used."""
+    username = username_for(base)
+    if len(username) > MAX_USERNAME_LENGTH:
+        return f'„{raw}“ ist zu lang.'
+    if base in seen:
+        return f'„{username}“ kommt mehrfach vor.'
+    if not check_availability or is_base_available(actor, base):
+        return None
+    foreign = _foreign_prefix_owner(actor, base)
+    if foreign is not None:
+        return f'„{username}“ liegt im Präfix „{foreign.name}“, das jemand anderem gehört.'
+    suggestion = suggest_free_base(actor, base, taken=seen | {base})
+    hint = f' Vorschlag: „{username_for(suggestion)}“' if suggestion else ''
+    return f'„{username}“ ist bereits vergeben.{hint}'
+
+
+def _resolve_bases(actor, names, prefix, result):
+    """Turn the requested names into data-folder names; errors go into `result`."""
+    names = [n for n in (names or []) if n and n.strip()]
+    if not names:
+        result.errors.append('Bitte mindestens einen Namen angeben.')
+    if len(names) > MAX_BATCH_SIZE:
+        result.errors.append(f'Höchstens {MAX_BATCH_SIZE} Accounts auf einmal.')
+
+    # Name checks are only meaningful once the prefix itself is usable.
+    check_availability = not result.prefix_suggestion
+    bases = []
+    seen = set()
+    for raw in names:
+        slug = slugify_name(raw)
+        if not slug:
+            result.errors.append(f'„{raw}“ ist kein gültiger Name (erlaubt: Buchstaben, Ziffern, Bindestrich).')
+            continue
+        base = build_base(prefix, slug)
+        error = _name_error(actor, raw, base, seen, check_availability)
+        seen.add(base)
+        if error:
+            result.errors.append(error)
+        else:
+            bases.append(base)
+    return bases
+
+
+def _persist_accounts(actor, bases, prefix, shared_password, delete_at, lock_at):
+    """Create the users and profiles in one transaction. Returns [(username, password)]."""
+    managed_by = None if is_global_admin(actor) else actor
+    created = []
+    with transaction.atomic():
+        prefix_obj = claim_prefix(actor, prefix) if prefix else None
+        for base in bases:
+            username = username_for(base)
+            password = shared_password or generate_password()
+            user = User.objects.create_user(username=username, password=password)
+            profile = get_profile(user)
+            profile.managed_by = managed_by
+            profile.prefix = prefix_obj
+            profile.delete_at = delete_at
+            profile.lock_at = lock_at
+            profile.save()
+            created.append((username, password))
+    return created
+
+
 def create_accounts(actor, names, prefix=None, shared_password=None, delete_at=None, lock_at=None) -> CreateResult:
     """Create '<prefix>-<name>_admin' accounts managed by `actor`.
 
@@ -273,77 +351,20 @@ def create_accounts(actor, names, prefix=None, shared_password=None, delete_at=N
         result.errors.append('Keine Berechtigung, Accounts anzulegen.')
         return result
 
-    now = timezone.now()
-    _validate_future(delete_at, 'Automatisch löschen am', now, result.errors)
-    _validate_future(lock_at, 'Sperren am', now, result.errors)
-
     prefix = normalize_prefix(prefix)
     result.prefix = prefix
-    if prefix:
-        check = check_prefix(actor, prefix)
-        if not check.valid or not check.free:
-            result.errors.append(check.message)
-            result.prefix_suggestion = check.suggestion
-
-    if shared_password:
-        result.errors += [f'Gemeinsames Passwort: {m}' for m in validate_shared_password(shared_password)]
-
-    names = [n for n in (names or []) if n and n.strip()]
-    if not names:
-        result.errors.append('Bitte mindestens einen Namen angeben.')
-    if len(names) > MAX_BATCH_SIZE:
-        result.errors.append(f'Höchstens {MAX_BATCH_SIZE} Accounts auf einmal.')
-
-    bases = []
-    seen = set()
-    for raw in names:
-        slug = slugify_name(raw)
-        if not slug:
-            result.errors.append(f'„{raw}“ ist kein gültiger Name (erlaubt: Buchstaben, Ziffern, Bindestrich).')
-            continue
-        base = build_base(prefix, slug)
-        username = username_for(base)
-        if len(username) > MAX_USERNAME_LENGTH:
-            result.errors.append(f'„{raw}“ ist zu lang.')
-            continue
-        if base in seen:
-            result.errors.append(f'„{username}“ kommt mehrfach vor.')
-            continue
-        seen.add(base)
-        # Name checks are only meaningful once the prefix itself is usable.
-        if not result.prefix_suggestion and not is_base_available(actor, base):
-            foreign = _foreign_prefix_owner(actor, base)
-            if foreign is not None:
-                result.errors.append(f'„{username}“ liegt im Präfix „{foreign.name}“, das jemand anderem gehört.')
-                continue
-            suggestion = suggest_free_base(actor, base, taken=seen)
-            hint = f' Vorschlag: „{username_for(suggestion)}“' if suggestion else ''
-            result.errors.append(f'„{username}“ ist bereits vergeben.{hint}')
-            continue
-        bases.append(base)
-
+    _check_create_inputs(actor, result, prefix, shared_password, delete_at, lock_at)
+    bases = _resolve_bases(actor, names, prefix, result)
     if result.errors:
         return result
 
-    managed_by = None if is_global_admin(actor) else actor
     try:
-        with transaction.atomic():
-            prefix_obj = claim_prefix(actor, prefix) if prefix else None
-            for base in bases:
-                username = username_for(base)
-                password = shared_password or generate_password()
-                user = User.objects.create_user(username=username, password=password)
-                profile = get_profile(user)
-                profile.managed_by = managed_by
-                profile.prefix = prefix_obj
-                profile.delete_at = delete_at
-                profile.lock_at = lock_at
-                profile.save()
-                result.created.append((username, password))
-    except (AccountManagementError, IntegrityError) as e:
-        result.created = []
-        result.errors.append(str(e) if isinstance(e, AccountManagementError)
-                             else 'Ein Name wurde gerade von jemand anderem vergeben. Bitte erneut versuchen.')
+        result.created = _persist_accounts(actor, bases, prefix, shared_password, delete_at, lock_at)
+    except AccountManagementError as e:
+        result.errors.append(str(e))
+        return result
+    except IntegrityError:
+        result.errors.append('Ein Name wurde gerade von jemand anderem vergeben. Bitte erneut versuchen.')
         return result
 
     for username, _ in result.created:
@@ -499,14 +520,7 @@ def accounts_affected_by_deletion(user) -> list:
     return affected
 
 
-def delete_accounts(users, actor=None) -> list:
-    """Delete accounts without leaving data behind (login audit logs are kept on purpose).
-
-    Deleting a group admin also deletes every account they manage.
-    Returns the deleted usernames.
-    """
-    from axes.models import AccessAttempt
-
+def _collect_deletion_targets(users) -> list:
     to_delete = []
     seen = set()
     for user in users:
@@ -514,36 +528,58 @@ def delete_accounts(users, actor=None) -> list:
             if u.pk not in seen:
                 seen.add(u.pk)
                 to_delete.append(u)
+    return to_delete
 
+
+def _check_deletable(to_delete, actor):
+    """Never delete the global admin, the acting account, or anything sharing its data folder."""
     protected = {GLOBAL_ADMIN_USERNAME}
+    actor_home = None
     if actor is not None:
         protected.add(actor.username)
         actor_home = get_user_home_directory(actor.username)
-    else:
-        actor_home = None
     for u in to_delete:
         if u.username in protected:
             raise AccountManagementError(f'„{u.username}“ kann hier nicht gelöscht werden.')
         if actor_home and get_user_home_directory(u.username) == actor_home:
             raise AccountManagementError(f'„{u.username}“ teilt sich den Datenordner mit deinem Account.')
 
+
+def _delete_zipped_folders(home):
+    for zipped in ZippedFolder.objects.filter(name=home):
+        try:
+            zipped.zip_file.delete(save=False)
+        except Exception as e:
+            print(f"Removing stored zip for {home} failed: {e}")
+        zipped.delete()
+
+
+def _purge_account(user):
+    """Remove one account and everything that belongs to it (except login audit logs)."""
+    from axes.models import AccessAttempt
+
+    end_sessions([user])
+    home = get_user_home_directory(user.username)
+    _remove_directory(home)
+    _remove_directory(get_review_directory(user.pk))  # the account's own review slot (if it reviewed others)
+    _remove_review_copies_of(user.pk)                  # copies of this account in other reviewers' slots
+    _delete_zipped_folders(home)
+    AccessAttempt.objects.filter(username=user.username).delete()
+    user.delete()  # profile is removed by CASCADE; AuditLog rows keep the username
+
+
+def delete_accounts(users, actor=None) -> list:
+    """Delete accounts without leaving data behind (login audit logs are kept on purpose).
+
+    Deleting a group admin also deletes every account they manage.
+    Returns the deleted usernames.
+    """
+    to_delete = _collect_deletion_targets(users)
+    _check_deletable(to_delete, actor)
     deleted = []
     for u in to_delete:
-        end_sessions([u])
-        home = get_user_home_directory(u.username)
-        _remove_directory(home)
-        _remove_directory(get_review_directory(u.pk))  # the account's own review slot (if it reviewed others)
-        _remove_review_copies_of(u.pk)                  # copies of this account in other reviewers' slots
-        for zipped in ZippedFolder.objects.filter(name=home):
-            try:
-                zipped.zip_file.delete(save=False)
-            except Exception:
-                pass
-            zipped.delete()
-        AccessAttempt.objects.filter(username=u.username).delete()
         deleted.append(u.username)
-        u.delete()  # profile is removed by CASCADE; AuditLog rows keep the username
-
+        _purge_account(u)
     release_unused_prefixes()
     return deleted
 
@@ -556,39 +592,50 @@ def _fmt(dt):
     return timezone.localtime(dt).strftime('%Y-%m-%d %H:%M') if dt else ''
 
 
+EXPORT_CSV_HEADER = ['username', 'kurs', 'betreut_von', 'erstellt', 'gesperrt', 'sperren_am', 'loeschen_am']
+
+
+def _export_csv_row(user) -> list:
+    profile = get_profile(user)
+    return [
+        user.username,
+        profile.prefix.name if profile.prefix else '',
+        profile.managed_by.username if profile.managed_by else '',
+        _fmt(profile.created_at),
+        'nein' if user.is_active else 'ja',
+        _fmt(profile.lock_at),
+        _fmt(profile.delete_at),
+    ]
+
+
+def _zip_folder(zipf, home, folder):
+    """Add every file of `home` (except the lockfile) to the zip under `folder/`."""
+    for root, _dirs, files in os.walk(home):
+        for name in files:
+            if name == 'lockfile':
+                continue
+            abs_path = os.path.join(root, name)
+            rel = os.path.relpath(abs_path, start=home)
+            zipf.write(abs_path, arcname=f"{folder}/{rel}")
+
+
 def export_accounts_zip(users) -> bytes:
     """One folder per account (its data folder) plus accounts.csv."""
     memory_file = io.BytesIO()
     csv_buffer = io.StringIO()
     writer = csv.writer(csv_buffer, delimiter=';')
-    writer.writerow(['username', 'kurs', 'betreut_von', 'erstellt', 'gesperrt', 'sperren_am', 'loeschen_am'])
+    writer.writerow(EXPORT_CSV_HEADER)
 
     with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
         written_folders = set()
         for user in users:
-            profile = get_profile(user)
-            writer.writerow([
-                user.username,
-                profile.prefix.name if profile.prefix else '',
-                profile.managed_by.username if profile.managed_by else '',
-                _fmt(profile.created_at),
-                'ja' if not user.is_active else 'nein',
-                _fmt(profile.lock_at),
-                _fmt(profile.delete_at),
-            ])
+            writer.writerow(_export_csv_row(user))
             home = get_user_home_directory(user.username)
             folder = home.rstrip('/').split('/')[-1]
-            if folder in written_folders or not os.path.isdir(home):
-                continue
-            written_folders.add(folder)
-            for root, _dirs, files in os.walk(home):
-                for name in files:
-                    if name == 'lockfile':
-                        continue
-                    abs_path = os.path.join(root, name)
-                    rel = os.path.relpath(abs_path, start=home)
-                    zipf.write(abs_path, arcname=f"{folder}/{rel}")
-        zipf.writestr('accounts.csv', '﻿' + csv_buffer.getvalue())
+            if folder not in written_folders and os.path.isdir(home):
+                written_folders.add(folder)
+                _zip_folder(zipf, home, folder)
+        zipf.writestr('accounts.csv', '\ufeff' + csv_buffer.getvalue())
     return memory_file.getvalue()
 
 

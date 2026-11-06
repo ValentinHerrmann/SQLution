@@ -1,5 +1,4 @@
 """Accountverwaltung: account management for group admins (teachers) and the global admin (issue #100)."""
-from datetime import datetime
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -152,66 +151,94 @@ def create_accounts_view(request):
     return redirect(PAGE)
 
 
+def _bulk_lock(request, users):
+    am.lock_accounts(users, f'Gesperrt von {request.user.username}')
+    messages.success(request, f'{len(users)} Account(s) gesperrt.')
+
+
+def _bulk_unlock(request, users):
+    am.unlock_accounts(users)
+    messages.success(request, f'{len(users)} Account(s) entsperrt.')
+
+
+def _requested_date_changes(post) -> dict:
+    """{'delete_at': datetime|None, 'lock_at': …} for the fields the user filled in or cleared."""
+    changes = {}
+    for key in ('delete_at', 'lock_at'):
+        if post.get(f'clear_{key}'):
+            changes[key] = None
+        elif post.get(f'bulk_{key}'):
+            value = am.parse_local_datetime(post.get(f'bulk_{key}'))
+            if value <= timezone.now():
+                raise am.AccountManagementError('Das Datum muss in der Zukunft liegen.')
+            changes[key] = value
+    return changes
+
+
+def _bulk_set_dates(request, users):
+    changes = _requested_date_changes(request.POST)
+    if not changes:
+        messages.info(request, 'Keine Änderung angegeben.')
+        return
+    am.set_dates(users, **changes)
+    messages.success(request, f'Termine für {len(users)} Account(s) aktualisiert.')
+
+
+def _bulk_reset_password(request, users):
+    shared = request.POST.get('shared_password', '') or None
+    errors = am.validate_shared_password(shared) if shared else []
+    if errors:
+        for e in errors:
+            messages.error(request, f'Gemeinsames Passwort: {e}')
+        return
+    _store_passwords(request, am.reset_passwords(users, shared))
+    messages.success(request, f'Passwörter für {len(users)} Account(s) zurückgesetzt.')
+
+
+def _bulk_download(request, users):
+    response = HttpResponse(am.export_accounts_zip(users), content_type='application/zip')
+    stamp = timezone.localtime().strftime('%Y-%m-%d_%H-%M')
+    response['Content-Disposition'] = f'attachment; filename="accounts_{stamp}.zip"'
+    return response
+
+
+def _bulk_delete(request, users):
+    if request.POST.get('confirm', '').strip() != am.DELETE_CONFIRMATION:
+        messages.error(request, f'Zum Löschen bitte „{am.DELETE_CONFIRMATION}“ eingeben.')
+        return
+    deleted = am.delete_accounts(users, actor=request.user)
+    messages.success(request, f'{len(deleted)} Account(s) samt Daten gelöscht: {", ".join(deleted)}')
+
+
+BULK_ACTIONS = {
+    'lock': _bulk_lock,
+    'unlock': _bulk_unlock,
+    'set_dates': _bulk_set_dates,
+    'reset_password': _bulk_reset_password,
+    'download': _bulk_download,
+    'delete': _bulk_delete,
+}
+
+
 @login_required
 @user_passes_test(can_manage_accounts)
 @require_POST
 @csrf_protect
 def bulk_action(request):
-    action = request.POST.get('action', '')
+    handler = BULK_ACTIONS.get(request.POST.get('action', ''))
+    if handler is None:
+        messages.error(request, 'Unbekannte Aktion.')
+        return redirect(PAGE)
     users = _resolve_targets(request)
     if not users:
         messages.error(request, 'Keine Accounts ausgewählt.')
         return redirect(PAGE)
-
     try:
-        if action == 'lock':
-            am.lock_accounts(users, f'Gesperrt von {request.user.username}')
-            messages.success(request, f'{len(users)} Account(s) gesperrt.')
-        elif action == 'unlock':
-            am.unlock_accounts(users)
-            messages.success(request, f'{len(users)} Account(s) entsperrt.')
-        elif action == 'set_dates':
-            changes = {}
-            for key in ('delete_at', 'lock_at'):
-                if request.POST.get(f'clear_{key}'):
-                    changes[key] = None
-                elif request.POST.get(f'bulk_{key}'):
-                    value = am.parse_local_datetime(request.POST.get(f'bulk_{key}'))
-                    if value <= timezone.now():
-                        raise am.AccountManagementError('Das Datum muss in der Zukunft liegen.')
-                    changes[key] = value
-            if not changes:
-                messages.info(request, 'Keine Änderung angegeben.')
-            else:
-                am.set_dates(users, **changes)
-                messages.success(request, f'Termine für {len(users)} Account(s) aktualisiert.')
-        elif action == 'reset_password':
-            shared = request.POST.get('shared_password', '') or None
-            if shared:
-                errors = am.validate_shared_password(shared)
-                if errors:
-                    for e in errors:
-                        messages.error(request, f'Gemeinsames Passwort: {e}')
-                    return redirect(PAGE)
-            _store_passwords(request, am.reset_passwords(users, shared))
-            messages.success(request, f'Passwörter für {len(users)} Account(s) zurückgesetzt.')
-        elif action == 'download':
-            data = am.export_accounts_zip(users)
-            response = HttpResponse(data, content_type='application/zip')
-            stamp = datetime.now().strftime('%Y-%m-%d_%H-%M')
-            response['Content-Disposition'] = f'attachment; filename="accounts_{stamp}.zip"'
-            return response
-        elif action == 'delete':
-            if request.POST.get('confirm', '').strip() != am.DELETE_CONFIRMATION:
-                messages.error(request, f'Zum Löschen bitte „{am.DELETE_CONFIRMATION}“ eingeben.')
-                return redirect(PAGE)
-            deleted = am.delete_accounts(users, actor=request.user)
-            messages.success(request, f'{len(deleted)} Account(s) samt Daten gelöscht: {", ".join(deleted)}')
-        else:
-            messages.error(request, 'Unbekannte Aktion.')
+        response = handler(request, users)
     except am.AccountManagementError as e:
         messages.error(request, str(e))
-    return redirect(PAGE)
+        response = None
+    return response or redirect(PAGE)
 
 
 @login_required

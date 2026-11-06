@@ -9,9 +9,9 @@ SQLution - Accountverwaltung
   .um-table td, .um-table th { vertical-align: middle; }
   .um-online { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #28a745; margin-left: 4px; }
   .um-toolbar .btn { margin: 2px; }
-  .um-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; display: none; justify-content: center; align-items: center; }
-  .um-modal-overlay.show { display: flex; }
-  .um-modal { background-color: var(--bg-tertiary); color: var(--text-primary); padding: 20px; border-radius: 8px; max-width: 520px; width: calc(100% - 32px); box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+  dialog.um-modal { border: none; background-color: var(--bg-tertiary); color: var(--text-primary); padding: 0; border-radius: 8px; max-width: 520px; width: calc(100% - 32px); box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+  dialog.um-modal > div { padding: 20px; }
+  dialog.um-modal::backdrop { background: rgba(0,0,0,0.5); }
   .um-modal ul { max-height: 220px; overflow-y: auto; }
   #prefix-feedback.ok { color: #28a745; }
   #prefix-feedback.bad { color: #dc3545; }
@@ -19,7 +19,7 @@ SQLution - Accountverwaltung
     body * { visibility: hidden; }
     #password-box, #password-box * { visibility: visible; }
     #password-box { position: absolute; left: 0; top: 0; width: 100%; }
-    .no-print { display: none !important; }
+    #password-box .no-print { display: none; }
   }
 </style>
 
@@ -97,7 +97,7 @@ SQLution - Accountverwaltung
                 <small id="prefix-feedback" class="form-text"></small>
               </div>
               <div class="form-group col-md-8">
-                <label class="d-block">Namen</label>
+                <span class="d-block mb-1">Namen</span>
                 <div class="form-check form-check-inline">
                   <input class="form-check-input" type="radio" name="mode" id="mode-list" value="list" {% if form_data.mode != 'series' %}checked{% endif %}>
                   <label class="form-check-label" for="mode-list">Liste</label>
@@ -107,11 +107,12 @@ SQLution - Accountverwaltung
                   <label class="form-check-label" for="mode-series">Serie</label>
                 </div>
                 <div id="names-list" class="mt-1">
-                  <textarea class="form-control" name="names" rows="3" placeholder="Ein Name pro Zeile, z.B. gruppe1">{{ form_data.names }}</textarea>
+                  <label for="names" class="sr-only">Namen, einer pro Zeile</label>
+                  <textarea class="form-control" id="names" name="names" rows="3" placeholder="Ein Name pro Zeile, z.B. gruppe1">{{ form_data.names }}</textarea>
                 </div>
                 <div id="names-series" class="form-row mt-1">
-                  <div class="col-8"><input type="text" class="form-control" name="series_base" placeholder="Basisname, z.B. gruppe" value="{{ form_data.series_base }}"></div>
-                  <div class="col-4"><input type="number" class="form-control" name="series_count" min="1" max="{{ max_batch }}" placeholder="Anzahl" value="{{ form_data.series_count }}"></div>
+                  <div class="col-8"><label for="series_base" class="sr-only">Basisname</label><input type="text" class="form-control" id="series_base" name="series_base" placeholder="Basisname, z.B. gruppe" value="{{ form_data.series_base }}"></div>
+                  <div class="col-4"><label for="series_count" class="sr-only">Anzahl</label><input type="number" class="form-control" id="series_count" name="series_count" min="1" max="{{ max_batch }}" placeholder="Anzahl" value="{{ form_data.series_count }}"></div>
                 </div>
                 <small class="form-text um-hint">Ergibt z.B. <code id="name-preview">…</code></small>
               </div>
@@ -201,7 +202,7 @@ SQLution - Accountverwaltung
           <table class="table table-sm table-striped um-table" id="accounts-table">
             <thead>
               <tr>
-                <th><input type="checkbox" id="select-all" title="Alle angezeigten auswählen"></th>
+                <th><label for="select-all" class="sr-only">Alle angezeigten auswählen</label><input type="checkbox" id="select-all" title="Alle angezeigten auswählen"></th>
                 <th>Account</th>
                 <th>Kurs</th>
                 {% if is_global %}<th>Betreut von</th>{% endif %}
@@ -215,7 +216,7 @@ SQLution - Accountverwaltung
             <tbody>
               {% for row in rows %}
                 <tr data-course="{{ row.prefix }}" data-username="{{ row.user.username }}" data-id="{{ row.user.pk }}">
-                  <td><input type="checkbox" name="ids" value="{{ row.user.pk }}" class="row-select"></td>
+                  <td><label for="select-{{ row.user.pk }}" class="sr-only">{{ row.user.username }} auswählen</label><input type="checkbox" id="select-{{ row.user.pk }}" name="ids" value="{{ row.user.pk }}" class="row-select"></td>
                   <td>
                     <strong>{{ row.user.username }}</strong>{% if row.online %}<span class="um-online" title="Gerade eingeloggt"></span>{% endif %}
                     {% if row.is_group_admin %}<span class="badge badge-info">{{ group_admin_name }}</span>{% endif %}
@@ -252,8 +253,8 @@ SQLution - Accountverwaltung
 <form method="post" id="role-form" style="display: none;">{% csrf_token %}<input type="hidden" name="group_admin" id="role-value"></form>
 
 <!-- Delete confirmation -->
-<div class="um-modal-overlay" id="delete-modal" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
-  <div class="um-modal">
+<dialog class="um-modal" id="delete-modal" aria-labelledby="delete-modal-title">
+  <div>
     <h5 id="delete-modal-title"><i class="fas fa-exclamation-triangle text-danger"></i> Accounts endgültig löschen</h5>
     <p>Folgende Accounts werden <strong>samt aller Daten</strong> (Datenbank, Abfragen, Diagramme, Review-Kopien) gelöscht. Das kann nicht rückgängig gemacht werden.</p>
     <ul id="delete-list"></ul>
@@ -266,7 +267,7 @@ SQLution - Accountverwaltung
       <button type="button" class="btn btn-danger" id="delete-go" disabled>Endgültig löschen</button>
     </div>
   </div>
-</div>
+</dialog>
 
 <script>
 (function () {
@@ -283,7 +284,6 @@ SQLution - Accountverwaltung
     document.querySelectorAll('[data-needs-selection]').forEach(b => { b.disabled = n === 0; });
   }
   checkboxes().forEach(c => c.addEventListener('change', updateSelection));
-  const visibleRows = () => rows.filter(r => r.style.display !== 'none');
   function selectVisible(state) {
     rows.forEach(r => { r.querySelector('.row-select').checked = state && r.style.display !== 'none'; });
     updateSelection();
@@ -329,14 +329,14 @@ SQLution - Accountverwaltung
     }
     confirmInput.value = '';
     goButton.disabled = true;
-    modal.classList.add('show');
+    modal.showModal();
     confirmInput.focus();
   }
-  function closeDeleteModal() { modal.classList.remove('show'); }
+  function closeDeleteModal() { modal.close(); }
   confirmInput.addEventListener('input', () => { goButton.disabled = confirmInput.value.trim() !== CONFIRM_WORD; });
   document.getElementById('delete-cancel').addEventListener('click', closeDeleteModal);
+  // Backdrop clicks hit the <dialog> itself (its content sits in an inner, padded div); Escape is native.
   modal.addEventListener('click', e => { if (e.target === modal) closeDeleteModal(); });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDeleteModal(); });
   document.getElementById('delete-selected').addEventListener('click', openDeleteModal);
   goButton.addEventListener('click', () => {
     document.getElementById('bulk-confirm').value = confirmInput.value.trim();
@@ -386,8 +386,8 @@ SQLution - Accountverwaltung
   const preview = document.getElementById('name-preview');
   const modeSeries = document.getElementById('mode-series');
   function slug(s) {
-    return (s || '').trim().toLowerCase().replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
-      .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    return (s || '').trim().toLowerCase().replaceAll('ä', 'ae').replaceAll('ö', 'oe').replaceAll('ü', 'ue').replaceAll('ß', 'ss')
+      .replace(/[^a-z0-9]+/g, '-').split('-').filter(Boolean).join('-');
   }
   function updateMode() {
     document.getElementById('names-list').style.display = modeSeries.checked ? 'none' : '';
@@ -398,12 +398,12 @@ SQLution - Accountverwaltung
     let name;
     if (modeSeries.checked) {
       const base = document.querySelector('[name=series_base]').value || 'gruppe';
-      const count = parseInt(document.querySelector('[name=series_count]').value || '1', 10) || 1;
+      const count = Number.parseInt(document.querySelector('[name=series_count]').value || '1', 10) || 1;
       name = slug(base) + String(1).padStart(String(count).length, '0');
     } else {
       name = slug(document.querySelector('[name=names]').value.split('\n')[0]) || 'gruppe1';
     }
-    const p = slug(prefixInput.value).replace(/-/g, '');
+    const p = slug(prefixInput.value).replaceAll('-', '');
     preview.textContent = (p ? p + '-' : '') + name + '_admin';
   }
   document.querySelectorAll('[name=mode]').forEach(r => r.addEventListener('change', updateMode));
@@ -435,7 +435,7 @@ SQLution - Accountverwaltung
     document.querySelectorAll('#password-table tbody tr').forEach(tr => {
       lines.push(Array.from(tr.querySelectorAll('td')).map(td => td.textContent.trim()));
     });
-    const csv = '﻿' + lines.map(l => l.map(v => '"' + v.replace(/"/g, '""') + '"').join(';')).join('\r\n');
+    const csv = '\uFEFF' + lines.map(l => l.map(v => '"' + v.replaceAll('"', '""') + '"').join(';')).join('\r\n');
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
     const a = document.createElement('a');
     a.href = url;

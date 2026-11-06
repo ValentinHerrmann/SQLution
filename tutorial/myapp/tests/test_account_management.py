@@ -174,7 +174,8 @@ def test_prefix_claim_reuse_and_block(teacher, other_teacher):
     create(teacher, ['gruppe2'], prefix='q11inf')
 
     check = am.check_prefix(other_teacher, 'q11inf')
-    assert check.valid and not check.free
+    assert check.valid
+    assert not check.free
     assert check.suggestion == 'q11inf2'
     result = am.create_accounts(other_teacher, ['gruppe1'], prefix='q11inf')
     assert not result.ok
@@ -237,7 +238,8 @@ def test_group_admin_cannot_touch_foreign_accounts(teacher, other_teacher):
     assert any('ignoriert' in m for m in message_texts(response))
     own.refresh_from_db(); foreign.refresh_from_db(); independent.refresh_from_db()
     assert not own.is_active
-    assert foreign.is_active and independent.is_active
+    assert foreign.is_active
+    assert independent.is_active
 
     assert c.post(f'/user_management/review/{foreign.pk}/').status_code == 404
     c.post('/user_management/bulk/', {'action': 'delete', 'confirm': am.DELETE_CONFIRMATION, 'ids': [foreign.pk]})
@@ -271,7 +273,8 @@ def test_prefix_check_endpoint(teacher, other_teacher):
     data = client_for(other_teacher).get('/user_management/prefix-check/', {'prefix': 'kurs'}).json()
     assert data == {**data, 'valid': True, 'free': False, 'suggestion': 'kurs2'}
     data = client_for(teacher).get('/user_management/prefix-check/', {'prefix': 'kurs'}).json()
-    assert data['free'] and data['owned_by_me']
+    assert data['free']
+    assert data['owned_by_me']
 
 
 # --------------------------------------------------------------------------------------
@@ -287,7 +290,8 @@ def test_create_view_shows_passwords_once(teacher):
     assert response.status_code == 302
     assert User.objects.filter(username__startswith='q11inf-gruppe').count() == 3
     page = c.get('/user_management/').content.decode()
-    assert 'Zugangsdaten' in page and 'q11inf-gruppe1_admin' in page
+    assert 'Zugangsdaten' in page
+    assert 'q11inf-gruppe1_admin' in page
     assert 'Zugangsdaten' not in c.get('/user_management/').content.decode()
 
 
@@ -297,7 +301,8 @@ def test_create_view_with_dates(teacher):
         'prefix': '', 'mode': 'list', 'names': 'alpha\nbeta', 'lock_at': lock, 'delete_at': '',
     })
     profile = User.objects.get(username='alpha_admin').profile
-    assert profile.lock_at is not None and profile.delete_at is None
+    assert profile.lock_at is not None
+    assert profile.delete_at is None
 
 
 # --------------------------------------------------------------------------------------
@@ -360,9 +365,11 @@ def test_apply_schedules(teacher):
     AccountProfile.objects.filter(user=a).update(lock_at=past)
     AccountProfile.objects.filter(user=b).update(delete_at=past)
     result = am.apply_schedules()
-    assert result['locked'] == 1 and result['deleted'] == 1
+    assert result['locked'] == 1
+    assert result['deleted'] == 1
     a.refresh_from_db()
-    assert not a.is_active and a.profile.lock_at is None
+    assert not a.is_active
+    assert a.profile.lock_at is None
     assert not User.objects.filter(pk=b.pk).exists()
     c.refresh_from_db()
     assert c.is_active
@@ -422,7 +429,8 @@ def test_review_slot(teacher):
     assert c.get('/overview/').status_code == 302
 
     response = c.post(f'/user_management/review/{student.pk}/')
-    assert response.status_code == 302 and response['Location'].endswith('/overview/')
+    assert response.status_code == 302
+    assert response['Location'].endswith('/overview/')
     review_dir = get_review_directory(teacher.pk)
     assert os.path.isfile(os.path.join(review_dir, 'kundenliste.sql'))
     with open(os.path.join(review_dir, REVIEW_SOURCE_MARKER)) as f:
@@ -474,4 +482,5 @@ def test_export_zip(teacher):
         assert 'kurs-a/datenbank.db' in names
         assert 'accounts.csv' in names
         csv_text = z.read('accounts.csv').decode('utf-8-sig')
-        assert 'kurs-a_admin' in csv_text and 'kurs-b_admin' in csv_text
+        assert 'kurs-a_admin' in csv_text
+        assert 'kurs-b_admin' in csv_text

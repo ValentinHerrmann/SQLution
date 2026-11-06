@@ -10,13 +10,13 @@ GROUP_ADMIN_GROUP = "Gruppenadmin"
 
 
 def create_group_admin_group(apps, schema_editor):
-    Group = apps.get_model("auth", "Group")
-    Group.objects.get_or_create(name=GROUP_ADMIN_GROUP)
+    group_model = apps.get_model("auth", "Group")
+    group_model.objects.get_or_create(name=GROUP_ADMIN_GROUP)
 
 
 def remove_group_admin_group(apps, schema_editor):
-    Group = apps.get_model("auth", "Group")
-    Group.objects.filter(name=GROUP_ADMIN_GROUP).delete()
+    group_model = apps.get_model("auth", "Group")
+    group_model.objects.filter(name=GROUP_ADMIN_GROUP).delete()
 
 
 class Migration(migrations.Migration):
