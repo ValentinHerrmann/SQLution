@@ -23,6 +23,22 @@ html, body {
   flex-shrink: 0;
 }
 
+/* Mobile: the opened burger menu lies over the page with the navbar background (issue #160).
+   991.98px is the breakpoint of navbar-expand-lg. */
+@media (max-width: 991.98px) {
+  .navbar .navbar-collapse {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1030;
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 4px 6px var(--shadow-medium);
+    padding: 0 1rem 0.5rem;
+  }
+}
+
 footer {
   flex-shrink: 0;
   height: 30px;

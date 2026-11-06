@@ -95,9 +95,10 @@ body:not([data-theme]) .btn-inactive {
   background-color: var(--border-hover);
 }
 
+/* Outline buttons have no background: their text must be light here, the dark accent colors are almost invisible. */
 [data-theme="dark"] .btn-outline-primary {
-  color: var(--accent-primary);
-  border-color: var(--accent-primary);
+  color: var(--text-secondary);
+  border-color: var(--text-secondary);
 }
 
 [data-theme="dark"] .btn-outline-primary:hover {
@@ -108,7 +109,18 @@ body:not([data-theme]) .btn-inactive {
 
 [data-theme="dark"] .btn-outline-secondary {
   color: var(--text-secondary);
-  border-color: var(--border-color);
+  border-color: var(--border-hover);
+}
+
+[data-theme="dark"] .btn-outline-info {
+  color: var(--text-info);
+  border-color: var(--text-info);
+}
+
+[data-theme="dark"] .btn-outline-info:hover {
+  background-color: var(--accent-info);
+  border-color: var(--accent-info);
+  color: #ffffff;
 }
 
  
