@@ -34,6 +34,25 @@ docker exec -it <container-name> python manage.py createsuperuser
 3. Log in with your superuser credentials
 4. Click "Users" → "Add User" to create additional accounts
 
+## In-App Account Management (Accountverwaltung)
+
+Day-to-day account management happens in the app at `/user_management/` ("Accountverwaltung" in the navigation). It is available to the global admin (`admin`) and to **group admins** (usually teachers).
+
+- **Group admins**: the global admin creates an account for the teacher (for example `mueller_admin`, which also gives them their own project) and clicks the teacher icon in the account table. This adds the account to the Django group `Gruppenadmin`, which you can also manage in `/admin/`.
+- **Creating accounts**: enter a list of names, or a base name plus a count, and optionally a **course prefix** (e.g. `q11inf` creates `q11inf-gruppe1_admin`). A prefix belongs to whoever uses it first and is released when its last account is deleted. Taken names are rejected, and a free name is suggested.
+- **Passwords** are generated per account, or set as one shared password for the whole batch. They are shown **once**, with CSV download and a print view. If a password is lost, reset it.
+- **Bulk actions**: lock and unlock, schedule a lock (`Sperren am`) or an automatic deletion (`Automatisch löschen am`), reset passwords, download data (a zip with one folder per account plus `accounts.csv`), and delete.
+- **Deleting** asks you to type `LÖSCHEN`. It removes the account, its data folder, its sessions, review copies and brute-force records. Login audit logs are kept. Deleting a group admin also deletes every account they manage.
+- **Review**: copies an account's project into a separate review slot (`user_databases/~review/<id>/`) and switches the teacher's session to it. The student's original and the teacher's own project are never changed. Use "Zurück zu meinem Projekt" in the banner to leave.
+
+### Scheduled locks and deletions
+
+Scheduled locks and deletions are applied automatically: at most once a minute while the app receives requests, before every login, and immediately for a logged-in user whose time has passed. To apply them on a fixed schedule as well (for example from cron), run:
+
+```bash
+docker exec <container-name> python manage.py apply_account_schedules
+```
+
 ## Creating Regular Users Programmatically
 
 If you need to create users via script, you can create a Django management command:

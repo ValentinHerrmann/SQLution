@@ -210,8 +210,40 @@ def end_all_sessions(request):
 
 # views.py
 from django.contrib.auth.views import LoginView
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+from myapp.utils import account_management
+
+
+class LockAwareAuthenticationForm(AuthenticationForm):
+    """Tells the user that their account is locked instead of 'wrong password'."""
+    account_locked = False
+
+    def clean(self):
+        try:
+            return super().clean()
+        except ValidationError:
+            username = self.cleaned_data.get('username')
+            password = self.cleaned_data.get('password')
+            if username and password:
+                user = User.objects.filter(username=username, is_active=False).first()
+                if user is not None and user.check_password(password):
+                    self.account_locked = True
+            raise
+
 
 class CustomLoginView(LoginView):
+    form_class = LockAwareAuthenticationForm
+
+    def post(self, request, *args, **kwargs):
+        # Make sure scheduled locks/deletions are in effect before anyone logs in.
+        try:
+            account_management.apply_schedules()
+        except Exception as e:
+            print(f"{timestamp()}Applying account schedules before login failed: {e}")
+        return super().post(request, *args, **kwargs)
+
     def get_initial(self):
         initial = super().get_initial()
         username = self.request.GET.get('username')

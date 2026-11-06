@@ -1,5 +1,5 @@
 from django.urls import include, path, re_path
-from myapp.views import api,files,simple,user,views,admin,user_functions
+from myapp.views import api,files,simple,user,views,admin,user_functions,user_management
 from myapp import views_user
 from django.views.generic import RedirectView
 from django.templatetags.static import static
@@ -39,6 +39,14 @@ urlpatterns = [
     path('clear-resource-logs/', views_user.clear_resource_logs, name='clear_resource_logs'),
     path('clear-audit-logs/', views_user.clear_audit_logs, name='clear_audit_logs'),
     path('end-all-sessions/', user.end_all_sessions, name='end_all_sessions'),
+
+    path('user_management/', user_management.user_management, name='user_management'),
+    path('user_management/create/', user_management.create_accounts_view, name='user_management_create'),
+    path('user_management/prefix-check/', user_management.prefix_check, name='user_management_prefix_check'),
+    path('user_management/bulk/', user_management.bulk_action, name='user_management_bulk'),
+    path('user_management/review/exit/', user_management.exit_review, name='user_management_review_exit'),
+    path('user_management/review/<int:user_id>/', user_management.start_review, name='user_management_review'),
+    path('user_management/role/<int:user_id>/', user_management.set_role, name='user_management_role'),
 
     path('sql_ide/', views.sql_ide, name='sql_ide'),
     path('user_databases.sqlite', files.read_file),

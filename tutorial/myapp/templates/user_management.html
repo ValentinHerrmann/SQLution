@@ -1,0 +1,450 @@
+{% extends "base.html" %}
+{% block title %}
+SQLution - Accountverwaltung
+{% endblock %}
+{% block content %}
+<style>
+  .um-card { margin-bottom: 12px; }
+  .um-hint { color: var(--text-muted); font-size: 0.85em; }
+  .um-table td, .um-table th { vertical-align: middle; }
+  .um-online { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #28a745; margin-left: 4px; }
+  .um-toolbar .btn { margin: 2px; }
+  .um-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; display: none; justify-content: center; align-items: center; }
+  .um-modal-overlay.show { display: flex; }
+  .um-modal { background-color: var(--bg-tertiary); color: var(--text-primary); padding: 20px; border-radius: 8px; max-width: 520px; width: calc(100% - 32px); box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+  .um-modal ul { max-height: 220px; overflow-y: auto; }
+  #prefix-feedback.ok { color: #28a745; }
+  #prefix-feedback.bad { color: #dc3545; }
+  @media print {
+    body * { visibility: hidden; }
+    #password-box, #password-box * { visibility: visible; }
+    #password-box { position: absolute; left: 0; top: 0; width: 100%; }
+    .no-print { display: none !important; }
+  }
+</style>
+
+<div class="container-fluid mt-2">
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <h2>Accountverwaltung</h2>
+    {% if is_global %}
+      <a href="{% url 'admin_overview' %}" class="btn btn-outline-secondary btn-sm">Server Management</a>
+    {% endif %}
+  </div>
+
+  {% for message in messages %}
+    <div class="alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'success' %}alert-success{% elif message.tags == 'warning' %}alert-warning{% else %}alert-info{% endif %}" role="alert">{{ message }}</div>
+  {% endfor %}
+
+  {% if new_passwords %}
+    <div class="card um-card border-warning" id="password-box">
+      <div class="card-body">
+        <h5 class="card-title">Zugangsdaten</h5>
+        <p class="mb-2"><strong>Diese Passwörter werden nur jetzt angezeigt.</strong> Lade sie herunter oder drucke sie aus, bevor du die Seite verlässt.</p>
+        <table class="table table-sm" id="password-table">
+          <thead><tr><th>Nutzername</th><th>Passwort</th></tr></thead>
+          <tbody>
+            {% for username, password in new_passwords %}
+              <tr><td><code>{{ username }}</code></td><td><code>{{ password }}</code></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        <div class="no-print">
+          <button type="button" class="btn btn-primary btn-sm" id="download-passwords"><i class="fas fa-file-csv"></i> Als CSV herunterladen</button>
+          <button type="button" class="btn btn-outline-primary btn-sm" onclick="window.print()"><i class="fas fa-print"></i> Drucken</button>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="row">
+    <!-- Role & prefixes -->
+    <div class="col-lg-4">
+      <div class="card um-card">
+        <div class="card-body">
+          <h6 class="card-title">Deine Rolle</h6>
+          {% if is_global %}
+            <p class="mb-2">Globaler Admin: du siehst und verwaltest alle Accounts. Von dir angelegte Accounts sind <em>unabhängig</em> (ohne betreuenden Gruppenadmin).</p>
+            <p class="um-hint mb-2">Lege Accounts für Lehrkräfte an und mache sie in der Tabelle zum <em>{{ group_admin_name }}</em>.</p>
+          {% else %}
+            <p class="mb-2">Gruppenadmin: du verwaltest die Accounts, die du angelegt hast.</p>
+          {% endif %}
+          <h6 class="card-title mt-3">Kurs-Präfixe</h6>
+          {% if prefixes %}
+            <ul class="mb-1 pl-3">
+              {% for p in prefixes %}
+                <li><code>{{ p.name }}</code>{% if is_global %} <span class="um-hint">({{ p.owner.username }})</span>{% endif %}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="um-hint mb-1">Noch keine.</p>
+          {% endif %}
+          <p class="um-hint mb-0">Ein Präfix gehört dem, der es zuerst verwendet, und wird wieder frei, sobald sein letzter Account gelöscht ist.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Create accounts -->
+    <div class="col-lg-8">
+      <div class="card um-card">
+        <div class="card-body">
+          <h6 class="card-title">Accounts anlegen</h6>
+          <form method="post" action="{% url 'user_management_create' %}" id="create-form" autocomplete="off">
+            {% csrf_token %}
+            <div class="form-row">
+              <div class="form-group col-md-4">
+                <label for="prefix">Kurs-Präfix <span class="um-hint">(empfohlen)</span></label>
+                <input type="text" class="form-control" id="prefix" name="prefix" maxlength="16" value="{{ form_data.prefix }}" placeholder="z.B. q11inf" pattern="[a-zA-Z0-9]*">
+                <small id="prefix-feedback" class="form-text"></small>
+              </div>
+              <div class="form-group col-md-8">
+                <label class="d-block">Namen</label>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="mode" id="mode-list" value="list" {% if form_data.mode != 'series' %}checked{% endif %}>
+                  <label class="form-check-label" for="mode-list">Liste</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="mode" id="mode-series" value="series" {% if form_data.mode == 'series' %}checked{% endif %}>
+                  <label class="form-check-label" for="mode-series">Serie</label>
+                </div>
+                <div id="names-list" class="mt-1">
+                  <textarea class="form-control" name="names" rows="3" placeholder="Ein Name pro Zeile, z.B. gruppe1">{{ form_data.names }}</textarea>
+                </div>
+                <div id="names-series" class="form-row mt-1">
+                  <div class="col-8"><input type="text" class="form-control" name="series_base" placeholder="Basisname, z.B. gruppe" value="{{ form_data.series_base }}"></div>
+                  <div class="col-4"><input type="number" class="form-control" name="series_count" min="1" max="{{ max_batch }}" placeholder="Anzahl" value="{{ form_data.series_count }}"></div>
+                </div>
+                <small class="form-text um-hint">Ergibt z.B. <code id="name-preview">…</code></small>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group col-md-4">
+                <label for="shared_password">Gemeinsames Passwort <span class="um-hint">(optional)</span></label>
+                <input type="text" class="form-control" id="shared_password" name="shared_password" autocomplete="new-password" placeholder="leer = je Account generiert">
+              </div>
+              <div class="form-group col-md-4">
+                <label for="lock_at">Sperren am <span class="um-hint">(optional)</span></label>
+                <input type="datetime-local" class="form-control" id="lock_at" name="lock_at" value="{{ form_data.lock_at }}">
+              </div>
+              <div class="form-group col-md-4">
+                <label for="delete_at">Automatisch löschen am <span class="um-hint">(optional)</span></label>
+                <input type="datetime-local" class="form-control" id="delete_at" name="delete_at" value="{{ form_data.delete_at }}">
+              </div>
+            </div>
+            <p class="um-hint">Ein gemeinsames Passwort ist bequem, aber dann können sich Teilnehmende auch in fremde Accounts einloggen.</p>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-user-plus"></i> Anlegen</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Accounts -->
+  <div class="card um-card">
+    <div class="card-body">
+      <div class="d-flex flex-wrap justify-content-between align-items-center mb-2">
+        <h6 class="card-title mb-0">{% if is_global %}Alle Accounts{% else %}Deine Accounts{% endif %} ({{ rows|length }})</h6>
+        <div class="form-inline">
+          <label for="course-filter" class="mr-2">Kurs</label>
+          <select id="course-filter" class="form-control form-control-sm mr-2">
+            <option value="__all__">alle</option>
+            {% for c in courses %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+            <option value="">ohne Präfix</option>
+          </select>
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="select-visible">Alle angezeigten auswählen</button>
+        </div>
+      </div>
+
+      <form method="post" action="{% url 'user_management_bulk' %}" id="bulk-form">
+        {% csrf_token %}
+        <input type="hidden" name="confirm" id="bulk-confirm" value="">
+        <div class="um-toolbar mb-2">
+          <span class="mr-2"><span id="selected-count">0</span> ausgewählt:</span>
+          <button type="submit" name="action" value="lock" class="btn btn-sm btn-warning" data-needs-selection><i class="fas fa-lock"></i> Sperren</button>
+          <button type="submit" name="action" value="unlock" class="btn btn-sm btn-outline-success" data-needs-selection><i class="fas fa-lock-open"></i> Entsperren</button>
+          <button type="button" class="btn btn-sm btn-outline-primary" data-toggle-panel="dates-panel" data-needs-selection><i class="fas fa-calendar-alt"></i> Termine…</button>
+          <button type="button" class="btn btn-sm btn-outline-primary" data-toggle-panel="password-panel" data-needs-selection><i class="fas fa-key"></i> Passwörter…</button>
+          <button type="submit" name="action" value="download" class="btn btn-sm btn-outline-secondary" data-needs-selection><i class="fas fa-download"></i> Herunterladen</button>
+          <button type="button" class="btn btn-sm btn-danger" id="delete-selected" data-needs-selection><i class="fas fa-trash-alt"></i> Löschen…</button>
+        </div>
+        <div id="dates-panel" class="border rounded p-2 mb-2" style="display: none;">
+          <div class="form-row align-items-end">
+            <div class="form-group col-md-4 mb-1">
+              <label for="bulk_lock_at">Sperren am</label>
+              <input type="datetime-local" class="form-control form-control-sm" id="bulk_lock_at" name="bulk_lock_at">
+              <div class="form-check"><input class="form-check-input" type="checkbox" name="clear_lock_at" id="clear_lock_at" value="1"><label class="form-check-label" for="clear_lock_at">Termin entfernen</label></div>
+            </div>
+            <div class="form-group col-md-4 mb-1">
+              <label for="bulk_delete_at">Automatisch löschen am</label>
+              <input type="datetime-local" class="form-control form-control-sm" id="bulk_delete_at" name="bulk_delete_at">
+              <div class="form-check"><input class="form-check-input" type="checkbox" name="clear_delete_at" id="clear_delete_at" value="1"><label class="form-check-label" for="clear_delete_at">Termin entfernen</label></div>
+            </div>
+            <div class="form-group col-md-4 mb-1">
+              <button type="submit" name="action" value="set_dates" class="btn btn-sm btn-primary">Termine übernehmen</button>
+            </div>
+          </div>
+          <small class="um-hint">Leere Felder bleiben unverändert.</small>
+        </div>
+        <div id="password-panel" class="border rounded p-2 mb-2" style="display: none;">
+          <div class="form-row align-items-end">
+            <div class="form-group col-md-6 mb-1">
+              <label for="bulk_shared_password">Gemeinsames Passwort <span class="um-hint">(optional)</span></label>
+              <input type="text" class="form-control form-control-sm" id="bulk_shared_password" name="shared_password" autocomplete="new-password" placeholder="leer = je Account generiert">
+            </div>
+            <div class="form-group col-md-6 mb-1">
+              <button type="submit" name="action" value="reset_password" class="btn btn-sm btn-primary">Passwörter zurücksetzen</button>
+            </div>
+          </div>
+          <small class="um-hint">Betroffene Accounts werden abgemeldet.</small>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-sm table-striped um-table" id="accounts-table">
+            <thead>
+              <tr>
+                <th><input type="checkbox" id="select-all" title="Alle angezeigten auswählen"></th>
+                <th>Account</th>
+                <th>Kurs</th>
+                {% if is_global %}<th>Betreut von</th>{% endif %}
+                <th>Status</th>
+                <th>Erstellt</th>
+                <th>Sperren am</th>
+                <th>Löschen am</th>
+                <th>Aktionen</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in rows %}
+                <tr data-course="{{ row.prefix }}" data-username="{{ row.user.username }}" data-id="{{ row.user.pk }}">
+                  <td><input type="checkbox" name="ids" value="{{ row.user.pk }}" class="row-select"></td>
+                  <td>
+                    <strong>{{ row.user.username }}</strong>{% if row.online %}<span class="um-online" title="Gerade eingeloggt"></span>{% endif %}
+                    {% if row.is_group_admin %}<span class="badge badge-info">{{ group_admin_name }}</span>{% endif %}
+                    {% if row.cascade %}<span class="cascade-data" hidden>{{ row.cascade|join:"," }}</span>{% endif %}
+                  </td>
+                  <td>{% if row.prefix %}<code>{{ row.prefix }}</code>{% endif %}</td>
+                  {% if is_global %}<td>{% if row.profile.managed_by %}{{ row.profile.managed_by.username }}{% else %}<span class="um-hint">unabhängig</span>{% endif %}</td>{% endif %}
+                  <td>{% if row.user.is_active %}<span class="badge badge-success">aktiv</span>{% else %}<span class="badge badge-secondary">gesperrt</span>{% endif %}</td>
+                  <td><small>{{ row.profile.created_at|date:"d.m.Y" }}</small></td>
+                  <td><small>{{ row.profile.lock_at|date:"d.m.Y H:i"|default:"–" }}</small></td>
+                  <td><small>{{ row.profile.delete_at|date:"d.m.Y H:i"|default:"–" }}</small></td>
+                  <td class="text-nowrap">
+                    <button type="button" class="btn btn-sm btn-outline-primary" data-review-url="{% url 'user_management_review' row.user.pk %}" title="Projekt als Kopie öffnen (dein eigenes Projekt bleibt unverändert)"><i class="fas fa-eye"></i> Review</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-single-action="download" title="Daten herunterladen"><i class="fas fa-download"></i></button>
+                    <button type="button" class="btn btn-sm btn-outline-danger" data-single-action="delete" title="Löschen"><i class="fas fa-trash-alt"></i></button>
+                    {% if is_global %}
+                      <button type="button" class="btn btn-sm {% if row.is_group_admin %}btn-info{% else %}btn-outline-info{% endif %}" data-role-url="{% url 'user_management_role' row.user.pk %}" data-role-value="{% if row.is_group_admin %}0{% else %}1{% endif %}" title="{% if row.is_group_admin %}Gruppenadmin-Rolle entziehen{% else %}Zum Gruppenadmin machen{% endif %}"><i class="fas fa-chalkboard-teacher"></i></button>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="9" class="text-center um-hint">Noch keine Accounts.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden forms for row actions -->
+<form method="post" id="review-form" style="display: none;">{% csrf_token %}</form>
+<form method="post" id="role-form" style="display: none;">{% csrf_token %}<input type="hidden" name="group_admin" id="role-value"></form>
+
+<!-- Delete confirmation -->
+<div class="um-modal-overlay" id="delete-modal" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
+  <div class="um-modal">
+    <h5 id="delete-modal-title"><i class="fas fa-exclamation-triangle text-danger"></i> Accounts endgültig löschen</h5>
+    <p>Folgende Accounts werden <strong>samt aller Daten</strong> (Datenbank, Abfragen, Diagramme, Review-Kopien) gelöscht. Das kann nicht rückgängig gemacht werden.</p>
+    <ul id="delete-list"></ul>
+    <div id="delete-cascade" class="alert alert-danger" style="display: none;"></div>
+    <p class="um-hint">Tipp: Lade die Daten vorher herunter.</p>
+    <label for="delete-confirm-input">Zum Bestätigen <strong>{{ delete_confirmation }}</strong> eingeben:</label>
+    <input type="text" class="form-control mb-3" id="delete-confirm-input" autocomplete="off">
+    <div class="text-right">
+      <button type="button" class="btn btn-secondary" id="delete-cancel">Abbrechen</button>
+      <button type="button" class="btn btn-danger" id="delete-go" disabled>Endgültig löschen</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const CONFIRM_WORD = "{{ delete_confirmation|escapejs }}";
+  const bulkForm = document.getElementById('bulk-form');
+  const rows = Array.from(document.querySelectorAll('#accounts-table tbody tr[data-id]'));
+  const checkboxes = () => Array.from(document.querySelectorAll('.row-select'));
+  const selected = () => checkboxes().filter(c => c.checked);
+
+  // ---- selection ----
+  function updateSelection() {
+    const n = selected().length;
+    document.getElementById('selected-count').textContent = n;
+    document.querySelectorAll('[data-needs-selection]').forEach(b => { b.disabled = n === 0; });
+  }
+  checkboxes().forEach(c => c.addEventListener('change', updateSelection));
+  const visibleRows = () => rows.filter(r => r.style.display !== 'none');
+  function selectVisible(state) {
+    rows.forEach(r => { r.querySelector('.row-select').checked = state && r.style.display !== 'none'; });
+    updateSelection();
+  }
+  document.getElementById('select-all').addEventListener('change', e => selectVisible(e.target.checked));
+  document.getElementById('select-visible').addEventListener('click', () => selectVisible(true));
+  document.getElementById('course-filter').addEventListener('change', e => {
+    const v = e.target.value;
+    rows.forEach(r => { r.style.display = (v === '__all__' || r.dataset.course === v) ? '' : 'none'; });
+    selectVisible(false);
+  });
+  updateSelection();
+
+  // ---- panels ----
+  document.querySelectorAll('[data-toggle-panel]').forEach(b => b.addEventListener('click', () => {
+    const p = document.getElementById(b.dataset.togglePanel);
+    p.style.display = p.style.display === 'none' ? '' : 'none';
+  }));
+
+  // ---- delete with confirmation ----
+  const modal = document.getElementById('delete-modal');
+  const confirmInput = document.getElementById('delete-confirm-input');
+  const goButton = document.getElementById('delete-go');
+  function openDeleteModal() {
+    const list = document.getElementById('delete-list');
+    list.replaceChildren();
+    const cascade = [];
+    selected().forEach(c => {
+      const row = c.closest('tr');
+      const li = document.createElement('li');
+      li.textContent = row.dataset.username;
+      list.appendChild(li);
+      const data = row.querySelector('.cascade-data');
+      if (data) cascade.push(...data.textContent.split(',').filter(Boolean));
+    });
+    const box = document.getElementById('delete-cascade');
+    if (cascade.length) {
+      box.textContent = 'Achtung: Darunter sind Gruppenadmins. Alle ' + cascade.length +
+        ' von ihnen betreuten Accounts werden ebenfalls gelöscht: ' + cascade.join(', ');
+      box.style.display = '';
+    } else {
+      box.style.display = 'none';
+    }
+    confirmInput.value = '';
+    goButton.disabled = true;
+    modal.classList.add('show');
+    confirmInput.focus();
+  }
+  function closeDeleteModal() { modal.classList.remove('show'); }
+  confirmInput.addEventListener('input', () => { goButton.disabled = confirmInput.value.trim() !== CONFIRM_WORD; });
+  document.getElementById('delete-cancel').addEventListener('click', closeDeleteModal);
+  modal.addEventListener('click', e => { if (e.target === modal) closeDeleteModal(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDeleteModal(); });
+  document.getElementById('delete-selected').addEventListener('click', openDeleteModal);
+  goButton.addEventListener('click', () => {
+    document.getElementById('bulk-confirm').value = confirmInput.value.trim();
+    submitBulk('delete');
+  });
+
+  function submitBulk(action) {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'action';
+    input.value = action;
+    bulkForm.appendChild(input);
+    bulkForm.submit();
+    input.remove();
+  }
+
+  // ---- row actions ----
+  function selectOnly(row) {
+    checkboxes().forEach(c => { c.checked = false; });
+    row.querySelector('.row-select').checked = true;
+    updateSelection();
+  }
+  document.querySelectorAll('[data-single-action]').forEach(b => b.addEventListener('click', () => {
+    selectOnly(b.closest('tr'));
+    if (b.dataset.singleAction === 'delete') openDeleteModal();
+    else submitBulk(b.dataset.singleAction);
+  }));
+  document.querySelectorAll('[data-review-url]').forEach(b => b.addEventListener('click', () => {
+    const form = document.getElementById('review-form');
+    form.action = b.dataset.reviewUrl;
+    form.submit();
+  }));
+  document.querySelectorAll('[data-role-url]').forEach(b => b.addEventListener('click', () => {
+    const user = b.closest('tr').dataset.username;
+    const grant = b.dataset.roleValue === '1';
+    const text = grant ? user + ' zum Gruppenadmin machen?' : user + ' die Gruppenadmin-Rolle entziehen?';
+    if (!confirm(text)) return;
+    const form = document.getElementById('role-form');
+    form.action = b.dataset.roleUrl;
+    document.getElementById('role-value').value = b.dataset.roleValue;
+    form.submit();
+  }));
+
+  // ---- create form: mode, preview, live prefix check ----
+  const prefixInput = document.getElementById('prefix');
+  const feedback = document.getElementById('prefix-feedback');
+  const preview = document.getElementById('name-preview');
+  const modeSeries = document.getElementById('mode-series');
+  function slug(s) {
+    return (s || '').trim().toLowerCase().replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  }
+  function updateMode() {
+    document.getElementById('names-list').style.display = modeSeries.checked ? 'none' : '';
+    document.getElementById('names-series').style.display = modeSeries.checked ? '' : 'none';
+    updatePreview();
+  }
+  function updatePreview() {
+    let name;
+    if (modeSeries.checked) {
+      const base = document.querySelector('[name=series_base]').value || 'gruppe';
+      const count = parseInt(document.querySelector('[name=series_count]').value || '1', 10) || 1;
+      name = slug(base) + String(1).padStart(String(count).length, '0');
+    } else {
+      name = slug(document.querySelector('[name=names]').value.split('\n')[0]) || 'gruppe1';
+    }
+    const p = slug(prefixInput.value).replace(/-/g, '');
+    preview.textContent = (p ? p + '-' : '') + name + '_admin';
+  }
+  document.querySelectorAll('[name=mode]').forEach(r => r.addEventListener('change', updateMode));
+  document.querySelectorAll('#create-form textarea, #create-form [name=series_base], #create-form [name=series_count]')
+    .forEach(el => el.addEventListener('input', updatePreview));
+
+  let timer = null;
+  function checkPrefix() {
+    const value = prefixInput.value.trim();
+    updatePreview();
+    if (!value) { feedback.textContent = ''; feedback.className = 'form-text'; return; }
+    fetch("{% url 'user_management_prefix_check' %}?prefix=" + encodeURIComponent(value), { credentials: 'same-origin' })
+      .then(r => r.json())
+      .then(data => {
+        if (prefixInput.value.trim() !== value) return;
+        feedback.textContent = data.message;
+        feedback.className = 'form-text ' + (data.valid && data.free ? 'ok' : 'bad');
+      })
+      .catch(() => { feedback.textContent = ''; });
+  }
+  prefixInput.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(checkPrefix, 300); });
+  updateMode();
+  checkPrefix();
+
+  // ---- passwords as CSV ----
+  const dl = document.getElementById('download-passwords');
+  if (dl) dl.addEventListener('click', () => {
+    const lines = [['Nutzername', 'Passwort']];
+    document.querySelectorAll('#password-table tbody tr').forEach(tr => {
+      lines.push(Array.from(tr.querySelectorAll('td')).map(td => td.textContent.trim()));
+    });
+    const csv = '﻿' + lines.map(l => l.map(v => '"' + v.replace(/"/g, '""') + '"').join(';')).join('\r\n');
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'zugangsdaten.csv';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  });
+})();
+</script>
+{% endblock %}

@@ -29,3 +29,34 @@ class AuditLog(models.Model):
         
     def __str__(self):
         return f"{self.username} - {self.action} at {self.timestamp}"
+
+class AccountPrefix(models.Model):
+    """A course/batch prefix (e.g. 'q11inf'). Claimed by the group admin who uses it first."""
+    name = models.CharField(max_length=16, unique=True)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='account_prefixes')
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+
+class AccountProfile(models.Model):
+    """User-management data for an account."""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    # The group admin supervising this account. None = independent account.
+    managed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='managed_accounts')
+    prefix = models.ForeignKey(AccountPrefix, on_delete=models.SET_NULL, null=True, blank=True, related_name='accounts')
+    delete_at = models.DateTimeField(null=True, blank=True)  # automatic deletion
+    lock_at = models.DateTimeField(null=True, blank=True)    # scheduled lock (e.g. project submission)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return f"Profile of {self.user.username}"
+
+
+def get_profile(user) -> AccountProfile:
+    profile, _ = AccountProfile.objects.get_or_create(user=user)
+    return profile

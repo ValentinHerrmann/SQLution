@@ -57,28 +57,33 @@
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav">
           <li class="nav-item">
-            {% if user.is_authenticated and user.username|endswith:'_admin' %}
+            {% if is_db_admin %}
               <a class="nav-link {% if request.resolver_match.url_name == 'overview' %}active{% endif %}" href="{% url 'overview' %}">Übersicht</a>
             {% endif %}
           </li>
           <li class="nav-item">
-            {% if user.is_authenticated and user.username|endswith:'_admin' %}
+            {% if is_db_admin %}
               <a class="nav-link {% if request.resolver_match.url_name == 'user_functions' or request.resolver_match.url_name == 'user_functions_execute' %}active{% endif %}" href="{% url 'user_functions' %}">Nutzerfunktionen</a>
             {% endif %}
           </li>
           <li class="nav-item">
-            {% if user.is_authenticated and user.username|endswith:'_admin' %}
+            {% if is_db_admin %}
               <a class="nav-link {% if request.resolver_match.url_name == 'apollon' %}active{% endif %}" href="{% url 'apollon' %}">Klassendiagramm</a>
             {% endif %}
           </li>
           <li class="nav-item">
-            {% if user.is_authenticated and user.username|endswith:'_admin' %}
+            {% if is_db_admin %}
               <a class="nav-link {% if request.resolver_match.url_name == 'sql_ide' %}active{% endif %}" href="{% url 'sql_ide' %}">SQL IDE</a>
             {% endif %}
           </li>
           <li class="nav-item">
+            {% if can_manage_accounts %}
+              <a class="nav-link {% if request.resolver_match.url_name == 'user_management' %}active{% endif %}" href="{% url 'user_management' %}">Accountverwaltung</a>
+            {% endif %}
+          </li>
+          <li class="nav-item">
             {% if user.is_authenticated and user.username == 'admin' %}
-              <a class="nav-link" href="/admin/">User Management</a>
+              <a class="nav-link" href="/admin/">Django Admin</a>
             {% endif %}
           </li>
           <li class="nav-item">
@@ -122,6 +127,15 @@
         </ul>
       </div>
     </nav>
+    {% if review %}
+      <div class="alert alert-warning mb-0 py-1 px-3 d-flex flex-wrap align-items-center justify-content-between rounded-0" role="status" id="review-banner">
+        <span><i class="fas fa-eye"></i> <strong>Review:</strong> Du arbeitest an einer Kopie des Projekts von <strong>{{ review.source_username }}</strong>. Das Original bleibt unverändert.</span>
+        <form method="post" action="{% url 'user_management_review_exit' %}" class="mb-0">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-sm btn-outline-dark">Zurück zu meinem Projekt</button>
+        </form>
+      </div>
+    {% endif %}
     <div class="container-fluid main-content">
       {% block content %} 
       {% endblock %} 
