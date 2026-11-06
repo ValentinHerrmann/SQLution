@@ -9,10 +9,49 @@ from django.core.files.base import ContentFile
 from myapp.models import ZippedFolder
 
 
-def get_user_directory(username) -> str:
+USER_DB_ROOT = "user_databases"
+# '~' is not allowed in Django usernames, so this folder can never collide with a user's data folder.
+REVIEW_ROOT = f"{USER_DB_ROOT}/~review"
+REVIEW_SOURCE_MARKER = ".review_source"
+
+
+def get_user_home_directory(username) -> str:
+    """The data folder that belongs to an account, ignoring any active review session."""
     if '_' in username:
         username = username.split('_')[0]
-    return f"user_databases/{username}/"
+    return f"{USER_DB_ROOT}/{username}/"
+
+
+def get_review_directory(user_id) -> str:
+    """The review slot of a group admin (a copy of the project currently under review)."""
+    return f"{REVIEW_ROOT}/{user_id}/"
+
+
+def _active_review_directory(username):
+    """Return the review slot if the current request belongs to `username` and is in review mode."""
+    try:
+        from myapp.signals import get_current_request
+        request = get_current_request()
+        if request is None:
+            return None
+        user = getattr(request, 'user', None)
+        if user is None or not getattr(user, 'is_authenticated', False) or user.username != username:
+            return None
+        session = getattr(request, 'session', None)
+        if session is None or not session.get('review'):
+            return None
+        return get_review_directory(user.pk)
+    except Exception:
+        return None
+
+
+def get_user_directory(username) -> str:
+    """The data folder the app works on for `username`.
+
+    Normally the account's own folder. While a group admin reviews another account
+    (session flag set by the user management), this is the group admin's review slot.
+    """
+    return _active_review_directory(username) or get_user_home_directory(username)
 
 def get_user_suffix(username) -> str:
     if '_' in username and not username.endswith('_admin'):

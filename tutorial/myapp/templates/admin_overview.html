@@ -14,6 +14,9 @@ SQLution - Resource Overview
       <div class="d-flex justify-content-between align-items-center mb-2">
         <h2>Admin Overview</h2>
         <div>
+          <a href="{% url 'user_management' %}" class="btn btn-primary" style="margin: 2px;">
+            <i class="fas fa-users-cog"></i> Accountverwaltung
+          </a>
           <!-- Performance Logs Section -->
           <div class="btn-group me-2" role="group">
             <a href="{% url 'download_resource_logs' %}" class="btn btn-success" style="margin: 2px;">

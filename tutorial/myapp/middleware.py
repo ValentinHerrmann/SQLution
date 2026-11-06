@@ -198,5 +198,62 @@ class UserAgentMiddleware(MiddlewareMixin):
         # Store request for signal handlers
         from myapp.signals import set_current_request
         set_current_request(request)
-        
+
+        self.apply_account_policies(request)
+
         return None
+
+    def process_response(self, request, response):
+        # Don't let the stored request (and with it a review session) leak into later work on this thread.
+        try:
+            from myapp.signals import set_current_request
+            set_current_request(None)
+        except Exception:
+            pass
+        return response
+
+    def apply_account_policies(self, request):
+        """User management (issue #100): scheduled locks/deletions, forced logout, review mode."""
+        try:
+            from myapp.utils import account_management
+        except Exception:
+            return
+        try:
+            account_management.maybe_apply_schedules()
+        except Exception as e:
+            print(f"Applying account schedules failed: {e}")
+
+        user = getattr(request, 'user', None)
+        if not (user is not None and getattr(user, 'is_authenticated', False)):
+            return
+        try:
+            if account_management.account_is_due(user):
+                self._force_logout(request, account_management)
+                return
+            self._apply_review_state(request, user)
+        except Exception as e:
+            print(f"Account policy check failed: {e}")
+
+    def _force_logout(self, request, account_management):
+        from django.contrib.auth import logout
+        from django.contrib.auth.models import AnonymousUser, User
+        account_management.apply_schedules()
+        if User.objects.filter(pk=request.user.pk).exists():
+            request._logout_reason = 'Account gesperrt'
+            logout(request)
+        else:
+            # The account was just deleted: nothing left to log against.
+            request.session.flush()
+            request.user = AnonymousUser()
+
+    def _apply_review_state(self, request, user):
+        from django.contrib.auth.models import User
+        from myapp.utils.roles import can_manage_accounts
+        review = request.session.get('review')
+        if not review:
+            return
+        source_id = review.get('source_id') if isinstance(review, dict) else None
+        if not can_manage_accounts(user) or not User.objects.filter(pk=source_id).exists():
+            del request.session['review']
+            return
+        user.in_review = True

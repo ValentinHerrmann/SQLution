@@ -36,7 +36,11 @@
 
         {% if form.errors %}
           <div class="alert alert-danger" role="alert">
-            Nutzername oder Passwort falsch.
+            {% if form.account_locked %}
+              Dieser Account ist gesperrt. Bitte wende dich an deine Lehrkraft.
+            {% else %}
+              Nutzername oder Passwort falsch.
+            {% endif %}
           </div>
         {% endif %}
 

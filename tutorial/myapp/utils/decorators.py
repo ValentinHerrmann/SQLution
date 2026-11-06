@@ -1,5 +1,7 @@
-def is_global_admin(user):
-    return user.is_authenticated and user.username == 'admin'
-
-def is_db_admin(user):
-    return user.is_authenticated and user.username.endswith('_admin')
+from myapp.utils.roles import (  # noqa: F401  (re-exported for `from myapp.utils.decorators import *`)
+    is_global_admin,
+    is_group_admin,
+    can_manage_accounts,
+    is_db_admin,
+    managed_queryset,
+)

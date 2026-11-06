@@ -27,3 +27,15 @@ def log_user_logout(sender, request, user, **kwargs):
     forced_reason = getattr(request, '_logout_reason', None)
     action = 'FORCED_LOGOUT' if forced_reason else 'LOGOUT'
     log_audit_event(user, action, request, forced_reason)
+
+
+from django.contrib.auth.models import User
+from django.db.models.signals import post_save
+from myapp.models import AccountProfile
+
+
+@receiver(post_save, sender=User)
+def create_account_profile(sender, instance, created, **kwargs):
+    """Every account gets an AccountProfile (user-management data)."""
+    if created and not kwargs.get('raw', False):
+        AccountProfile.objects.get_or_create(user=instance)
