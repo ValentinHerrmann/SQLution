@@ -134,7 +134,11 @@
     </nav>
     {% if review %}
       <div class="alert alert-warning mb-0 py-1 px-3 d-flex flex-wrap align-items-center justify-content-between rounded-0" id="review-banner">
-        <output><i class="fas fa-eye"></i> <strong>Review:</strong> Du arbeitest an einer Kopie des Projekts von <strong>{{ review.source_username }}</strong>. Das Original bleibt unverändert.</output>
+        {% if review.db_user %}
+          <output><i class="fas fa-eye"></i> <strong>Review:</strong> Nutzersicht von <strong>{{ review.source_username }}</strong>. Du siehst nur die für diesen Nutzer freigegebenen Abfragen (auf einer Kopie des Projekts).</output>
+        {% else %}
+          <output><i class="fas fa-eye"></i> <strong>Review:</strong> Du arbeitest an einer Kopie des Projekts von <strong>{{ review.source_username }}</strong>. Das Original bleibt unverändert.</output>
+        {% endif %}
         <form method="post" action="{% url 'user_management_review_exit' %}" class="mb-0">
           {% csrf_token %}
           <button type="submit" class="btn btn-sm btn-outline-dark">Zurück zu meinem Projekt</button>

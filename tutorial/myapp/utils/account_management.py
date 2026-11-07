@@ -41,6 +41,7 @@ PREFIX_RE = re.compile(r'^[a-z0-9]{1,16}$')
 ACCOUNT_SUFFIX = '_admin'
 MAX_USERNAME_LENGTH = 150
 MAX_BATCH_SIZE = 200          # sanity limit per create request (typo guard, not a quota)
+MAX_SERIES_DIGITS = 6
 SCHEDULE_INTERVAL_SECONDS = 60
 DELETE_CONFIRMATION = 'LÖSCHEN'
 
@@ -215,10 +216,13 @@ def release_unused_prefixes() -> int:
     return deleted
 
 
-def expand_series(base_name, count) -> list:
-    """('gruppe', 12) -> ['gruppe01', …, 'gruppe12']."""
-    width = len(str(count))
-    return [f"{base_name}{i:0{width}d}" for i in range(1, count + 1)]
+def expand_series(base_name, first, last, digits=None) -> list:
+    """('gruppe', 1, 12) -> ['gruppe01', …, 'gruppe12'], ('gruppe', 13, 15, 3) -> ['gruppe013', …, 'gruppe015'].
+
+    `digits` defaults to the digits of `last`. Set it explicitly to continue an existing series later.
+    """
+    width = digits or len(str(last))
+    return [f"{base_name}{i:0{width}d}" for i in range(first, last + 1)]
 
 
 # --------------------------------------------------------------------------------------

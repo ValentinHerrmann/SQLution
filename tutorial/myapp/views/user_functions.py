@@ -17,10 +17,18 @@ import os
 
 
 
+def viewer_suffix(request) -> str:
+    """The db-user short name whose queries are shown ('' = all queries).
+
+    While a group admin reviews a db-user, that db-user's name; otherwise the own one.
+    """
+    return getattr(request.user, 'review_as_db_user', '') or get_user_suffix(request.user.username)
+
+
 @login_required
 def user_functions(request):
     dir = get_user_directory(request.user.username)
-    suffix = get_user_suffix(request.user.username)
+    suffix = viewer_suffix(request)
     if suffix == '':
         sql_files = query_access.list_converted_queries(dir)  # db-admin: everything
     else:
@@ -54,7 +62,7 @@ def user_functions_execute(request):
             return HttpResponse("No SQL file specified.", status=400)
         if sqlfile is not None and sqlfile != '':
             dir = get_user_directory(request.user.username)
-            suffix = get_user_suffix(request.user.username)
+            suffix = viewer_suffix(request)
             if suffix != '' and not query_access.can_see(query_access.load_access(dir), sqlfile, suffix):
                 logout(request)
                 messages.error(request, 'Du hast versucht auf eine SQL-Abfrage zuzugreifen, auf die du nicht zugreifen darfst. Du wurdest aus Sicherheitsgründen abgemeldet.')

@@ -24,7 +24,8 @@
                         <div>
                             <br>
                             Im Code-Editor kannst du Dateien anlegen und benennen. 
-                            Diese werden dem Nutzer dann mit dem Namen angezeigt, den du eingegeben hast.<br>
+                            Diese werden dem Nutzer dann mit dem Namen angezeigt, den du eingegeben hast,
+                            sobald du sie unter <i>„Nutzer & Freigaben“</i> für ihn freigegeben hast. Neue SQL-Abfragen siehst zunächst nur du.<br>
                             <b> Änderungen werden erst gespeichert, wenn du auf "Änderungen speichern" klickst!</b> 
                             Das Speichern kann außerdem nicht rückgängig gemacht werden!<br>
                         </div>
@@ -39,11 +40,19 @@
                     </summary>
                     <div style="display: flex; align-items: flex-start;">
                         <div>
-                            Deine Datenbank hat immer einen Admin-Account (mit dem bist du gerade eingeloggt), um die Datenbank mit SQL-Abfragen zu erstellen und einen Nutzer-Account, der nur auf die fertigen SQL-Abfragen zugreifen kann. Diese beiden Accounts können immer auf alle gespeicherten SQL-Abfragen zugreifen.
+                            Deine Datenbank hat einen Admin-Account (mit dem bist du gerade eingeloggt), um die Datenbank mit SQL-Abfragen zu erstellen.
+                            Unter <i>„Nutzer & Freigaben“</i> legst du dir selbst Nutzer-Accounts an. Diese können nichts an der Datenbank ändern,
+                            sondern nur die SQL-Abfragen ausführen, die du für sie freigegeben hast.
                             <br><br>
-                            Zusätzlich kannst du von deiner Lehrkraft weitere Nutzeraccounts mit eingeschränkten Rechten bekommen. Diese können dann nur auf die SQL-Abfragen zugreifen, die du für sie freigegeben hast. Das eignet sich zum Beispiel gut, wenn verschiedene Mitarbeiter:innen einer Firma auf unterschiedliche Daten zugreifen sollen. Beispielsweise die Finanzabteilung auf die Gehaltsdaten, die Personalabteilung auf die Adressdaten der Mitarbeiter:innen und den Schichtplan dürfen alle ansehen.
+                            Das eignet sich zum Beispiel gut, wenn verschiedene Mitarbeiter:innen einer Firma auf unterschiedliche Daten zugreifen sollen.
+                            Beispielsweise die Finanzabteilung auf die Gehaltsdaten, die Personalabteilung auf die Adressdaten der Mitarbeiter:innen und den Schichtplan dürfen alle ansehen.
                             <br><br>
-                            Die Accounts könnten dann z.B. so heißen: <i>'firma_finanz'</i> und <i>'firma_personal'</i>. Nennst du eine SQL-Abfrage dann z.B.  <i>'finanz_Gehälter'</i>, kann nur der Nutzer firma_finanz diese Abfrage sehen und ausführen, eine SQL-Abfrage namens  <i>'Schichtplan'</i> können alle Nutzer sehen und ausführen.
+                            Heißt dein Projekt z.B. <i>'firma'</i> und du legst die Nutzer <i>'finanz'</i> und <i>'personal'</i> an, melden sie sich mit <i>'firma_finanz'</i> und <i>'firma_personal'</i> an.
+                            In der Tabelle <i>„Freigaben“</i> setzt du dann für jede SQL-Abfrage einen Haken bei den Nutzern, die sie sehen und ausführen dürfen:
+                            <i>'Gehälter'</i> nur bei <i>finanz</i>, <i>'Schichtplan'</i> bei <i>„Alle“</i>. <i>„Alle“</i> gilt auch für Nutzer, die du später anlegst.
+                            <br><br>
+                            Früher wurde das über den Namen der SQL-Abfrage gesteuert (z.B. <i>'finanz_Gehälter'</i>). Solche Abfragen wurden automatisch umbenannt und freigegeben;
+                            die alte Datei liegt als Sicherung mit der Endung <i>.sql_bak</i> im Projekt.
                         </div>
                     </div>
                 </details>

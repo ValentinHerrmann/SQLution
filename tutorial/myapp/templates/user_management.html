@@ -85,9 +85,14 @@ SQLution - Accountverwaltung
                   <label for="names" class="sr-only">Namen, einer pro Zeile</label>
                   <textarea class="form-control" id="names" name="names" rows="3" placeholder="Ein Name pro Zeile, z.B. gruppe1">{{ form_data.names }}</textarea>
                 </div>
-                <div id="names-series" class="form-row mt-1">
-                  <div class="col-8"><label for="series_base" class="sr-only">Basisname</label><input type="text" class="form-control" id="series_base" name="series_base" placeholder="Basisname, z.B. gruppe" value="{{ form_data.series_base }}"></div>
-                  <div class="col-4"><label for="series_count" class="sr-only">Anzahl</label><input type="number" class="form-control" id="series_count" name="series_count" min="1" max="{{ max_batch }}" placeholder="Anzahl" value="{{ form_data.series_count }}"></div>
+                <div id="names-series" class="mt-1">
+                  <label for="series_base" class="sr-only">Basisname</label>
+                  <input type="text" class="form-control mb-1" id="series_base" name="series_base" placeholder="Basisname, z.B. gruppe" value="{{ form_data.series_base }}">
+                  <div class="d-flex" style="gap: 8px;"><!-- not .form-row: stylesheet.css gives it a 20px gap that breaks the columns -->
+                    <div style="flex: 1;"><label for="series_first" class="um-hint mb-0">von</label><input type="number" class="form-control" id="series_first" name="series_first" min="0" value="{{ form_data.series_first|default:'1' }}"></div>
+                    <div style="flex: 1;"><label for="series_last" class="um-hint mb-0">bis</label><input type="number" class="form-control" id="series_last" name="series_last" min="0" value="{{ form_data.series_last }}"></div>
+                    <div style="flex: 1;"><label for="series_digits" class="um-hint mb-0">Stellen</label><input type="number" class="form-control" id="series_digits" name="series_digits" min="1" max="{{ max_series_digits }}" placeholder="auto" title="Stellen der Nummer (leer = automatisch). Für eine spätere Fortsetzung der Serie gleich lassen." value="{{ form_data.series_digits }}"></div>
+                  </div>
                 </div>
                 <small class="form-text um-hint">Ergibt z.B. <code id="name-preview">…</code></small>
               </div>
@@ -204,7 +209,13 @@ SQLution - Accountverwaltung
                   <td><small>{{ row.profile.lock_at|date:"d.m.Y H:i"|default:"–" }}</small></td>
                   <td><small>{{ row.profile.delete_at|date:"d.m.Y H:i"|default:"–" }}</small></td>
                   <td class="text-nowrap">
-                    <button type="button" class="btn btn-sm btn-outline-primary" data-review-url="{% url 'user_management_review' row.user.pk %}" title="Projekt als Kopie öffnen (dein eigenes Projekt bleibt unverändert)"><i class="fas fa-eye"></i> Review</button>
+                    {% if row.reviewable %}
+                      {% if row.db_user_of %}
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-review-url="{% url 'user_management_review' row.user.pk %}" title="Nutzersicht ansehen: die freigegebenen Abfragen, auf einer Kopie des Projekts"><i class="fas fa-eye"></i> Review</button>
+                      {% else %}
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-review-url="{% url 'user_management_review' row.user.pk %}" title="Projekt als Kopie öffnen (dein eigenes Projekt bleibt unverändert)"><i class="fas fa-eye"></i> Review</button>
+                      {% endif %}
+                    {% endif %}
                     <button type="button" class="btn btn-sm btn-outline-secondary" data-single-action="download" title="Daten herunterladen"><i class="fas fa-download"></i></button>
                     <button type="button" class="btn btn-sm btn-outline-danger" data-single-action="delete" title="Löschen"><i class="fas fa-trash-alt"></i></button>
                     {% if is_global %}
@@ -373,8 +384,10 @@ SQLution - Accountverwaltung
     let name;
     if (modeSeries.checked) {
       const base = document.querySelector('[name=series_base]').value || 'gruppe';
-      const count = Number.parseInt(document.querySelector('[name=series_count]').value || '1', 10) || 1;
-      name = slug(base) + String(1).padStart(String(count).length, '0');
+      const first = Number.parseInt(document.querySelector('[name=series_first]').value || '1', 10) || 0;
+      const last = Number.parseInt(document.querySelector('[name=series_last]').value, 10) || first;
+      const digits = Number.parseInt(document.querySelector('[name=series_digits]').value, 10) || String(last).length;
+      name = slug(base) + String(first).padStart(digits, '0');
     } else {
       name = slug(document.querySelector('[name=names]').value.split('\n')[0]) || 'gruppe1';
     }
@@ -382,7 +395,7 @@ SQLution - Accountverwaltung
     preview.textContent = (p ? p + '-' : '') + name + '_admin';
   }
   document.querySelectorAll('[name=mode]').forEach(r => r.addEventListener('change', updateMode));
-  document.querySelectorAll('#create-form textarea, #create-form [name=series_base], #create-form [name=series_count]')
+  document.querySelectorAll('#create-form textarea, #names-series input')
     .forEach(el => el.addEventListener('input', updatePreview));
 
   let timer = null;

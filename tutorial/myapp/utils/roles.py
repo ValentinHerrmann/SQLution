@@ -31,8 +31,11 @@ def can_manage_accounts(user):
 
 
 def is_db_admin(user):
-    """Accounts that may edit a database: '<name>_admin' accounts, and group admins while reviewing."""
-    if not (user and user.is_authenticated):
+    """Accounts that may edit a database: '<name>_admin' accounts, and group admins while reviewing.
+
+    Not while reviewing a db-user: that view has no db-admin rights.
+    """
+    if not (user and user.is_authenticated) or getattr(user, 'review_as_db_user', ''):
         return False
     return user.username.endswith('_admin') or bool(getattr(user, 'in_review', False))
 

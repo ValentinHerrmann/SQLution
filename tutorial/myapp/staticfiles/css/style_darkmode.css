@@ -342,6 +342,18 @@ body:not([data-theme]) .btn-inactive {
   color: #fff3cd;
 }
 
+/* e.g. "Zurück zu meinem Projekt" in the review banner: Bootstrap's dark outline is invisible here */
+[data-theme="dark"] .alert-warning .btn-outline-dark {
+  color: #fff3cd;
+  border-color: var(--accent-warning);
+}
+
+[data-theme="dark"] .alert-warning .btn-outline-dark:hover {
+  background-color: var(--accent-warning);
+  border-color: var(--accent-warning);
+  color: #1a1a1a;
+}
+
 [data-theme="dark"] .alert-danger {
   background-color: #2d1b1e;
   border-color: #3e2723;

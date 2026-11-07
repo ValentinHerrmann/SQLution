@@ -25,9 +25,11 @@ from myapp.utils.directories import get_user_home_directory
 from myapp.utils.roles import can_manage_db_users, managed_queryset
 
 from test_account_management import (  # noqa: F401  (fixtures are used by name)
+    admin,
     client_for,
     create,
     isolated,
+    make_group_admin,
     message_texts,
     teacher,
     test_database,
@@ -365,3 +367,49 @@ def test_account_table_lists_db_users_below_their_db_admin(student, teacher):
     content = client_for(teacher).get('/user_management/').content.decode()
     order = [content.index(name) for name in ('aaa_admin', 'gruppe1_admin', 'gruppe1_abc')]
     assert order == sorted(order)
+
+
+# --------------------------------------------------------------------------------------
+# Review: only by the account's own group admin
+# --------------------------------------------------------------------------------------
+
+def test_only_own_group_admin_may_review(admin, student, teacher):
+    create_db_users(student, ['leser'])
+    leser = User.objects.get(username='gruppe1_leser')
+    independent = User.objects.get(username=am.create_accounts(admin, ['solo']).created[0][0])
+    other_teacher = make_group_admin('schmidt')
+
+    for actor, target in [(admin, student), (admin, independent), (other_teacher, student),
+                          (other_teacher, leser), (teacher, independent)]:
+        assert client_for(actor).post(f'/user_management/review/{target.pk}/').status_code == 404, (actor, target)
+
+    # the Review button is only shown where it works
+    content = client_for(admin).get('/user_management/').content.decode()
+    assert 'data-review-url="' not in content
+    content = client_for(teacher).get('/user_management/').content.decode()
+    assert content.count('data-review-url="') == 2  # gruppe1_admin and gruppe1_leser
+
+
+def test_reviewing_db_user_shows_its_view(student, teacher):
+    directory = project_dir(student)
+    write_query(directory, 'Preise')
+    write_query(directory, 'Geheim')
+    qa.save_access(directory, {'Preise': ['leser']})
+    create_db_users(student, ['leser'])
+    leser = User.objects.get(username='gruppe1_leser')
+
+    c = client_for(teacher)
+    response = c.post(f'/user_management/review/{leser.pk}/')
+    assert response.status_code == 302 and response['Location'].endswith('/user_functions/')
+
+    content = c.get('/user_functions/').content.decode()
+    assert 'Preise' in content and 'Geheim' not in content
+    assert 'Nutzersicht von' in content
+    assert c.get('/overview/').status_code == 302  # no db-admin rights in a db-user's view
+    assert c.get('/user_functions/execute/?file=Preise').status_code == 200
+
+    # reviewing the db-admin afterwards: full project again
+    response = c.post(f'/user_management/review/{student.pk}/')
+    assert response['Location'].endswith('/overview/')
+    content = c.get('/user_functions/').content.decode()
+    assert 'Preise' in content and 'Geheim' in content
