@@ -11,7 +11,7 @@ from sqlite3 import OperationalError
 import psutil
 
 from myapp.utils.directories import fullpath, get_directory_tree_with_sizes, get_user_directory, sqllock_get, sqllock_release
-from myapp.utils.sqlite_connector import runSql
+from myapp.utils.sqlite_connector import runSql, backup_db, DB_FILE, SQLITE_HEADER
 from myapp.utils.diagram import load_json
 from myapp.utils.users import get_logged_in_users_count, get_session_details
 from myapp.utils.utils import timestamp
@@ -120,7 +120,8 @@ def sql_file_version(user_dir: str, filename: str) -> str:
 
 def delete_sql_file(user_dir: str, filename: str) -> bool:
     """
-    Delete a SQL file from the user's directory.
+    Delete a SQL file from the user's directory. A copy is kept as '<name>.sql_deleted'
+    (not listed, but part of the ZIP export); it overwrites an older one.
     
     Args:
         user_dir: User's directory path
@@ -134,7 +135,7 @@ def delete_sql_file(user_dir: str, filename: str) -> bool:
     """
     filepath = fullpath(user_dir, _sql_filename(filename))
     if os.path.exists(filepath):
-        os.remove(filepath)
+        os.replace(filepath, filepath + '_deleted')
         return True
     return False
 
@@ -191,18 +192,24 @@ def execute_sql_query(sql: str, username: str) -> Dict[str, Any]:
 
 def save_database_file(user_dir: str, data: bytes) -> None:
     """
-    Save database file from binary data.
+    Save database file from binary data. The old database is backed up first (see backup_db).
     
     Args:
         user_dir: User's directory path
         data: Binary database content
     
     Raises:
+        ValueError: If data is not a SQLite database
         Exception: If file cannot be saved
     """
-    file_path = os.path.join(user_dir, "datenbank.db")
-    with open(file_path, 'wb+') as destination:
+    if not data.startswith(SQLITE_HEADER):
+        raise ValueError("Not a SQLite database")
+    file_path = os.path.join(user_dir, DB_FILE)
+    tmp_path = file_path + '.tmp'
+    with open(tmp_path, 'wb') as destination:
         destination.write(data)
+    backup_db(user_dir)
+    os.replace(tmp_path, file_path)
 
 
 def read_diagram_json(user_dir: str, filename: str) -> bytes:

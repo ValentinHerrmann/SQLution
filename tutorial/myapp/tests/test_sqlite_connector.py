@@ -41,33 +41,45 @@ class TestGetDbName(unittest.TestCase):
         assert result == ""
 
 
-class TestDeleteDb(unittest.TestCase):
-    """Test suite for delete_db function."""
+class TestBackupDb(unittest.TestCase):
+    """Test suite for backup_db function."""
     
-    def test_delete_db_existing_file(self):
-        """Test deleting an existing database file."""
+    def test_backup_db_existing_file(self):
+        """The database is copied to a timestamped .bak and stays in place."""
         with tempfile.TemporaryDirectory() as tmpdir:
             db_path = os.path.join(tmpdir, 'datenbank.db')
-            backup_path = db_path + '.bak'
-            
-            # Create a dummy database file
             with open(db_path, 'w') as f:
                 f.write('dummy db')
             
-            with patch('myapp.utils.sqlite_connector.get_db_name', return_value=db_path):
-                sqlite_connector.delete_db('testuser')
+            sqlite_connector.backup_db(tmpdir)
             
-            assert not os.path.exists(db_path)
-            assert os.path.exists(backup_path)
+            assert os.path.exists(db_path)
+            backups = [f for f in os.listdir(tmpdir) if f.startswith('datenbank_') and f.endswith('.db.bak')]
+            assert len(backups) == 1
+            with open(os.path.join(tmpdir, backups[0])) as f:
+                assert f.read() == 'dummy db'
     
-    def test_delete_db_nonexistent_file(self):
-        """Test deleting a non-existent database file."""
+    def test_backup_db_nonexistent_file(self):
+        """Without a database nothing happens."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            db_path = os.path.join(tmpdir, 'nonexistent.db')
+            sqlite_connector.backup_db(tmpdir)
+            assert os.listdir(tmpdir) == []
+    
+    def test_backup_db_keeps_three_newest(self):
+        """Older backups are removed."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with open(os.path.join(tmpdir, 'datenbank.db'), 'w') as f:
+                f.write('current')
+            old = [f'datenbank_2020-01-0{i}_10-00-00.db.bak' for i in range(1, 5)]
+            for name in old:
+                open(os.path.join(tmpdir, name), 'w').close()
             
-            with patch('myapp.utils.sqlite_connector.get_db_name', return_value=db_path):
-                # Should not raise an error
-                sqlite_connector.delete_db('testuser')
+            sqlite_connector.backup_db(tmpdir)
+            
+            backups = sorted(f for f in os.listdir(tmpdir) if f.endswith('.db.bak'))
+            assert len(backups) == 3
+            assert old[0] not in backups and old[1] not in backups
+            assert old[2] in backups and old[3] in backups
 
 
 class TestCreateDb(unittest.TestCase):
@@ -137,6 +149,33 @@ class TestCreateDb(unittest.TestCase):
             with patch('myapp.utils.sqlite_connector.get_user_directory', return_value=tmpdir):
                 with pytest.raises(sqlite3.DatabaseError):
                     sqlite_connector.create_db(sql, 'testuser')
+    
+    def test_create_db_failure_keeps_old_db(self):
+        """A failing statement leaves the old database and its folder untouched."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            db_path = os.path.join(tmpdir, 'datenbank.db')
+            with patch('myapp.utils.sqlite_connector.get_user_directory', return_value=tmpdir):
+                sqlite_connector.create_db("CREATE TABLE alt (id INTEGER);", 'testuser')
+                with pytest.raises(sqlite3.DatabaseError):
+                    sqlite_connector.create_db("CREATE TABLE neu (id INTEGER); INVALID SQL;", 'testuser')
+            
+            assert sorted(os.listdir(tmpdir)) == ['datenbank.db']  # no tmp file, no backup
+            with sqlite3.connect(db_path) as conn:
+                tables = [r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")]
+            assert tables == ['alt']
+    
+    def test_create_db_backs_up_old_db(self):
+        """A successful rebuild keeps the previous database as .db.bak."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with patch('myapp.utils.sqlite_connector.get_user_directory', return_value=tmpdir):
+                sqlite_connector.create_db("CREATE TABLE alt (id INTEGER);", 'testuser')
+                sqlite_connector.create_db("CREATE TABLE neu (id INTEGER);", 'testuser')
+            
+            backups = [f for f in os.listdir(tmpdir) if f.endswith('.db.bak')]
+            assert len(backups) == 1
+            with sqlite3.connect(os.path.join(tmpdir, backups[0])) as conn:
+                tables = [r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")]
+            assert tables == ['alt']
     
     def test_create_db_none_dbname(self):
         """Test creating database when username is None (returns empty dbname)."""

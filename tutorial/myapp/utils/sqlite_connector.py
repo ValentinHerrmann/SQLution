@@ -1,14 +1,28 @@
 import sqlite3
 import os
+import glob
+import shutil
+from datetime import datetime
 from myapp.utils.directories import get_user_directory
 import re
 from html import escape
 
 
-def delete_db(username:str):
-    dbname = get_db_name(username)
-    if os.path.exists(dbname):
-        os.rename(dbname, dbname + ".bak")
+DB_FILE = "datenbank.db"
+SQLITE_HEADER = b'SQLite format 3\x00'
+BACKUPS_TO_KEEP = 3
+
+def backup_db(user_dir:str):
+    """Copy datenbank.db of a folder to datenbank_<YYYY-MM-DD_HH-MM-SS>.db.bak and keep only the newest backups.
+    The database itself stays in place (the caller replaces it afterwards)."""
+    dbname = os.path.join(user_dir, DB_FILE)
+    if not os.path.exists(dbname):
+        return
+    stamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    shutil.copy2(dbname, os.path.join(user_dir, f"datenbank_{stamp}.db.bak"))
+    backups = sorted(glob.glob(os.path.join(glob.escape(user_dir), "datenbank_*.db.bak")))  # the timestamp sorts by age
+    for old in backups[:-BACKUPS_TO_KEEP]:
+        os.remove(old)
 
 def get_db_name(username:str):
 
@@ -40,9 +54,13 @@ def create_db(sql:str, username:str):
     if dbname is None:
         #print("No database name provided.")
         return None
-    delete_db(username)  # Delete the old database if it exists
-
-    with sqlite3.connect(dbname, isolation_level=None) as con:
+    if dbname == "":
+        raise FileNotFoundError("No database name provided.")
+    tmpname = dbname + ".tmp"  # the old database stays untouched until the new one is complete
+    if os.path.exists(tmpname):
+        os.remove(tmpname)
+    con = sqlite3.connect(tmpname, isolation_level=None)
+    try:
         cur = con.cursor()
         for s in split_statements(sql):
             if s.strip() == '':
@@ -51,6 +69,13 @@ def create_db(sql:str, username:str):
                 cur.execute(s)
             except sqlite3.Error as e:
                 raise sqlite3.DatabaseError(f"SQL error during DB creation: {e}") from e
+    except BaseException:
+        con.close()
+        os.remove(tmpname)
+        raise
+    con.close()
+    backup_db(os.path.dirname(dbname))
+    os.replace(tmpname, dbname)
     with open(dbname, 'rb') as file:
         binary_data = file.read()
         return binary_data

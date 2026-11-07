@@ -150,6 +150,8 @@ class TestSqlFileOperations:
         
         assert result is True
         assert not os.path.exists(file_path)
+        assert os.path.exists(file_path + '_deleted')  # a copy is kept
+        assert 'delete_me.sql' not in api_utils.list_sql_files(temp_dir)
     
     def test_delete_sql_file_nonexistent(self, temp_dir):
         """Test deleting a non-existent file returns False."""
@@ -262,7 +264,7 @@ class TestDatabaseFileOperations:
     def test_save_database_file(self):
         """Test saving database file from binary data."""
         with tempfile.TemporaryDirectory() as temp_dir:
-            test_data = b'\x00\x01\x02\x03\x04\x05'
+            test_data = b'SQLite format 3\x00' + b'\x01\x02\x03'
             
             api_utils.save_database_file(temp_dir, test_data)
             
@@ -272,6 +274,33 @@ class TestDatabaseFileOperations:
             with open(file_path, 'rb') as f:
                 saved_data = f.read()
             assert saved_data == test_data
+    
+    def test_save_database_file_rejects_non_sqlite(self):
+        """Anything without the SQLite header is refused and the old database stays."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            file_path = os.path.join(temp_dir, 'datenbank.db')
+            with open(file_path, 'wb') as f:
+                f.write(b'SQLite format 3\x00old')
+            
+            with pytest.raises(ValueError):
+                api_utils.save_database_file(temp_dir, b'not a database')
+            
+            assert os.listdir(temp_dir) == ['datenbank.db']
+            with open(file_path, 'rb') as f:
+                assert f.read() == b'SQLite format 3\x00old'
+    
+    def test_save_database_file_backs_up_old_db(self):
+        """The replaced database is kept as .db.bak."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with open(os.path.join(temp_dir, 'datenbank.db'), 'wb') as f:
+                f.write(b'SQLite format 3\x00old')
+            
+            api_utils.save_database_file(temp_dir, b'SQLite format 3\x00new')
+            
+            backups = [f for f in os.listdir(temp_dir) if f.endswith('.db.bak')]
+            assert len(backups) == 1
+            with open(os.path.join(temp_dir, backups[0]), 'rb') as f:
+                assert f.read() == b'SQLite format 3\x00old'
 
 
 class TestDiagramOperations:

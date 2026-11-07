@@ -4,6 +4,7 @@
 let filenameOnLoad = "";
 let contentOnLoad = "";
 let versionOnLoad = "";
+let loadRequestId = 0; // a response for an older click must not overwrite what a newer click loaded
 
 /**
  * Keeps the Playground content for this browser tab (sessionStorage can throw, e.g. when storage is blocked)
@@ -61,7 +62,7 @@ function createBtnFilelistInline(title, color, f, icon, onclick) {
 async function on_delBtn_click(e, f) {
     e.stopPropagation();
     const ok = await globalThis.showConfirmDialog(
-        `Datei "${f}" wirklich löschen?`,
+        `Datei "${f}" wirklich löschen? Eine Kopie bleibt als "${f}_deleted" erhalten (im ZIP-Export enthalten).`,
         "fas fa-trash",
         "var(--accent-danger)"
     );
@@ -378,6 +379,7 @@ async function saveCurrentFile() {
  * @param {HTMLLIElement} liElement - List item element that was clicked
  */
 async function loadFileIntoEditor(filename, liElement) {
+    const requestId = ++loadRequestId;
     try {
         // restore editor height when opening a file (remove result view)
         if (typeof restoreEditorHeight === 'function') {
@@ -396,10 +398,12 @@ async function loadFileIntoEditor(filename, liElement) {
                     "Änderungen speichern? Wenn nicht gespeichert wird, gehen diese verloren.",
                     "fas fa-save"
                 );
+                if (requestId !== loadRequestId) return;
                 if (confirmed) {
                     if (filenameOnLoad !== 'Playground') {
                         let success = await saveCurrentFile();
                         console.log("Save success: " + success);
+                        if (requestId !== loadRequestId) return;
                         if (!success) {
                             showAlertDialog("Speichern der Datei fehlgeschlagen. Abbruch des Ladevorgangs.", "fas fa-exclamation-triangle");
                             return;
@@ -445,6 +449,7 @@ async function loadFileIntoEditor(filename, liElement) {
             const resp = await fetch(`/api/sql/${encodeURIComponent(base)}.sql`);
             if (!resp.ok) throw new Error('Could not load file content');
             const content = await resp.text();
+            if (requestId !== loadRequestId) return;
             editor.setValue(content, -1);
             contentOnLoad = content;
             versionOnLoad = resp.headers.get('X-File-Version') || '';
