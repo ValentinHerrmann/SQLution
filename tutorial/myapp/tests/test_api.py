@@ -76,9 +76,10 @@ class TestApiSql:
         return request
     
     @patch('myapp.views.api.sqllock_release')
+    @patch('myapp.views.api.sqllock_get')
     @patch('myapp.views.api.get_user_directory')
     @patch('myapp.views.api.api_utils.save_sql_file')
-    def test_api_sql_post_success(self, mock_save, mock_get_dir, mock_unlock, mock_user):
+    def test_api_sql_post_success(self, mock_save, mock_get_dir, mock_unlock, mock_lock, mock_user):
         """Test POST request to save SQL file."""
         mock_get_dir.return_value = '/tmp/testuser_admin'
         
@@ -97,9 +98,10 @@ class TestApiSql:
         mock_unlock.assert_called()
     
     @patch('myapp.views.api.sqllock_release')
+    @patch('myapp.views.api.sqllock_get')
     @patch('myapp.views.api.get_user_directory')
     @patch('myapp.views.api.api_utils.read_sql_file')
-    def test_api_sql_get_success(self, mock_read, mock_get_dir, mock_unlock, mock_user):
+    def test_api_sql_get_success(self, mock_read, mock_get_dir, mock_unlock, mock_lock, mock_user):
         """Test GET request to read SQL file."""
         mock_get_dir.return_value = '/tmp/testuser_admin'
         mock_read.return_value = 'SELECT * FROM users;'
@@ -115,9 +117,10 @@ class TestApiSql:
         mock_read.assert_called_once_with('/tmp/testuser_admin', 'query.sql')
     
     @patch('myapp.views.api.sqllock_release')
+    @patch('myapp.views.api.sqllock_get')
     @patch('myapp.views.api.get_user_directory')
     @patch('myapp.views.api.api_utils.delete_sql_file')
-    def test_api_sql_delete_success(self, mock_delete, mock_get_dir, mock_unlock, mock_user):
+    def test_api_sql_delete_success(self, mock_delete, mock_get_dir, mock_unlock, mock_lock, mock_user):
         """Test DELETE request to remove SQL file."""
         mock_get_dir.return_value = '/tmp/testuser_admin'
         mock_delete.return_value = True
@@ -132,9 +135,10 @@ class TestApiSql:
         mock_delete.assert_called_once_with('/tmp/testuser_admin', 'old.sql')
     
     @patch('myapp.views.api.sqllock_release')
+    @patch('myapp.views.api.sqllock_get')
     @patch('myapp.views.api.get_user_directory')
     @patch('myapp.views.api.api_utils.delete_sql_file')
-    def test_api_sql_delete_not_found(self, mock_delete, mock_get_dir, mock_unlock, mock_user):
+    def test_api_sql_delete_not_found(self, mock_delete, mock_get_dir, mock_unlock, mock_lock, mock_user):
         """Test DELETE request for non-existent file."""
         mock_get_dir.return_value = '/tmp/testuser_admin'
         mock_delete.return_value = False
@@ -148,9 +152,10 @@ class TestApiSql:
         assert b"File not found" in response.content
     
     @patch('myapp.views.api.sqllock_release')
+    @patch('myapp.views.api.sqllock_get')
     @patch('myapp.views.api.get_user_directory')
     @patch('myapp.views.api.api_utils.save_sql_file')
-    def test_api_sql_put_success(self, mock_save, mock_get_dir, mock_unlock, mock_user):
+    def test_api_sql_put_success(self, mock_save, mock_get_dir, mock_unlock, mock_lock, mock_user):
         """Test PUT request to save SQL file (alternative to POST)."""
         mock_get_dir.return_value = '/tmp/testuser_admin'
 
@@ -169,9 +174,10 @@ class TestApiSql:
         mock_unlock.assert_called()
 
     @patch('myapp.views.api.sqllock_release')
+    @patch('myapp.views.api.sqllock_get')
     @patch('myapp.views.api.get_user_directory')
     @patch('myapp.views.api.api_utils.read_sql_file')
-    def test_api_sql_handles_exception(self, mock_read, mock_get_dir, mock_unlock, mock_user):
+    def test_api_sql_handles_exception(self, mock_read, mock_get_dir, mock_unlock, mock_lock, mock_user):
         """Test error handling in api_sql."""
         mock_get_dir.return_value = '/tmp/testuser_admin'
         mock_read.side_effect = Exception('Read error')
@@ -186,63 +192,91 @@ class TestApiSql:
         mock_unlock.assert_called()
 
 
-class TestApiSqlAll:
-    """Tests for api_sql_all view (replace all SQL files)."""
-    
+class TestApiSqlFiles:
+    """api_sql with a real temporary folder: create (PUT), save (POST) and the file version."""
+
     @pytest.fixture
-    def mock_user(self):
+    def user_dir(self, tmp_path):
+        return str(tmp_path)
+
+    @pytest.fixture
+    def call(self, user_dir):
         user = Mock(spec=User)
         user.username = 'testuser_admin'
-        return user
-    
-    @patch('myapp.views.api.sqllock_release')
-    @patch('myapp.utils.directories.sqllock_get')
-    @patch('myapp.views.api.get_user_directory')
-    @patch('myapp.views.api.api_utils.replace_all_sql_files')
-    def test_api_sql_all_post_success(self, mock_replace, mock_get_dir, mock_lock, mock_unlock, mock_user):
-        """Test POST request to replace all SQL files."""
-        mock_get_dir.return_value = '/tmp/testuser'
-        
-        files_data = [
-            {'filename': 'query1.sql', 'sql': 'SELECT 1;'},
-            {'filename': 'query2.sql', 'sql': 'SELECT 2;'}
-        ]
-        
-        request = RequestFactory().post(
-            '/api/sql/all',
-            data=json.dumps({'files': files_data}),
-            content_type='application/json'
-        )
-        request.user = mock_user
-        
-        response = api.api_sql_all(request)
-        
+
+        def _call(method, body=None, filename='test.sql'):
+            data = json.dumps(body) if body is not None else ''
+            request = getattr(RequestFactory(), method)('/api/sql/' + filename, data=data, content_type='application/json')
+            request.user = user
+            with patch('myapp.views.api.get_user_directory', return_value=user_dir):
+                return api.api_sql(request, filename)
+        return _call
+
+    def read(self, user_dir, name='test.sql'):
+        with open(os.path.join(user_dir, name), encoding='utf-8') as f:
+            return f.read()
+
+    def test_put_creates_file(self, call, user_dir):
+        response = call('put', {'sql': 'SELECT 1;'})
         assert response.status_code == 200
-        assert b"Files saved successfully" in response.content
-        mock_replace.assert_called_once_with('/tmp/testuser', files_data)
-        mock_lock.assert_called_once()
-        mock_unlock.assert_called()
-    
-    @patch('myapp.views.api.sqllock_release')
-    @patch('myapp.utils.directories.sqllock_get')
-    @patch('myapp.views.api.get_user_directory')
-    @patch('myapp.views.api.api_utils.replace_all_sql_files')
-    def test_api_sql_all_handles_exception(self, mock_replace, mock_get_dir, mock_lock, mock_unlock, mock_user):
-        """Test error handling in api_sql_all."""
-        mock_get_dir.return_value = '/tmp/testuser_admin'
-        mock_replace.side_effect = Exception('Replace error')
-        
-        request = RequestFactory().post(
-            '/api/sql/all',
-            data=json.dumps({'files': []}),
-            content_type='application/json'
-        )
-        request.user = mock_user
-        
-        response = api.api_sql_all(request)
-        
+        assert response['X-File-Version']
+        assert self.read(user_dir) == 'SELECT 1;'
+        assert not os.path.exists(os.path.join(user_dir, 'lockfile'))
+
+    def test_put_non_string_sql_is_400_and_creates_no_file(self, call, user_dir):
+        response = call('put', {'sql': {'isTrusted': True}})
+        assert response.status_code == 400
+        assert not os.path.exists(os.path.join(user_dir, 'test.sql'))
+        assert not os.path.exists(os.path.join(user_dir, 'lockfile'))
+
+    def test_put_on_existing_file_is_409_and_keeps_content(self, call, user_dir):
+        call('put', {'sql': 'SELECT 1;'})
+        response = call('put', {'sql': 'DROP TABLE x;'})
+        assert response.status_code == 409
+        assert self.read(user_dir) == 'SELECT 1;'
+
+    def test_get_has_version_header(self, call, user_dir):
+        version = call('put', {'sql': 'SELECT 1;'})['X-File-Version']
+        response = call('get')
+        assert response.status_code == 200
+        assert response.content == b'SELECT 1;'
+        assert response['X-File-Version'] == version
+
+    def test_post_with_current_version_saves(self, call, user_dir):
+        version = call('put', {'sql': 'SELECT 1;'})['X-File-Version']
+        response = call('post', {'sql': 'SELECT 2;', 'version': version})
+        assert response.status_code == 200
+        assert response['X-File-Version']
+        assert self.read(user_dir) == 'SELECT 2;'
+
+    def test_post_with_stale_version_is_409(self, call, user_dir):
+        call('put', {'sql': 'SELECT 1;'})
+        response = call('post', {'sql': 'SELECT 2;', 'version': '123'})
+        assert response.status_code == 409
+        assert self.read(user_dir) == 'SELECT 1;'
+
+    def test_post_with_stale_version_and_force_saves(self, call, user_dir):
+        call('put', {'sql': 'SELECT 1;'})
+        response = call('post', {'sql': 'SELECT 2;', 'version': '123', 'force': True})
+        assert response.status_code == 200
+        assert self.read(user_dir) == 'SELECT 2;'
+
+    def test_post_without_version_saves(self, call, user_dir):
+        call('put', {'sql': 'SELECT 1;'})
+        assert call('post', {'sql': 'SELECT 2;'}).status_code == 200
+        assert self.read(user_dir) == 'SELECT 2;'
+
+    def test_failed_write_keeps_old_content(self, call, user_dir):
+        call('put', {'sql': 'SELECT 1;'})
+        with patch('myapp.utils.api_utils.os.replace', side_effect=OSError('disk full')):
+            response = call('post', {'sql': 'SELECT 2;'})
         assert response.status_code == 500
-        assert b"Internal error while saving SQL files" in response.content
+        assert self.read(user_dir) == 'SELECT 1;'
+        assert not os.path.exists(os.path.join(user_dir, 'test.sql.tmp'))
+
+    def test_umlauts_roundtrip(self, call, user_dir):
+        call('put', {'sql': "SELECT 'Müller';"})
+        assert call('get').content.decode('utf-8') == "SELECT 'Müller';"
 
 
 class TestApiSqlList:

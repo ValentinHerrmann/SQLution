@@ -400,6 +400,78 @@ def test_upload_of_old_project_zip_gets_converted(student):
     assert qa.load_access(directory) == {'Neu': qa.ALL, 'Alt': ['leser']}
 
 
+def make_zip(files):
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, 'w') as zipf:
+        for name, content in files.items():
+            zipf.writestr(name, content)
+    buffer.seek(0)
+    buffer.name = 'projekt.zip'
+    return buffer
+
+
+def test_upload_of_old_zip_keeps_existing_queries_and_access(student):
+    directory = project_dir(student)
+    write_query(directory, 'Kunden_Liste', 'SELECT 1')
+    write_query(directory, 'Preise', 'SELECT 2')
+    qa.save_access(directory, {'Kunden_Liste': qa.ALL, 'Preise': ['leser']})
+
+    client_for(student).post('/upload_zip/', {'zip_file': make_zip({'Kasse_Umsatz.sql': 'SELECT 3'})})
+
+    assert qa.list_queries(directory) == ['Kunden_Liste', 'Preise', 'Umsatz']
+    assert qa.load_access(directory) == {'Kunden_Liste': qa.ALL, 'Preise': ['leser'], 'Umsatz': ['Kasse']}
+    assert not os.path.exists(os.path.join(directory, 'lockfile'))
+    assert os.listdir('user_databases') and not [d for d in os.listdir('user_databases') if d.startswith('~import_')]
+
+
+def test_upload_zip_keeps_overwritten_query_as_bak_and_merges_access(student):
+    directory = project_dir(student)
+    write_query(directory, 'Preise', 'alt')
+    write_query(directory, 'Gleich', 'gleich')
+    write_query(directory, 'Nur_hier', 'x')
+    qa.save_access(directory, {'Preise': ['leser'], 'Gleich': qa.ALL, 'Nur_hier': ['a']})
+
+    zip_access = json.dumps({'Preise': '*', 'Neu': ['kasse']})
+    client_for(student).post('/upload_zip/', {'zip_file': make_zip({
+        'Preise.sql': 'neu', 'Gleich.sql': 'gleich', 'Neu.sql': 'n', qa.ACCESS_FILE: zip_access})})
+
+    assert read_file(directory, 'Preise.sql') == 'neu'
+    assert read_file(directory, 'Preise.sql_bak') == 'alt'
+    assert not os.path.exists(os.path.join(directory, 'Gleich.sql_bak'))  # unchanged content needs no backup
+    assert qa.load_access(directory) == {'Preise': qa.ALL, 'Gleich': qa.ALL, 'Nur_hier': ['a'], 'Neu': ['kasse']}
+
+    # a second overwrite replaces the older backup
+    client_for(student).post('/upload_zip/', {'zip_file': make_zip({'Preise.sql': 'neuer', qa.ACCESS_FILE: '{}'})})
+    assert read_file(directory, 'Preise.sql_bak') == 'neu'
+
+
+def test_upload_zip_refuses_path_traversal(student):
+    directory = project_dir(student)
+    client_for(student).post('/upload_zip/', {'zip_file': make_zip({'../evil.sql': 'x', 'Gut.sql': 'y'})})
+    assert not os.path.exists(os.path.join(os.path.dirname(directory.rstrip('/')), 'evil.sql'))
+    assert not os.path.exists(os.path.join(directory, 'Gut.sql'))  # nothing was imported
+
+
+def test_upload_db_rejects_non_sqlite(student):
+    directory = project_dir(student)
+    c = client_for(student)
+    response = c.post('/upload_db/', {'db_file': io.BytesIO(b'kaputt')})
+    assert 'keine SQLite-Datenbank' in ' '.join(message_texts(response))
+    assert not os.path.exists(os.path.join(directory, 'datenbank.db'))
+
+
+def test_delete_api_keeps_sql_deleted_and_does_not_list_it(student):
+    directory = project_dir(student)
+    write_query(directory, 'Weg', 'SELECT 1')
+    qa.save_access(directory, {'Weg': qa.ALL})
+    c = client_for(student)
+    assert c.delete('/api/sql/Weg.sql').status_code == 200
+    assert read_file(directory, 'Weg.sql_deleted') == 'SELECT 1'
+    assert qa.load_access(directory) == {}
+    assert c.get('/api/sql/list').json()['files'] == []
+    assert qa.list_queries(directory) == []
+
+
 def test_rename_api_moves_access(student):
     directory = project_dir(student)
     write_query(directory, 'Alt')
@@ -467,3 +539,9 @@ def test_reviewing_db_user_shows_its_view(student, teacher):
     content = c.get('/user_functions/').content.decode()
     assert 'Preise' in content
     assert 'Geheim' in content
+
+
+def test_sql_ide_links_versioned_static_files(student):
+    response = client_for(student).get('/sql_ide/')
+    assert response.status_code == 200
+    assert 'file_list.js?v=' in response.content.decode()

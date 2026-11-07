@@ -98,6 +98,11 @@
                         <br> ➔ <i style="color: var(--text-secondary);">SELECT * FROM Lehrer WHERE schule=2</i> wird ausgeführt
                         
                         <br><br>
+                        Ist der Wert Text (z.B. ein Kürzel), musst du den <b>ganzen Platzhalter in Anführungszeichen</b> setzen:
+                        <i style="color: var(--text-secondary);">SELECT * FROM Lehrer WHERE kuerzel='{Lehrer}[SELECT kuerzel FROM Lehrer]'</i>.
+                        Apostrophe in Eingaben (z.B. O'Brien) werden innerhalb von Anführungszeichen automatisch behandelt.
+
+                        <br><br>
                         Beim Ausführen auf dieser Seite, wird statt eines Dropdowns ein Textfeld angezeigt.
                 </div>
                 <img src="{% static 'img/Dropdown_Example.png' %}" alt="SQL Variablen Beispiel" style="max-width: 230px; height: auto; border: 1px solid #ccc; border-radius: 6px; box-shadow: 1px 1px 6px #eee;">

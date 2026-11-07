@@ -150,40 +150,13 @@ class TestSqlFileOperations:
         
         assert result is True
         assert not os.path.exists(file_path)
+        assert os.path.exists(file_path + '_deleted')  # a copy is kept
+        assert 'delete_me.sql' not in api_utils.list_sql_files(temp_dir)
     
     def test_delete_sql_file_nonexistent(self, temp_dir):
         """Test deleting a non-existent file returns False."""
         result = api_utils.delete_sql_file(temp_dir, 'nonexistent.sql')
         assert result is False
-    
-    def test_replace_all_sql_files(self, temp_dir):
-        """Test replacing all SQL files in directory."""
-        # Create some existing files
-        with open(os.path.join(temp_dir, 'old1.sql'), 'w') as f:
-            f.write('OLD 1')
-        with open(os.path.join(temp_dir, 'old2.sql'), 'w') as f:
-            f.write('OLD 2')
-        with open(os.path.join(temp_dir, 'keep.txt'), 'w') as f:
-            f.write('KEEP ME')
-        
-        # Replace with new files
-        new_files = [
-            {'filename': 'new1.sql', 'sql': 'SELECT 1;'},
-            {'filename': 'new2', 'sql': 'SELECT 2;'}  # Without extension
-        ]
-        
-        api_utils.replace_all_sql_files(temp_dir, new_files)
-        
-        # Check old SQL files are gone
-        assert not os.path.exists(os.path.join(temp_dir, 'old1.sql'))
-        assert not os.path.exists(os.path.join(temp_dir, 'old2.sql'))
-        
-        # Check new files exist
-        assert os.path.exists(os.path.join(temp_dir, 'new1.sql'))
-        assert os.path.exists(os.path.join(temp_dir, 'new2.sql'))
-        
-        # Check non-SQL file is preserved
-        assert os.path.exists(os.path.join(temp_dir, 'keep.txt'))
     
     def test_list_sql_files_empty_directory(self, temp_dir):
         """Test listing SQL files in empty directory."""
@@ -291,7 +264,7 @@ class TestDatabaseFileOperations:
     def test_save_database_file(self):
         """Test saving database file from binary data."""
         with tempfile.TemporaryDirectory() as temp_dir:
-            test_data = b'\x00\x01\x02\x03\x04\x05'
+            test_data = b'SQLite format 3\x00' + b'\x01\x02\x03'
             
             api_utils.save_database_file(temp_dir, test_data)
             
@@ -301,6 +274,33 @@ class TestDatabaseFileOperations:
             with open(file_path, 'rb') as f:
                 saved_data = f.read()
             assert saved_data == test_data
+    
+    def test_save_database_file_rejects_non_sqlite(self):
+        """Anything without the SQLite header is refused and the old database stays."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            file_path = os.path.join(temp_dir, 'datenbank.db')
+            with open(file_path, 'wb') as f:
+                f.write(b'SQLite format 3\x00old')
+            
+            with pytest.raises(ValueError):
+                api_utils.save_database_file(temp_dir, b'not a database')
+            
+            assert os.listdir(temp_dir) == ['datenbank.db']
+            with open(file_path, 'rb') as f:
+                assert f.read() == b'SQLite format 3\x00old'
+    
+    def test_save_database_file_backs_up_old_db(self):
+        """The replaced database is kept as .db.bak."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with open(os.path.join(temp_dir, 'datenbank.db'), 'wb') as f:
+                f.write(b'SQLite format 3\x00old')
+            
+            api_utils.save_database_file(temp_dir, b'SQLite format 3\x00new')
+            
+            backups = [f for f in os.listdir(temp_dir) if f.endswith('.db.bak')]
+            assert len(backups) == 1
+            with open(os.path.join(temp_dir, backups[0]), 'rb') as f:
+                assert f.read() == b'SQLite format 3\x00old'
 
 
 class TestDiagramOperations:

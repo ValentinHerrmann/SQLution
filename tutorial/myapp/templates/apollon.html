@@ -6,8 +6,8 @@ SQLution - Klassendiagramm
 
 
 {% block content %} 
-    <link rel="stylesheet" href="{% static 'apollon/apollon-sqlution.css' %}">
-    <link rel="stylesheet" href="{% static 'apollon/apollon-custom.css' %}">
+    <link rel="stylesheet" href="{% static 'apollon/apollon-sqlution.css' %}?v={{ static_version }}">
+    <link rel="stylesheet" href="{% static 'apollon/apollon-custom.css' %}?v={{ static_version }}">
 
     <div id="div-full-page">
       <div id="div-top-section" class="flex-row" style="justify-content: space-evenly;">
@@ -106,14 +106,14 @@ SQLution - Klassendiagramm
       </div>
     </div>
 
-    <script type="module" src="{% static 'apollon/apollon-sqlution.js' %}"></script>
+    <script type="module" src="{% static 'apollon/apollon-sqlution.js' %}?v={{ static_version }}"></script>
     <script>
       window.apollonPageConfig = {
         uploadMaxBytes: {{ upload_max_bytes|default:'null' }},
         uploadMaxHuman: "{{ upload_max_human|default:'' }}",
       }
     </script>
-    <script src="{% static 'apollon/apollon-page.js' %}"></script>
+    <script src="{% static 'apollon/apollon-page.js' %}?v={{ static_version }}"></script>
 {% endblock %} 
 
 {% block powered_by %}

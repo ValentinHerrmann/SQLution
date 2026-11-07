@@ -11,9 +11,9 @@
     {% load static %}
         
     <!-- Theme Switcher CSS Files -->
-    <link rel="stylesheet" href="{% static 'css/style_lightmode.css' %}">
-    <link rel="stylesheet" href="{% static 'css/style_darkmode.css' %}">
-    <link rel="stylesheet" href="{% static 'css/theme-switcher.css' %}">
+    <link rel="stylesheet" href="{% static 'css/style_lightmode.css' %}?v={{ static_version }}">
+    <link rel="stylesheet" href="{% static 'css/style_darkmode.css' %}?v={{ static_version }}">
+    <link rel="stylesheet" href="{% static 'css/theme-switcher.css' %}?v={{ static_version }}">
 
   </head>
   <body class="login-page">
@@ -81,6 +81,6 @@
     </div>
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
-    <script type="module" src="{% static 'js/sqlution.js' %}" ></script>
+    <script type="module" src="{% static 'js/sqlution.js' %}?v={{ static_version }}" ></script>
   </body>
 </html>

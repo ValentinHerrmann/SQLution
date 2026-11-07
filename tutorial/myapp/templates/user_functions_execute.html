@@ -23,10 +23,10 @@
                 <select id="dropdown_{{ inp.name }}" name="dropdown_{{ inp.name }}">
                     {% for option in inp.options %}
                         {% with selected=inpVals|dict_get:inp.name %}
-                            {% if option == selected %}
-                                <option value="{{ option }}" selected>{{ option }}</option>
+                            {% if option.value == selected %}
+                                <option value="{{ option.value }}" selected>{{ option.label }}</option>
                             {% else %}
-                                <option value="{{ option }}">{{ option }}</option>
+                                <option value="{{ option.value }}">{{ option.label }}</option>
                             {% endif %}
                         {% endwith %}
                     {% endfor %}

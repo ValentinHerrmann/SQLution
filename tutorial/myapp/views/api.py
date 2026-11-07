@@ -3,7 +3,7 @@ from django.http import HttpResponse, JsonResponse
 from django.urls import get_resolver
 from myapp.utils.decorators import is_db_admin, is_global_admin
 from django.contrib.auth.decorators import login_required,user_passes_test
-from myapp.utils.directories import get_user_directory, sqllock_release
+from myapp.utils.directories import get_user_directory, sqllock_get, sqllock_release
 from myapp.utils import api_utils, query_access
 from django.views.decorators.http import require_http_methods
 
@@ -29,26 +29,40 @@ def api_endpoints(request) -> HttpResponse:
 @login_required
 @user_passes_test(is_db_admin)
 def api_sql(request, filename:str) -> HttpResponse:
+    """GET reads, PUT creates (409 if it exists), POST saves (409 if the file was changed meanwhile), DELETE removes a SQL file."""
     user_dir = get_user_directory(request.user.username)
+    try:
+        sqllock_get(user_dir)
+    except TimeoutError:
+        return HttpResponse("Server busy, please try again", status=503)
     try:
         if request.method == "PUT" or request.method == "POST":
             body_unicode = request.body.decode('utf-8')
             body = json.loads(body_unicode)
             sql = body['sql']
+            if not isinstance(sql, str):
+                return HttpResponse("sql must be a string", status=400)
+            current_version = api_utils.sql_file_version(user_dir, filename)
+            if request.method == "PUT" and current_version:
+                return HttpResponse("File already exists", status=409)
+            if (request.method == "POST" and current_version and 'version' in body
+                    and body['version'] != current_version and not body.get('force')):
+                return HttpResponse("File was changed meanwhile", status=409)
             api_utils.save_sql_file(user_dir, filename, sql)
-            sqllock_release(user_dir)
-            return HttpResponse("File saved successfully", status=200)
+            response = HttpResponse("File saved successfully", status=200)
+            response['X-File-Version'] = api_utils.sql_file_version(user_dir, filename)
+            return response
 
         if request.method == "GET":
             file_content = api_utils.read_sql_file(user_dir, filename)
-            sqllock_release(user_dir)
-            return HttpResponse(file_content, content_type="text/sql", status=200)
+            response = HttpResponse(file_content, content_type="text/sql", status=200)
+            response['X-File-Version'] = api_utils.sql_file_version(user_dir, filename)
+            return response
         
         if request.method == "DELETE":
             deleted = api_utils.delete_sql_file(user_dir, filename)
-            sqllock_release(user_dir)
             if deleted:
-                query_access.remove_query(user_dir, filename)
+                query_access.remove_query(user_dir, filename, lock_held=True)  # api_sql holds the lock
                 return HttpResponse("File deleted successfully", status=200)
             return HttpResponse("File not found", status=404)
         
@@ -56,31 +70,6 @@ def api_sql(request, filename:str) -> HttpResponse:
     except Exception as e:
         print(f"Error: {e}")
         return HttpResponse("Unknown request", status=500)
-    finally:
-        sqllock_release(user_dir)
-
-@require_http_methods(['POST'])
-@login_required
-@user_passes_test(is_db_admin)
-def api_sql_all(request) -> HttpResponse:
-    from myapp.utils.directories import sqllock_get
-    user_dir = get_user_directory(request.user.username)
-    try:
-        sqllock_get(user_dir)
-
-        if request.method == "POST":
-            body_unicode = request.body.decode('utf-8')
-            body = json.loads(body_unicode)
-            files = body['files']
-            
-            api_utils.replace_all_sql_files(user_dir, files)
-            sqllock_release(user_dir)
-            return HttpResponse("Files saved successfully", status=200)
-        
-        return HttpResponse("Unknown request", status=404)
-    except Exception as e:
-        print(f"Error: {e}")
-        return HttpResponse("Internal error while saving SQL files.", status=500)
     finally:
         sqllock_release(user_dir)
 
@@ -95,6 +84,8 @@ def api_sql_rename(request) -> HttpResponse:
         body = json.loads(request.body.decode('utf-8'))
         query_access.rename_query(user_dir, body['old'], body['new'])
         return HttpResponse("File renamed successfully", status=200)
+    except TimeoutError:
+        return HttpResponse("Server busy, please try again", status=503)
     except FileNotFoundError:
         return HttpResponse("File not found", status=404)
     except FileExistsError:
@@ -114,7 +105,7 @@ def api_sql_list(request) -> HttpResponse:
     try:
         sqllock_get(user_dir)
         if request.method == "GET":
-            query_access.load_access(user_dir)  # converts an old project once (see query_access)
+            query_access.load_access(user_dir, lock_held=True)  # converts an old project once (see query_access)
             files = api_utils.list_sql_files(user_dir)
             return JsonResponse({'files': files})
         else:
@@ -162,6 +153,8 @@ def api_upload_db(request) -> HttpResponse:
         if request.method == "POST":
             api_utils.save_database_file(user_dir, request.body)
             return HttpResponse("File saved successfully", status=201)
+    except ValueError:
+        return HttpResponse("Not a SQLite database", status=400)
     except Exception as e:
         print(f"Error: {e}")
         return HttpResponse("Internal error while uploading database.", status=500)
