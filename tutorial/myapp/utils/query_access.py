@@ -20,6 +20,7 @@ ACCESS_FILE = '_zugriff.json'
 ALL = '*'
 SQL_EXT = '.sql'
 BACKUP_EXT = '.sql_bak'
+DEFAULT_CATEGORY = 'Allgemein'
 
 
 def _query_path(directory, name) -> str:
@@ -29,6 +30,14 @@ def _query_path(directory, name) -> str:
 def query_name(filename: str) -> str:
     """'Bestellungen.sql' -> 'Bestellungen'."""
     return filename[:-len(SQL_EXT)] if filename.endswith(SQL_EXT) else filename
+
+
+def split_category(name):
+    """'Kunden - Liste' -> ('Kunden', 'Liste'); 'Liste' -> ('Allgemein', 'Liste')."""
+    if ' - ' in name:
+        category, label = name.split(' - ', 1)
+        return category, label
+    return DEFAULT_CATEGORY, name
 
 
 def list_queries(directory) -> list:

@@ -132,7 +132,7 @@ SQLution - Nutzer & Freigaben
                   <tr class="category"><td colspan="{{ names|length|add:2 }}">{{ category }}</td></tr>
                   {% for query in queries %}
                     <tr class="access-row">
-                      <td>{{ query.name }}</td>
+                      <td>{{ query.label }}</td>
                       <td><input type="checkbox" class="access-all" name="access" value="{{ all_value }}:{{ query.name }}" aria-label="{{ query.name }}: alle" {% if query.all %}checked{% endif %}></td>
                       {% for cell in query.cells %}
                         <td><input type="checkbox" class="access-user" name="access" value="{{ cell.user }}:{{ query.name }}" aria-label="{{ query.name }}: {{ cell.user }}" {% if cell.checked %}checked{% endif %}></td>
