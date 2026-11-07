@@ -5,6 +5,7 @@
 - Stick to the existing coding style of the project.
 - Don't add new code dependencies (pip packages, JS libraries, frameworks) without asking first. Vale must be able to understand the code quickly without learning anything new.
 - Grill Vale when planning: ask about unclear requirements and edge cases before you build anything.
+- Save quota: hand off as much work as possible to cheap subagents (e.g. `model: haiku`/`sonnet`). The main session plans, reviews and commits.
 
 ## What the app is
 A Django app for teaching databases/SQL in schools (sqlution.de). The UI text is German.
