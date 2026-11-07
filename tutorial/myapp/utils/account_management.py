@@ -505,8 +505,14 @@ def _remove_review_copies_of(user_id):
 
 
 def owns_data_folder(user) -> bool:
-    """'<base>_admin' and '<base>' own their data folder. db-users ('<base>_<name>') only use it."""
-    return user.username.endswith(ACCOUNT_SUFFIX) or '_' not in user.username
+    """'<base>_admin' owns its data folder. A plain '<base>' account only if there is no '<base>_admin':
+    otherwise it is an old user account of that project (it sees all queries) and only uses the folder.
+    db-users ('<base>_<name>') never own it."""
+    if user.username.endswith(ACCOUNT_SUFFIX):
+        return True
+    if '_' in user.username:
+        return False
+    return not User.objects.filter(username=user.username + ACCOUNT_SUFFIX).exists()
 
 
 def accounts_affected_by_deletion(user) -> list:

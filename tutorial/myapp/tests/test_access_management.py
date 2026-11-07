@@ -269,6 +269,23 @@ def test_deleting_db_admin_still_deletes_its_db_users(student, teacher):
     assert not os.path.exists(get_user_home_directory('gruppe1_admin'))
 
 
+def test_deleting_old_plain_user_account_keeps_project(admin):
+    """Before the Accountverwaltung, a project could have a plain user account 'firma' that sees all queries."""
+    firma_admin = User.objects.create_user(username='firma_admin', password='x')
+    firma = User.objects.create_user(username='firma', password='x')
+    kasse = User.objects.create_user(username='firma_kasse', password='x')
+    directory = project_dir(firma_admin)
+    write_query(directory, 'X')
+
+    deleted = am.delete_accounts([firma], actor=admin)
+
+    assert deleted == ['firma']
+    assert os.path.exists(os.path.join(directory, 'X.sql'))
+    assert User.objects.filter(pk__in=[firma_admin.pk, kasse.pk]).count() == 2
+    # without a '<base>_admin' a plain account still owns its folder (e.g. a group admin)
+    assert am.owns_data_folder(User.objects.create_user(username='mueller2', password='x'))
+
+
 def test_bulk_delete_needs_confirmation(student):
     create_db_users(student, ['leser'])
     leser = User.objects.get(username='gruppe1_leser')
@@ -294,7 +311,8 @@ def test_create_view_shows_passwords_once(student):
     c = client_for(student)
     response = c.post('/db_users/create/', {'names': 'leser\nkasse', 'shared_password': ''}, follow=True)
     content = response.content.decode()
-    assert 'gruppe1_leser' in content and 'Zugangsdaten' in content
+    assert 'gruppe1_leser' in content
+    assert 'Zugangsdaten' in content
     assert 'Zugangsdaten' not in c.get('/db_users/').content.decode()
 
 
@@ -324,14 +342,17 @@ def test_user_functions_respect_access(student):
     c = client_for(User.objects.get(username='gruppe1_leser'))
 
     content = c.get('/user_functions/').content.decode()
-    assert 'Preise' in content and 'Geheim' not in content
+    assert 'Preise' in content
+    assert 'Geheim' not in content
     assert c.get('/user_functions/execute/?file=Preise').status_code == 200
 
     response = c.get('/user_functions/execute/?file=Geheim')
-    assert response.status_code == 302 and '/accounts/login/' in response.url  # logged out
+    assert response.status_code == 302  # logged out
+    assert '/accounts/login/' in response.url
 
     admin_content = client_for(student).get('/user_functions/').content.decode()
-    assert 'Preise' in admin_content and 'Geheim' in admin_content
+    assert 'Preise' in admin_content
+    assert 'Geheim' in admin_content
 
 
 def test_upload_of_old_project_zip_gets_converted(student):
@@ -400,10 +421,12 @@ def test_reviewing_db_user_shows_its_view(student, teacher):
 
     c = client_for(teacher)
     response = c.post(f'/user_management/review/{leser.pk}/')
-    assert response.status_code == 302 and response['Location'].endswith('/user_functions/')
+    assert response.status_code == 302
+    assert response['Location'].endswith('/user_functions/')
 
     content = c.get('/user_functions/').content.decode()
-    assert 'Preise' in content and 'Geheim' not in content
+    assert 'Preise' in content
+    assert 'Geheim' not in content
     assert 'Nutzersicht von' in content
     assert c.get('/overview/').status_code == 302  # no db-admin rights in a db-user's view
     assert c.get('/user_functions/execute/?file=Preise').status_code == 200
@@ -412,4 +435,5 @@ def test_reviewing_db_user_shows_its_view(student, teacher):
     response = c.post(f'/user_management/review/{student.pk}/')
     assert response['Location'].endswith('/overview/')
     content = c.get('/user_functions/').content.decode()
-    assert 'Preise' in content and 'Geheim' in content
+    assert 'Preise' in content
+    assert 'Geheim' in content

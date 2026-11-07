@@ -58,6 +58,11 @@ Once a db-admin account (`<name>_admin`) exists, its owner works independently u
 
 - **Old projects**: the old file-name convention (`kasse_Umsatz.sql` visible only to `<name>_kasse`, files without `_` visible to everyone) is gone. The first time a project without `_zugriff.json` is opened, it is converted once: `kasse_Umsatz.sql` becomes `Umsatz.sql` released to `kasse`, `<<kasse_Umsatz>>` references are rewritten, and every renamed or changed file is backed up as `<name>.sql_bak` first. If the new name is taken, the file keeps its old name. Uploading an old project zip (without `_zugriff.json`) converts it the same way.
 - Not available for db-admins whose name contains a further `_` (e.g. `max_mueller_admin`, see issue #89), and not while reviewing someone else's project.
+- **Existing accounts after the update**:
+  - Existing `<name>_<nutzer>` db-users appear automatically in their db-admin's tab (they are matched by name). They keep seeing the same queries, because their project is converted on first use (see above).
+  - Accounts created in Django admin before the Accountverwaltung have no group admin. Teachers don't see them, nobody can review them, and their db-users don't inherit course or dates. Only db-users created later inherit those.
+  - Old plain user accounts without `_` (e.g. `firma` next to `firma_admin`) keep seeing all queries. They are not listed in the tab. Deleting one removes only that account, not the project.
+  - Bookmarked links to renamed queries (e.g. `?file=kasse_Umsatz`) no longer work.
 
 ### Scheduled locks and deletions
 
