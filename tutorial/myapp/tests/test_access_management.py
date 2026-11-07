@@ -539,3 +539,9 @@ def test_reviewing_db_user_shows_its_view(student, teacher):
     content = c.get('/user_functions/').content.decode()
     assert 'Preise' in content
     assert 'Geheim' in content
+
+
+def test_sql_ide_links_versioned_static_files(student):
+    response = client_for(student).get('/sql_ide/')
+    assert response.status_code == 200
+    assert 'file_list.js?v=' in response.content.decode()

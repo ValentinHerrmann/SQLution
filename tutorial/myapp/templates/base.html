@@ -24,11 +24,11 @@
   <!-- Theme Switcher CSS Files -->
 
 
-  <link rel="stylesheet" href="{% static 'css/style_lightmode.css' %}">
-  <link rel="stylesheet" href="{% static 'css/style_darkmode.css' %}">
-  <link rel="stylesheet" href="{% static 'css/theme-switcher.css' %}">
-  <link rel="stylesheet" href="{% static 'css/stylesheet.css' %}">
-  <link rel="stylesheet" href="{% static 'css/common.css' %}">
+  <link rel="stylesheet" href="{% static 'css/style_lightmode.css' %}?v={{ static_version }}">
+  <link rel="stylesheet" href="{% static 'css/style_darkmode.css' %}?v={{ static_version }}">
+  <link rel="stylesheet" href="{% static 'css/theme-switcher.css' %}?v={{ static_version }}">
+  <link rel="stylesheet" href="{% static 'css/stylesheet.css' %}?v={{ static_version }}">
+  <link rel="stylesheet" href="{% static 'css/common.css' %}?v={{ static_version }}">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 
    </head>
@@ -168,7 +168,7 @@
     <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
     {% include 'session_security/all.html' %}
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js" ></script>
-  <script type="module" src="{% static 'js/sqlution.js' %}" ></script>
-  <script src="{% static 'js/common-help.js' %}"></script>
+  <script type="module" src="{% static 'js/sqlution.js' %}?v={{ static_version }}" ></script>
+  <script src="{% static 'js/common-help.js' %}?v={{ static_version }}"></script>
   </body>
 </html>

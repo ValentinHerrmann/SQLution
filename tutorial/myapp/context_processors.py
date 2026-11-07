@@ -1,4 +1,15 @@
+import os
+import time
+
 from myapp.utils.roles import can_manage_accounts, can_manage_db_users, is_db_admin, is_global_admin
+
+# Appended to our own static files (?v=...) so browsers fetch new files after a deploy.
+STATIC_VERSION = os.environ.get('BUILD_VERSION') or str(int(time.time()))
+
+
+def static_version(request):
+    """Version string for the ?v= query of our own JS/CSS (cache busting)."""
+    return {'static_version': STATIC_VERSION}
 
 
 def account_roles(request):
