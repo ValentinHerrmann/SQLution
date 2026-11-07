@@ -19,6 +19,22 @@ def get_db_name(username:str):
     dbname = userdir + "/datenbank.db"
     return dbname
 
+def split_statements(sql:str):
+    """Splits SQL at ';' but not inside literals, triggers etc. (until sqlite3 says the statement is complete)."""
+    statements = []
+    current = ''
+    chunks = sql.split(';')
+    for i, chunk in enumerate(chunks):
+        current += chunk
+        if i < len(chunks) - 1:
+            current += ';'
+            if sqlite3.complete_statement(current):
+                statements.append(current)
+                current = ''
+    if current.strip() != '':
+        statements.append(current)  # incomplete rest (e.g. last statement without ';')
+    return statements
+
 def create_db(sql:str, username:str):
     dbname = get_db_name(username)
     if dbname is None:
@@ -28,7 +44,7 @@ def create_db(sql:str, username:str):
 
     with sqlite3.connect(dbname, isolation_level=None) as con:
         cur = con.cursor()
-        for s in sql.split(';'):
+        for s in split_statements(sql):
             if s.strip() == '':
                 continue
             try:
@@ -46,7 +62,7 @@ def runSql(sql:str, username:str):
         raise Exception('No database name provided')
     with sqlite3.connect(dbname, isolation_level=None) as con:
         cur = con.cursor()
-        for s in sql.split(';'):
+        for s in split_statements(sql):
             if s.strip() == '':
                 continue
             cur.execute(s)

@@ -454,3 +454,24 @@ class TestConvertSqliteMasterToHtml(unittest.TestCase):
 
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])
+
+
+class TestSplitStatements(unittest.TestCase):
+    def test_splits_on_semicolon(self):
+        self.assertEqual(sqlite_connector.split_statements('SELECT 1; SELECT 2;'), ['SELECT 1;', ' SELECT 2;'])
+
+    def test_semicolon_inside_literal(self):
+        statements = sqlite_connector.split_statements("INSERT INTO t VALUES ('a;b'); SELECT 2")
+        self.assertEqual(len(statements), 2)
+        self.assertIn("'a;b'", statements[0])
+        self.assertEqual(statements[1].strip(), 'SELECT 2')
+
+    def test_blank_remainder_is_dropped(self):
+        self.assertEqual(sqlite_connector.split_statements('SELECT 1;\n  '), ['SELECT 1;'])
+
+    def test_run_sql_with_semicolon_in_literal(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with patch('myapp.utils.sqlite_connector.get_db_name', return_value=os.path.join(tmp, 'x.db')):
+                sqlite_connector.runSql("CREATE TABLE t (a TEXT); INSERT INTO t VALUES ('a;b')", 'u')
+                cur = sqlite_connector.runSql('SELECT a FROM t', 'u')
+                self.assertEqual(cur.fetchall(), [('a;b',)])

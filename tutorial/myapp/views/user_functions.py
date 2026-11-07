@@ -12,6 +12,8 @@ from myapp.utils.directories import *
 from myapp.utils.api_utils import *
 from myapp.utils.pdf_export import build_result_pdf, pdf_filename
 from myapp.utils import query_access
+from myapp.utils.placeholders import find_dropdowns, find_inputs, strip_dropdown_sql, substitute_placeholders
+from html import escape
 import re
 import os
 
@@ -65,7 +67,6 @@ def user_functions_execute(request):
             
             with open(fullpath(dir,f"{sqlfile}.sql"), "r") as f:
                 sql = f.read()
-                sql += ';'
 
             try:
 
@@ -74,67 +75,36 @@ def user_functions_execute(request):
                 print(f"RecursionError in resolve_subqueries: {e}")
                 return HttpResponse("Error: Maximum subquery nesting depth reached. Possible circular reference detected.", status=400)
 
-            inputs = re.findall(r'{([^}]+)}\w?[^\[]', sql)
+            inputs = find_inputs(sql)
 
-            inputs = list(dict.fromkeys(inputs))
-            
-            dropdownSQLs = re.findall(r'({[^}]+}\[[^\]]+\])', sql)
             dropdowns = []
-            for drop in dropdownSQLs:
-                name = re.findall(r'{(.*?)}', drop)[0]
-                dSql = re.findall(r'\[(.*?)\]', drop)[0]
+            for name, dSql in find_dropdowns(sql):
+                if name in [drop['name'] for drop in dropdowns]:
+                    continue
                 cur = runSql(dSql, request.user.username)
-                vals = cur.fetchall()
-                v = [str(row).replace("(", "").replace(")", "") for row in vals]
+                options = [{
+                    'value': '' if row[0] is None else str(row[0]),
+                    'label': ', '.join('' if c is None else str(c) for c in row),
+                } for row in cur.fetchall()]
                 dropdowns.append({
                     'name': name,
-                    'options': v
+                    'options': options
                 })
 
-            # Remove entries from inputs that are also present as names in dropdowns
-            dropdown_names = {drop['name'] for drop in dropdowns}
-            inputs = [inp for inp in inputs if inp not in dropdown_names]
-
-            
+            sql = strip_dropdown_sql(sql)
 
             if request.method == 'POST' or len(inputs)+len(dropdowns) == 0:
                 try:
-                    # inpVals: raw submitted values for repopulating the form
-                    # sqlVals: processed values to insert into the SQL
+                    # inpVals: raw submitted values for repopulating the form; they are also the values for the SQL
                     inpVals = {}
-                    sqlVals = {}
                     for inp in inputs:
-                        val = request.POST.get(f'input_{inp}', '')
-                        inpVals[inp] = val
-                        sqlVals[inp] = val
+                        inpVals[inp] = request.POST.get(f'input_{inp}', '')
                     for drop in dropdowns:
                         n = drop['name']
-                        raw = request.POST.get(f'dropdown_{n}', '')
-                        inpVals[n] = raw
+                        inpVals[n] = request.POST.get(f'dropdown_{n}', '')
 
-                        # Try to extract a primary value for SQL substitution.
-                        # If the dropdown option contains commas (e.g. "1, 'name'") take the first segment.
-                        # Otherwise use the raw value directly.
-                        if raw is None:
-                            raise Exception("Fehler bei der Dropdown-Auswahl. Keine Auswahl übermittelt.")
-                        parts = [p.strip() for p in raw.split(',')]
-                        if len(parts) >= 1 and parts[0] != '':
-                            first = parts[0]
-                            # strip surrounding single or double quotes
-                            if (first.startswith("'") and first.endswith("'")) or (first.startswith('"') and first.endswith('"')):
-                                first = first[1:-1]
-                            sqlVals[n] = first
-                        else:
-                            # fallback
-                            sqlVals[n] = raw
-                
-                    sql = re.sub(r'\[[^\]]+\]', '',sql)
-                    #sql = re.replace(r'\[[^\]]+\]', '', sql)
-                    # Use processed sqlVals for substitution so SQL gets the correct primary values
-                    for key, value in sqlVals.items():
-                        sql = sql.replace('{' + key + '}', str(value))
-                    
-                    
+                    sql = substitute_placeholders(sql, inpVals)
+
                     cursor = runSql(sql, request.user.username)
 
                     if cursor.description:
@@ -142,7 +112,7 @@ def user_functions_execute(request):
                         result = cursor.fetchall()
                 except Exception as e:
                     error = str(e)
-            sql = sql.replace("\n", "<br>")
+            sql = escape(sql).replace("\n", "<br>")
         export = request.POST.get('export') or request.GET.get('export')
         return render_user_fun_exec(request, sql, inputs, sqlfile, result, error, columns, dropdowns, inpVals if 'inpVals' in locals() else {}, export)
     except Exception as e:
