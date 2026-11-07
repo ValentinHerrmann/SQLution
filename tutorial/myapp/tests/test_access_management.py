@@ -212,6 +212,13 @@ def test_create_db_users_validates_everything_first(student):
     assert not User.objects.filter(username='gruppe1_kasse').exists()
 
 
+def test_underscore_in_db_user_name_is_replaced(student):
+    """'_' only separates the data folder, so it never ends up in a name (issue #89)."""
+    result = create_db_users(student, ['kas_se'])
+    assert [u for u, _ in result.created] == ['gruppe1_kas-se']
+    assert get_user_home_directory('gruppe1_kas-se') == get_user_home_directory(student.username)
+
+
 def test_create_db_users_limit(student, monkeypatch):
     monkeypatch.setattr(du, 'MAX_DB_USERS_PER_PROJECT', 2)
     create_db_users(student, ['a'])
@@ -331,6 +338,29 @@ def test_save_access_matrix(student):
 
     with open(os.path.join(directory, qa.ACCESS_FILE), encoding='utf-8') as f:
         assert json.load(f) == {'Preise': qa.ALL, 'Bestellungen': ['kasse']}
+
+
+def test_split_category():
+    assert qa.split_category('Kunden - Liste') == ('Kunden', 'Liste')
+    assert qa.split_category('Kunden - Liste - alt') == ('Kunden', 'Liste - alt')
+    assert qa.split_category('Liste') == (qa.DEFAULT_CATEGORY, 'Liste')
+
+
+def test_category_prefix_hidden_on_buttons_and_matrix(student):
+    """The category is already the heading, the button and the matrix row only show the rest (issue #161)."""
+    directory = project_dir(student)
+    write_query(directory, 'Kunden - Liste')
+    create_db_users(student, ['leser'])
+    c = client_for(student)
+
+    content = c.get('/user_functions/').content.decode()
+    assert '<h4>Kunden</h4>' in content
+    assert '>Liste</a>' in content
+    assert '?file=Kunden - Liste"' in content
+
+    content = c.get('/db_users/').content.decode()
+    assert '<td>Liste</td>' in content
+    assert 'value="leser:Kunden - Liste"' in content
 
 
 def test_user_functions_respect_access(student):

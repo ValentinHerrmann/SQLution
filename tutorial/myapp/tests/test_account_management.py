@@ -25,6 +25,7 @@ from myapp.models import AccountPrefix, AccountProfile, AuditLog, get_profile
 from myapp.utils import account_management as am
 from myapp.utils.directories import (
     REVIEW_SOURCE_MARKER,
+    USER_DB_ROOT,
     get_review_directory,
     get_user_directory,
     get_user_home_directory,
@@ -140,6 +141,13 @@ def test_create_with_prefix(teacher):
         assert user.profile.prefix.name == 'q11inf'
         assert os.path.isdir(get_user_home_directory(username))
     assert AccountPrefix.objects.get(name='q11inf').owner == teacher
+
+
+def test_underscore_in_name_is_replaced(teacher):
+    """'_' only separates the data folder, so it never ends up in a name (issue #89)."""
+    result = create(teacher, ['gruppe_x'])
+    assert [u for u, _ in result.created] == ['gruppe-x_admin']
+    assert get_user_home_directory('gruppe-x_admin') == f'{USER_DB_ROOT}/gruppe-x/'
 
 
 def test_shared_password_applies_to_batch(teacher):

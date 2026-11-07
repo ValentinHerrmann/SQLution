@@ -13,22 +13,21 @@ from myapp.utils.directories import get_user_directory
 from myapp.utils.roles import can_manage_db_users
 
 PAGE = 'db_users'
-DEFAULT_CATEGORY = 'Allgemein'
-
-
-def _category(query):
-    """Same grouping as on the Nutzerfunktionen page: 'Kategorie - Name'."""
-    return query.split(' - ')[0] if ' - ' in query else DEFAULT_CATEGORY
 
 
 def _matrix(directory, names):
-    """{category: [{'name': query, 'all': bool, 'cells': [{'user': short name, 'checked': bool}]}]}"""
+    """{category: [{'name': query, 'label': name without category, 'all': bool, 'cells': [{'user': short name, 'checked': bool}]}]}
+
+    Same grouping as on the Nutzerfunktionen page: 'Kategorie - Name'.
+    """
     access = qa.load_access(directory)
     matrix = {}
     for query in qa.list_queries(directory):
         value = access.get(query)
-        matrix.setdefault(_category(query), []).append({
+        category, label = qa.split_category(query)
+        matrix.setdefault(category, []).append({
             'name': query,
+            'label': label,
             'all': value == qa.ALL,
             'cells': [{'user': n, 'checked': isinstance(value, list) and n in value} for n in names],
         })

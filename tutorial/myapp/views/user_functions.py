@@ -34,15 +34,10 @@ def user_functions(request):
     else:
         sql_files = query_access.visible_queries(dir, suffix)  # db-user: what the db-admin released
 
-    get_category = lambda x: x.split(' - ')[0] if ' - ' in x else 'Allgemein'
-    sqlfiledict = [{'file': file, 'name': file, 'category': get_category(file) } for file in sql_files]
-
     context = {'data': {}}
-    for entry in sqlfiledict:
-        cat = entry['category']
-        if cat not in context['data']:
-            context['data'][cat] = []
-        context['data'][cat].append(entry)
+    for file in sql_files:
+        category, label = query_access.split_category(file)  # the category is the heading (issue #161)
+        context['data'].setdefault(category, []).append({'file': file, 'name': label})
         
     return render(request, 'user_functions.html', context)
 
