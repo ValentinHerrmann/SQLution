@@ -156,35 +156,6 @@ class TestSqlFileOperations:
         result = api_utils.delete_sql_file(temp_dir, 'nonexistent.sql')
         assert result is False
     
-    def test_replace_all_sql_files(self, temp_dir):
-        """Test replacing all SQL files in directory."""
-        # Create some existing files
-        with open(os.path.join(temp_dir, 'old1.sql'), 'w') as f:
-            f.write('OLD 1')
-        with open(os.path.join(temp_dir, 'old2.sql'), 'w') as f:
-            f.write('OLD 2')
-        with open(os.path.join(temp_dir, 'keep.txt'), 'w') as f:
-            f.write('KEEP ME')
-        
-        # Replace with new files
-        new_files = [
-            {'filename': 'new1.sql', 'sql': 'SELECT 1;'},
-            {'filename': 'new2', 'sql': 'SELECT 2;'}  # Without extension
-        ]
-        
-        api_utils.replace_all_sql_files(temp_dir, new_files)
-        
-        # Check old SQL files are gone
-        assert not os.path.exists(os.path.join(temp_dir, 'old1.sql'))
-        assert not os.path.exists(os.path.join(temp_dir, 'old2.sql'))
-        
-        # Check new files exist
-        assert os.path.exists(os.path.join(temp_dir, 'new1.sql'))
-        assert os.path.exists(os.path.join(temp_dir, 'new2.sql'))
-        
-        # Check non-SQL file is preserved
-        assert os.path.exists(os.path.join(temp_dir, 'keep.txt'))
-    
     def test_list_sql_files_empty_directory(self, temp_dir):
         """Test listing SQL files in empty directory."""
         result = api_utils.list_sql_files(temp_dir)

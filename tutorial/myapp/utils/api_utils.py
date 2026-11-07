@@ -52,9 +52,18 @@ def extract_api_endpoints(url_patterns, prefix: str = '') -> List[Dict[str, Opti
     return endpoints
 
 
+def _sql_filename(filename: str) -> str:
+    """Normalize a SQL filename: '.sql.sql' becomes '.sql' and a missing '.sql' is added."""
+    filename = filename.replace(SQL_DOUBLE_EXT, SQL_EXT)
+    if not filename.endswith(SQL_EXT):
+        filename += SQL_EXT
+    return filename
+
+
 def save_sql_file(user_dir: str, filename: str, sql_content: str) -> None:
     """
     Save SQL content to a file in the user's directory.
+    The content is written to a temporary file first, so a failing write never empties an existing file.
     
     Args:
         user_dir: User's directory path
@@ -62,14 +71,20 @@ def save_sql_file(user_dir: str, filename: str, sql_content: str) -> None:
         sql_content: SQL content to save
     
     Raises:
+        TypeError: If sql_content is not a string
         Exception: If file cannot be saved
     """
-    filename = filename.replace(SQL_DOUBLE_EXT, SQL_EXT)
-    if not filename.endswith(SQL_EXT):
-        filename += SQL_EXT
-    
-    with open(fullpath(user_dir, filename), 'w') as f:
-        f.write(sql_content)
+    if not isinstance(sql_content, str):
+        raise TypeError("sql_content must be a string")
+    path = fullpath(user_dir, _sql_filename(filename))
+    tmp_path = path + '.tmp'
+    try:
+        with open(tmp_path, 'w', encoding='utf-8') as f:
+            f.write(sql_content)
+        os.replace(tmp_path, path)
+    finally:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
 
 
 def read_sql_file(user_dir: str, filename: str) -> str:
@@ -86,12 +101,21 @@ def read_sql_file(user_dir: str, filename: str) -> str:
     Raises:
         Exception: If file cannot be read
     """
-    filename = filename.replace(SQL_DOUBLE_EXT, SQL_EXT)
-    if not filename.endswith(SQL_EXT):
-        filename += SQL_EXT
-    
-    with open(fullpath(user_dir, filename), 'r') as f:
+    with open(fullpath(user_dir, _sql_filename(filename)), 'r', encoding='utf-8') as f:
         return f.read()
+
+
+def sql_file_version(user_dir: str, filename: str) -> str:
+    """
+    Version of a SQL file (its modification time in ns), used to detect edit conflicts.
+    
+    Returns:
+        The version as string, or '' if the file does not exist
+    """
+    try:
+        return str(os.stat(fullpath(user_dir, _sql_filename(filename))).st_mtime_ns)
+    except FileNotFoundError:
+        return ''
 
 
 def delete_sql_file(user_dir: str, filename: str) -> bool:
@@ -108,38 +132,11 @@ def delete_sql_file(user_dir: str, filename: str) -> bool:
     Raises:
         Exception: If file cannot be deleted
     """
-    filename = filename.replace(SQL_DOUBLE_EXT, SQL_EXT)
-    if not filename.endswith(SQL_EXT):
-        filename += SQL_EXT
-    
-    filepath = fullpath(user_dir, filename)
+    filepath = fullpath(user_dir, _sql_filename(filename))
     if os.path.exists(filepath):
         os.remove(filepath)
         return True
     return False
-
-
-def replace_all_sql_files(user_dir: str, files: List[Dict[str, str]]) -> None:
-    """
-    Delete all existing SQL files and create new ones from the provided list.
-    
-    Args:
-        user_dir: User's directory path
-        files: List of dictionaries with 'filename' and 'sql' keys
-    
-    Raises:
-        Exception: If files cannot be processed
-    """
-    # Delete all existing .sql files
-    for file in os.listdir(user_dir):
-        if file.endswith(SQL_EXT):
-            os.remove(os.path.join(user_dir, file))
-    
-    # Create new files
-    for file in files:
-        filename = file['filename']
-        sql = file['sql']
-        save_sql_file(user_dir, filename, sql)
 
 
 def list_sql_files(user_dir: str) -> List[str]:

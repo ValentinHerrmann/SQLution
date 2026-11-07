@@ -136,12 +136,26 @@ def get_directory_tree_with_sizes(directory) -> list[dict[str, str]]:
     return tree
 
 
-def sqllock_get(dir) -> None:
+def sqllock_get(dir, timeout:float=10, stale:float=30) -> None:
+    """Take the lock of a folder. A lockfile older than `stale` seconds is left over from a crashed request and removed.
+    Raises TimeoutError if the lock is still taken after `timeout` seconds."""
     lockfile_name = f'{dir}/lockfile'
-    while os.path.exists(lockfile_name):
+    deadline = time.monotonic() + timeout
+    while True:
+        try:
+            os.close(os.open(lockfile_name, os.O_CREAT | os.O_EXCL | os.O_WRONLY))
+            return
+        except FileExistsError:
+            pass
+        try:
+            if time.time() - os.stat(lockfile_name).st_mtime > stale:
+                os.remove(lockfile_name)
+                continue
+        except FileNotFoundError:
+            continue
+        if time.monotonic() >= deadline:
+            raise TimeoutError(f"Lock {lockfile_name} could not be taken.")
         time.sleep(0.1)
-    lockFile = open(f'{dir}/lockfile', 'w')
-    lockFile.close()
 
 def sqllock_release(dir) -> None:
     lockfile_name = f'{dir}/lockfile'

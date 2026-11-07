@@ -248,10 +248,23 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     const addBtn = document.getElementById('add-sql-btn');
-    if (addBtn) addBtn.addEventListener('click', addSQLFileDialog);
+    if (addBtn) addBtn.addEventListener('click', () => addSQLFileDialog());
 
     const runBtn = document.getElementById('run-sql-btn');
     if (runBtn) runBtn.addEventListener('click', runSqlFromEditor);
+
+    // warn before leaving the page with unsaved changes (the Playground is kept in sessionStorage instead)
+    globalThis.addEventListener('beforeunload', (e) => {
+        const editor = globalThis.sqlAceEditor;
+        if (!editor || !globalThis.getFilenameOnLoad?.()) return;
+        if (editor.getValue() === globalThis.getContentOnLoad()) return;
+        if (globalThis.getFilenameOnLoad() === 'Playground') {
+            globalThis.storePlayground(editor.getValue());
+        } else {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
 
     // load files if explorer exists
     if (document.getElementById('file-list')) loadFileList();

@@ -3,6 +3,31 @@
 
 let filenameOnLoad = "";
 let contentOnLoad = "";
+let versionOnLoad = "";
+
+/**
+ * Keeps the Playground content for this browser tab (sessionStorage can throw, e.g. when storage is blocked)
+ * @param {string} content - Editor content
+ */
+function storePlayground(content) {
+    try {
+        sessionStorage.setItem('sql_playground', content);
+    } catch (err) {
+        console.warn('sessionStorage not available', err);
+    }
+}
+
+/**
+ * @returns {string|null} Playground content stored by storePlayground
+ */
+function loadPlayground() {
+    try {
+        return sessionStorage.getItem('sql_playground');
+    } catch (err) {
+        console.warn('sessionStorage not available', err);
+        return null;
+    }
+}
 
 /**
  * Creates a button for the file list with specified styling and click handler
@@ -272,9 +297,10 @@ async function loadFileList() {
  * Saves a SQL file to the server
  * @param {string} filename - Name of the file to save
  * @param {string} content - SQL content to save
+ * @param {boolean} force - Overwrite even if the file was changed by someone else
  * @returns {Promise<boolean>} True if save was successful
  */
-async function saveFile(filename, content) {
+async function saveFile(filename, content, force = false) {
     try {
         console.log("Saving file: " + filename);
         const base = filename.replace(/\.sql$/i, '');
@@ -282,18 +308,33 @@ async function saveFile(filename, content) {
         const url = `/api/sql/${encodeURIComponent(base)}.sql`;
         const headers = { "Content-Type": "application/json" };
         if (csrftoken) headers['X-CSRFToken'] = csrftoken;
-        const body = JSON.stringify({ sql: content });
+        const isLoadedFile = filename === filenameOnLoad;
+        const payload = { sql: content };
+        if (isLoadedFile) payload.version = versionOnLoad;
+        if (force) payload.force = true;
 
         const resp = await fetch(url, {
             method: "POST",
             headers: headers,
-            body: body
+            body: JSON.stringify(payload)
         });
 
         if (resp.ok) {
             console.debug("File saved successfully: " + filename);
+            if (isLoadedFile) {
+                contentOnLoad = content;
+                versionOnLoad = resp.headers.get('X-File-Version') || '';
+            }
             showAlertDialog(`Datei "${filename}" erfolgreich gespeichert.`, "fas fa-check-circle", "var(--accent-success)");
             return true;
+        } else if (resp.status === 409 && !force) {
+            const overwrite = await globalThis.showConfirmDialog(
+                "Die Datei wurde inzwischen von jemand anderem geändert. Trotzdem überschreiben?",
+                "fas fa-exclamation-triangle",
+                "var(--accent-danger)"
+            );
+            if (overwrite) return await saveFile(filename, content, true);
+            return false;
         } else {
             console.error("Fehler beim Speichern der SQL Datei.", resp.status, resp.statusText);
             showAlertDialog("Fehler beim Speichern der SQL Datei.", "fas fa-exclamation-triangle", "var(--accent-danger)");
@@ -348,7 +389,7 @@ async function loadFileIntoEditor(filename, liElement) {
 
         if (editor.getValue() !== contentOnLoad) {
             if (filenameOnLoad === 'Playground') {
-                sessionStorage.setItem('sql_playground', editor.getValue());
+                storePlayground(editor.getValue());
             }
             else {
                 const confirmed = await globalThis.showConfirmDialog(
@@ -386,8 +427,8 @@ async function loadFileIntoEditor(filename, liElement) {
             }
         }
         if (filename === 'Playground') {
-            if (sessionStorage.getItem('sql_playground')) {
-                const savedContent = sessionStorage.getItem('sql_playground');
+            const savedContent = loadPlayground();
+            if (savedContent) {
                 editor.setValue(savedContent, -1);
                 contentOnLoad = savedContent;
                 filenameOnLoad = filename;
@@ -406,6 +447,7 @@ async function loadFileIntoEditor(filename, liElement) {
             const content = await resp.text();
             editor.setValue(content, -1);
             contentOnLoad = content;
+            versionOnLoad = resp.headers.get('X-File-Version') || '';
             filenameOnLoad = filename;
         }
     } catch (err) {
@@ -441,6 +483,8 @@ async function addSQLFileDialog(sql = '') {
         if (resp.ok) {
             console.debug("File created successfully: " + filename);
             ret = true;
+        } else if (resp.status === 409) {
+            showAlertDialog(`Eine Datei "${filename}" gibt es schon.`, "fas fa-exclamation-triangle");
         } else {
             console.error("Fehler beim Erstellen der SQL Datei.", resp.status, resp.statusText);
             showAlertDialog("Fehler beim Erstellen der SQL Datei.", "fas fa-exclamation-triangle");
@@ -453,49 +497,13 @@ async function addSQLFileDialog(sql = '') {
     return ret;
 }
 
-/**
- * Saves all SQL files from the IDE
- */
-async function saveSQLFiles() {
-    console.log("Saving SQL files...");
-    const confirmed = await globalThis.showConfirmDialog(
-        "Das Speichern überschreibt alle SQL-Abfragen auf dem Server. Das kann nicht rückgängig gemacht werden!",
-        "fas fa-save"
-    );
-    if (!confirmed) return;
-
-    const editorElem = document.getElementById('editor');
-    const username = editorElem?.dataset?.user || '';
-    const ide = globalThis.sql_ide_access?.getIDE ? globalThis.sql_ide_access.getIDE(username) : null;
-    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
-    const sql_files = [];
-    if (ide) {
-        const files = ide.getFiles();
-        for (const file of files) {
-            const filename = file.getName();
-            const content = file.getText();
-            sql_files.push({ filename: filename, sql: content });
-        }
-    }
-
-    try {
-        const resp = await fetch('/api/sql/all', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
-            body: JSON.stringify({ files: sql_files })
-        });
-        if (resp.ok) console.debug('Files saved successfully');
-        else console.error('Fehler beim Speichern der Dateien.');
-    } catch (err) {
-        console.error('Error saving files list:', err);
-    }
-}
-
 // Expose API for use in other modules
 globalThis.loadFileList = loadFileList;
 globalThis.loadFileIntoEditor = loadFileIntoEditor;
 globalThis.saveFile = saveFile;
-globalThis.saveSQLFiles = saveSQLFiles;
+globalThis.storePlayground = storePlayground;
+globalThis.getContentOnLoad = () => contentOnLoad;
+globalThis.getFilenameOnLoad = () => filenameOnLoad;
 globalThis.saveCurrentFile = saveCurrentFile;
 globalThis.addSQLFileDialog = addSQLFileDialog;
 
@@ -507,7 +515,6 @@ if (typeof module !== 'undefined' && module.exports) {
         saveFile,
         saveCurrentFile,
         addSQLFileDialog,
-        saveSQLFiles,
         deleteFile,
         filenameOnLoad,
         contentOnLoad

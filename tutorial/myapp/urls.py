@@ -62,7 +62,6 @@ urlpatterns = [
     path('api/sql/list', api.api_sql_list, name='api_sql_list'),
     path('api/sql/rename', api.api_sql_rename, name='api_sql_rename'),
     path('api/sql/run', api.api_run_sql, name='api_run_sql'),
-    path('api/sql/all', api.api_sql_all, name='api_sql_all'),
     path('api/upload_db/', api.api_upload_db, name='api_upload_db'),
     path('api/editor_diagram.json', api.api_editor_diagram_json, name='api_editor_diagram_json'),
     path('api/db_diagram.json', api.api_db_diagram_json, name='api_db_diagram_json'),
