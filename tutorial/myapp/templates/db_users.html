@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+{% block title %}
+SQLution - Nutzer & Freigaben
+{% endblock %}
+{% block content %}
+<style>
+  .um-card { margin-bottom: 12px; }
+  .um-hint { color: var(--text-muted); font-size: 0.85em; }
+  .um-table td, .um-table th { vertical-align: middle; }
+  .um-online { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #28a745; margin-left: 4px; }
+  .um-toolbar .btn { margin: 2px; }
+  dialog.um-modal { border: none; background-color: var(--bg-tertiary); color: var(--text-primary); padding: 0; border-radius: 8px; max-width: 520px; width: calc(100% - 32px); box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+  dialog.um-modal > div { padding: 20px; }
+  dialog.um-modal::backdrop { background: rgba(0,0,0,0.5); }
+  .access-matrix th, .access-matrix td { text-align: center; vertical-align: middle; }
+  .access-matrix th:first-child, .access-matrix td:first-child { text-align: left; }
+  .access-matrix .category td { background: var(--bg-tertiary); font-weight: bold; text-align: left; }
+  .access-matrix input:disabled { opacity: 0.4; }
+</style>
+
+<div class="container-fluid mt-2">
+  <h2>Nutzer & Freigaben</h2>
+  <p class="um-hint">Lege Nutzer für dein Projekt an und bestimme, welche gespeicherten SQL-Abfragen sie unter „Nutzerfunktionen“ sehen. Nutzer können nichts am Projekt ändern.</p>
+
+  {% for message in messages %}
+    <div class="alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'success' %}alert-success{% elif message.tags == 'warning' %}alert-warning{% else %}alert-info{% endif %}" role="alert">{{ message }}</div>
+  {% endfor %}
+
+  {% include "_password_box.html" %}
+
+  <div class="row">
+    <!-- Create db-users -->
+    <div class="col-lg-4">
+      <div class="card um-card">
+        <div class="card-body">
+          <h6 class="card-title">Nutzer anlegen</h6>
+          <form method="post" action="{% url 'db_users_create' %}" autocomplete="off">
+            {% csrf_token %}
+            <div class="form-group">
+              <label for="names">Namen, einer pro Zeile</label>
+              <textarea class="form-control" id="names" name="names" rows="3" placeholder="z.B. kasse"></textarea>
+              <small class="form-text um-hint">Anmeldename: <code>{{ login_prefix }}</code> + Name. Höchstens {{ max_users }} Nutzer.</small>
+            </div>
+            <div class="form-group">
+              <label for="shared_password">Gemeinsames Passwort <span class="um-hint">(optional)</span></label>
+              <input type="text" class="form-control" id="shared_password" name="shared_password" autocomplete="new-password" placeholder="leer = je Nutzer generiert">
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-user-plus"></i> Anlegen</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- db-users -->
+    <div class="col-lg-8">
+      <div class="card um-card">
+        <div class="card-body">
+          <h6 class="card-title">Deine Nutzer ({{ rows|length }})</h6>
+          <form method="post" action="{% url 'db_users_bulk' %}" id="bulk-form">
+            {% csrf_token %}
+            <input type="hidden" name="confirm" id="bulk-confirm" value="">
+            <div class="um-toolbar mb-2">
+              <span class="mr-2"><span id="selected-count">0</span> ausgewählt:</span>
+              <button type="submit" name="action" value="lock" class="btn btn-sm btn-warning" data-needs-selection><i class="fas fa-lock"></i> Sperren</button>
+              <button type="submit" name="action" value="unlock" class="btn btn-sm btn-outline-success" data-needs-selection><i class="fas fa-lock-open"></i> Entsperren</button>
+              <button type="button" class="btn btn-sm btn-outline-primary" id="toggle-password-panel" data-needs-selection><i class="fas fa-key"></i> Passwörter…</button>
+              <button type="button" class="btn btn-sm btn-danger" id="delete-selected" data-needs-selection><i class="fas fa-trash-alt"></i> Löschen…</button>
+            </div>
+            <div id="password-panel" class="border rounded p-2 mb-2" style="display: none;">
+              <div class="form-row align-items-end">
+                <div class="form-group col-md-6 mb-1">
+                  <label for="bulk_shared_password">Gemeinsames Passwort <span class="um-hint">(optional)</span></label>
+                  <input type="text" class="form-control form-control-sm" id="bulk_shared_password" name="shared_password" autocomplete="new-password" placeholder="leer = je Nutzer generiert">
+                </div>
+                <div class="form-group col-md-6 mb-1">
+                  <button type="submit" name="action" value="reset_password" class="btn btn-sm btn-primary">Passwörter zurücksetzen</button>
+                </div>
+              </div>
+              <small class="um-hint">Betroffene Nutzer werden abgemeldet.</small>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-sm table-striped um-table" id="users-table">
+                <thead>
+                  <tr>
+                    <th><label for="select-all" class="sr-only">Alle auswählen</label><input type="checkbox" id="select-all" title="Alle auswählen"></th>
+                    <th>Name</th>
+                    <th>Anmeldename</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for row in rows %}
+                    <tr data-name="{{ row.name }}">
+                      <td><label for="select-{{ row.user.pk }}" class="sr-only">{{ row.name }} auswählen</label><input type="checkbox" id="select-{{ row.user.pk }}" name="ids" value="{{ row.user.pk }}" class="row-select"></td>
+                      <td><strong>{{ row.name }}</strong>{% if row.online %}<span class="um-online" title="Gerade eingeloggt"></span>{% endif %}</td>
+                      <td><code>{{ row.user.username }}</code></td>
+                      <td>{% if row.user.is_active %}<span class="badge badge-success">aktiv</span>{% else %}<span class="badge badge-secondary">gesperrt</span>{% endif %}</td>
+                    </tr>
+                  {% empty %}
+                    <tr><td colspan="4" class="text-center um-hint">Noch keine Nutzer.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Access matrix -->
+  <div class="card um-card">
+    <div class="card-body">
+      <h6 class="card-title">Freigaben</h6>
+      <p class="um-hint">Neue Abfragen sieht zunächst niemand außer dir. „Alle“ gilt auch für Nutzer, die du später anlegst.</p>
+      {% if not matrix %}
+        <p class="um-hint mb-0">Noch keine gespeicherten SQL-Abfragen. Lege sie in der SQL IDE an.</p>
+      {% else %}
+        <form method="post" action="{% url 'db_users_access' %}">
+          {% csrf_token %}
+          <div class="table-responsive">
+            <table class="table table-sm table-bordered access-matrix">
+              <thead>
+                <tr>
+                  <th>Abfrage</th>
+                  <th>Alle</th>
+                  {% for name in names %}<th>{{ name }}</th>{% endfor %}
+                </tr>
+              </thead>
+              <tbody>
+                {% for category, queries in matrix.items %}
+                  <tr class="category"><td colspan="{{ names|length|add:2 }}">{{ category }}</td></tr>
+                  {% for query in queries %}
+                    <tr class="access-row">
+                      <td>{{ query.name }}</td>
+                      <td><input type="checkbox" class="access-all" name="access" value="{{ all_value }}:{{ query.name }}" aria-label="{{ query.name }}: alle" {% if query.all %}checked{% endif %}></td>
+                      {% for cell in query.cells %}
+                        <td><input type="checkbox" class="access-user" name="access" value="{{ cell.user }}:{{ query.name }}" aria-label="{{ query.name }}: {{ cell.user }}" {% if cell.checked %}checked{% endif %}></td>
+                      {% endfor %}
+                    </tr>
+                  {% endfor %}
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Freigaben speichern</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Delete confirmation -->
+<dialog class="um-modal" id="delete-modal" aria-labelledby="delete-modal-title">
+  <div>
+    <h5 id="delete-modal-title"><i class="fas fa-exclamation-triangle text-danger"></i> Nutzer endgültig löschen</h5>
+    <p>Folgende Nutzer werden gelöscht. Dein Projekt (Datenbank, Abfragen, Diagramme) bleibt unverändert.</p>
+    <ul id="delete-list"></ul>
+    <label for="delete-confirm-input">Zum Bestätigen <strong>{{ delete_confirmation }}</strong> eingeben:</label>
+    <input type="text" class="form-control mb-3" id="delete-confirm-input" autocomplete="off">
+    <div class="text-right">
+      <button type="button" class="btn btn-secondary" id="delete-cancel">Abbrechen</button>
+      <button type="button" class="btn btn-danger" id="delete-go" disabled>Endgültig löschen</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+(function () {
+  const CONFIRM_WORD = "{{ delete_confirmation|escapejs }}";
+  const bulkForm = document.getElementById('bulk-form');
+  const checkboxes = () => Array.from(document.querySelectorAll('.row-select'));
+  const selected = () => checkboxes().filter(c => c.checked);
+
+  // ---- selection ----
+  function updateSelection() {
+    const n = selected().length;
+    document.getElementById('selected-count').textContent = n;
+    document.querySelectorAll('[data-needs-selection]').forEach(b => { b.disabled = n === 0; });
+  }
+  checkboxes().forEach(c => c.addEventListener('change', updateSelection));
+  document.getElementById('select-all').addEventListener('change', e => {
+    checkboxes().forEach(c => { c.checked = e.target.checked; });
+    updateSelection();
+  });
+  updateSelection();
+
+  document.getElementById('toggle-password-panel').addEventListener('click', () => {
+    const p = document.getElementById('password-panel');
+    p.style.display = p.style.display === 'none' ? '' : 'none';
+  });
+
+  // ---- delete with confirmation ----
+  const modal = document.getElementById('delete-modal');
+  const confirmInput = document.getElementById('delete-confirm-input');
+  const goButton = document.getElementById('delete-go');
+  document.getElementById('delete-selected').addEventListener('click', () => {
+    const list = document.getElementById('delete-list');
+    list.replaceChildren();
+    selected().forEach(c => {
+      const li = document.createElement('li');
+      li.textContent = c.closest('tr').dataset.name;
+      list.appendChild(li);
+    });
+    confirmInput.value = '';
+    goButton.disabled = true;
+    modal.showModal();
+    confirmInput.focus();
+  });
+  confirmInput.addEventListener('input', () => { goButton.disabled = confirmInput.value.trim() !== CONFIRM_WORD; });
+  document.getElementById('delete-cancel').addEventListener('click', () => modal.close());
+  modal.addEventListener('click', e => { if (e.target === modal) modal.close(); });
+  goButton.addEventListener('click', () => {
+    document.getElementById('bulk-confirm').value = confirmInput.value.trim();
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'action';
+    input.value = 'delete';
+    bulkForm.appendChild(input);
+    bulkForm.submit();
+  });
+
+  // ---- matrix: "Alle" makes the single boxes of its row irrelevant ----
+  function updateRow(row) {
+    const all = row.querySelector('.access-all').checked;
+    row.querySelectorAll('.access-user').forEach(c => { c.disabled = all; });
+  }
+  document.querySelectorAll('.access-row').forEach(row => {
+    row.querySelector('.access-all').addEventListener('change', () => updateRow(row));
+    updateRow(row);
+  });
+})();
+</script>
+{% endblock %}

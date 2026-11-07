@@ -11,6 +11,7 @@ from django.views.decorators.http import require_GET, require_POST
 
 from myapp.models import AccountPrefix, get_profile
 from myapp.utils import account_management as am
+from myapp.utils.directories import get_user_suffix
 from myapp.utils.roles import (
     GLOBAL_ADMIN_USERNAME,
     GROUP_ADMIN_GROUP,
@@ -20,7 +21,8 @@ from myapp.utils.roles import (
 )
 
 PAGE = 'user_management'
-CREATE_FORM_FIELDS = ('prefix', 'mode', 'names', 'series_base', 'series_count', 'delete_at', 'lock_at')
+CREATE_FORM_FIELDS = ('prefix', 'mode', 'names', 'series_base', 'series_first', 'series_last', 'series_digits',
+                      'delete_at', 'lock_at')
 
 
 def _resolve_targets(request):
@@ -53,8 +55,9 @@ def user_management(request):
     rows = []
     for user in accounts:
         profile = get_profile(user)
+        owns_folder = am.owns_data_folder(user)
         cascade = []
-        if user.pk in group_admin_ids:
+        if user.pk in group_admin_ids or owns_folder:
             cascade = [u.username for u in am.accounts_affected_by_deletion(user) if u.pk != user.pk]
         rows.append({
             'user': user,
@@ -63,7 +66,12 @@ def user_management(request):
             'online': str(user.pk) in online,
             'is_group_admin': user.pk in group_admin_ids,
             'cascade': cascade,
+            'reviewable': profile.managed_by_id == actor.pk,
+            # db-users ('<base>_<name>') are listed right below the account whose project they use
+            'db_user_of': '' if owns_folder else user.username.split('_', 1)[0],
         })
+    rows.sort(key=lambda r: (r['db_user_of'] or r['user'].username.removesuffix(am.ACCOUNT_SUFFIX),
+                             r['db_user_of'] != '', r['user'].username))
 
     if global_admin:
         prefixes = AccountPrefix.objects.select_related('owner').all()
@@ -83,7 +91,7 @@ def user_management(request):
         'new_passwords': request.session.pop('new_passwords', None),
         'form_data': form_data,
         'delete_confirmation': am.DELETE_CONFIRMATION,
-        'max_batch': am.MAX_BATCH_SIZE,
+        'max_series_digits': am.MAX_SERIES_DIGITS,
         'group_admin_name': GROUP_ADMIN_GROUP,
     })
 
@@ -103,6 +111,30 @@ def prefix_check(request):
     })
 
 
+def _int_or_none(value):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _series_names(post):
+    """(names, error) for 'gruppe' von 13 bis 20 (Stellen optional)."""
+    base = post.get('series_base', '').strip()
+    first = _int_or_none(post.get('series_first') or '1')
+    last = _int_or_none(post.get('series_last'))
+    digits = _int_or_none(post.get('series_digits')) if post.get('series_digits') else None
+    if not base:
+        return [], 'Bitte einen Basisnamen angeben.'
+    if first is None or last is None or first < 0 or last < first:
+        return [], 'Bitte eine gültige Nummer „von“ und „bis“ angeben (bis ≥ von ≥ 0).'
+    if post.get('series_digits') and (digits is None or not 1 <= digits <= am.MAX_SERIES_DIGITS):
+        return [], f'„Stellen“ muss zwischen 1 und {am.MAX_SERIES_DIGITS} liegen.'
+    if last - first + 1 > am.MAX_BATCH_SIZE:
+        return [], f'Höchstens {am.MAX_BATCH_SIZE} Accounts auf einmal.'
+    return am.expand_series(base, first, last, digits), None
+
+
 @login_required
 @user_passes_test(can_manage_accounts)
 @require_POST
@@ -118,18 +150,10 @@ def create_accounts_view(request):
         return redirect(PAGE)
 
     if post.get('mode') == 'series':
-        base = post.get('series_base', '').strip()
-        try:
-            count = int(post.get('series_count', '0'))
-        except ValueError:
-            count = 0
-        if not base or count < 1:
-            messages.error(request, 'Bitte einen Basisnamen und eine Anzahl ≥ 1 angeben.')
+        names, error = _series_names(post)
+        if error:
+            messages.error(request, error)
             return redirect(PAGE)
-        if count > am.MAX_BATCH_SIZE:
-            messages.error(request, f'Höchstens {am.MAX_BATCH_SIZE} Accounts auf einmal.')
-            return redirect(PAGE)
-        names = am.expand_series(base, count)
     else:
         names = [line.strip() for line in post.get('names', '').splitlines()]
 
@@ -246,10 +270,15 @@ def bulk_action(request):
 @require_POST
 @csrf_protect
 def start_review(request, user_id):
-    source = get_object_or_404(managed_queryset(request.user), pk=user_id)
+    """Only the account's own group admin may review it (never the global admin, never independent accounts).
+
+    Reviewing a db-user shows exactly what that db-user sees (its released queries), not the project.
+    """
+    source = get_object_or_404(User.objects.filter(profile__managed_by=request.user), pk=user_id)
     am.start_review(request.user, source)
-    request.session['review'] = {'source_id': source.pk, 'source_username': source.username}
-    return redirect('overview')
+    db_user = '' if am.owns_data_folder(source) else get_user_suffix(source.username)
+    request.session['review'] = {'source_id': source.pk, 'source_username': source.username, 'db_user': db_user}
+    return redirect('user_functions' if db_user else 'overview')
 
 
 @login_required

@@ -4,7 +4,7 @@ from django.urls import get_resolver
 from myapp.utils.decorators import is_db_admin, is_global_admin
 from django.contrib.auth.decorators import login_required,user_passes_test
 from myapp.utils.directories import get_user_directory, sqllock_release
-from myapp.utils import api_utils
+from myapp.utils import api_utils, query_access
 from django.views.decorators.http import require_http_methods
 
 
@@ -48,6 +48,7 @@ def api_sql(request, filename:str) -> HttpResponse:
             deleted = api_utils.delete_sql_file(user_dir, filename)
             sqllock_release(user_dir)
             if deleted:
+                query_access.remove_query(user_dir, filename)
                 return HttpResponse("File deleted successfully", status=200)
             return HttpResponse("File not found", status=404)
         
@@ -84,6 +85,25 @@ def api_sql_all(request) -> HttpResponse:
         sqllock_release(user_dir)
 
 
+@require_http_methods(['POST'])
+@login_required
+@user_passes_test(is_db_admin)
+def api_sql_rename(request) -> HttpResponse:
+    """Rename a SQL file. Its visibility for db-users (_zugriff.json) moves along."""
+    user_dir = get_user_directory(request.user.username)
+    try:
+        body = json.loads(request.body.decode('utf-8'))
+        query_access.rename_query(user_dir, body['old'], body['new'])
+        return HttpResponse("File renamed successfully", status=200)
+    except FileNotFoundError:
+        return HttpResponse("File not found", status=404)
+    except FileExistsError:
+        return HttpResponse("A file with this name already exists", status=409)
+    except Exception as e:
+        print(f"Error in api_sql_rename: {e}")
+        return HttpResponse("Internal error while renaming the SQL file.", status=500)
+
+
 @require_http_methods(['GET'])
 @login_required
 @user_passes_test(is_db_admin)
@@ -94,6 +114,7 @@ def api_sql_list(request) -> HttpResponse:
     try:
         sqllock_get(user_dir)
         if request.method == "GET":
+            query_access.load_access(user_dir)  # converts an old project once (see query_access)
             files = api_utils.list_sql_files(user_dir)
             return JsonResponse({'files': files})
         else:

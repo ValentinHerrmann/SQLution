@@ -1,5 +1,5 @@
 from django.urls import include, path, re_path
-from myapp.views import api,files,simple,user,views,admin,user_functions,user_management
+from myapp.views import api,files,simple,user,views,admin,user_functions,user_management,db_users
 from myapp import views_user
 from django.views.generic import RedirectView
 from django.templatetags.static import static
@@ -48,6 +48,11 @@ urlpatterns = [
     path('user_management/review/<int:user_id>/', user_management.start_review, name='user_management_review'),
     path('user_management/role/<int:user_id>/', user_management.set_role, name='user_management_role'),
 
+    path('db_users/', db_users.db_users, name='db_users'),
+    path('db_users/create/', db_users.create_view, name='db_users_create'),
+    path('db_users/bulk/', db_users.bulk_action, name='db_users_bulk'),
+    path('db_users/access/', db_users.save_access, name='db_users_access'),
+
     path('sql_ide/', views.sql_ide, name='sql_ide'),
     path('user_databases.sqlite', files.read_file),
     path('user_databases/<str:username>.sqlite', files.read_file),
@@ -55,6 +60,7 @@ urlpatterns = [
     path('api/', api.api_endpoints, name='api_endpoints'),
     path('api/sql/<str:filename>.sql', api.api_sql, name='api_sql'),
     path('api/sql/list', api.api_sql_list, name='api_sql_list'),
+    path('api/sql/rename', api.api_sql_rename, name='api_sql_rename'),
     path('api/sql/run', api.api_run_sql, name='api_run_sql'),
     path('api/sql/all', api.api_sql_all, name='api_sql_all'),
     path('api/upload_db/', api.api_upload_db, name='api_upload_db'),

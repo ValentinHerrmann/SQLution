@@ -13,6 +13,7 @@ import zipfile
 from myapp.utils.decorators import *
 from myapp.utils.diagram import *
 from myapp.utils.directories import *
+from myapp.utils import query_access
 
 
 @user_passes_test(is_db_admin)
@@ -69,6 +70,9 @@ def upload_zip(request):
         dir = get_user_directory(request.user.username)
 
         with zipfile.ZipFile(zip_file, 'r') as zip_ref:
+            if query_access.ACCESS_FILE not in zip_ref.namelist():
+                # Old project: its file-name prefixes get converted on the next read.
+                query_access.forget_access_file(dir)
             zip_ref.extractall(dir)
     return redirect('overview')
 

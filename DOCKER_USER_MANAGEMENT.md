@@ -39,11 +39,30 @@ docker exec -it <container-name> python manage.py createsuperuser
 Day-to-day account management happens in the app at `/user_management/` ("Accountverwaltung" in the navigation). It is available to the global admin (`admin`) and to **group admins** (usually teachers).
 
 - **Group admins**: the global admin creates an account for the teacher (for example `mueller_admin`, which also gives them their own project) and clicks the teacher icon in the account table. This adds the account to the Django group `Gruppenadmin`, which you can also manage in `/admin/`.
-- **Creating accounts**: enter a list of names, or a base name plus a count, and optionally a **course prefix** (e.g. `q11inf` creates `q11inf-gruppe1_admin`). A prefix belongs to whoever uses it first and is released when its last account is deleted. Taken names are rejected, and a free name is suggested.
+- **Creating accounts**: enter a list of names, or a series (base name, first and last number, optional number of digits: `gruppe` 13–15 with 3 digits gives `gruppe013` … `gruppe015`; keep the digits the same to continue a series later), and optionally a **course prefix** (e.g. `q11inf` creates `q11inf-gruppe1_admin`). A prefix belongs to whoever uses it first and is released when its last account is deleted. Taken names are rejected, and a free name is suggested.
 - **Passwords** are generated per account, or set as one shared password for the whole batch. They are shown **once**, with CSV download and a print view. If a password is lost, reset it.
 - **Bulk actions**: lock and unlock, schedule a lock (`Sperren am`) or an automatic deletion (`Automatisch löschen am`), reset passwords, download data (a zip with one folder per account plus `accounts.csv`), and delete.
 - **Deleting** asks you to type `LÖSCHEN`. It removes the account, its data folder, its sessions, review copies and brute-force records. Login audit logs are kept. Deleting a group admin also deletes every account they manage.
-- **Review**: copies an account's project into a separate review slot (`user_databases/~review/<id>/`) and switches the teacher's session to it. The student's original and the teacher's own project are never changed. Use "Zurück zu meinem Projekt" in the banner to leave.
+- **Review**: only the group admin who manages an account can review it (not the global admin, not independent accounts). It copies the account's project into a separate review slot (`user_databases/~review/<id>/`) and switches the teacher's session to it. The student's original and the teacher's own project are never changed. Reviewing a db-user shows exactly that db-user's view: only the queries released to it, without Übersicht or IDE. Use "Zurück zu meinem Projekt" in the banner to leave.
+
+### Nutzer & Freigaben (db-users)
+
+Once a db-admin account (`<name>_admin`) exists, its owner works independently under "Nutzer & Freigaben" (`/db_users/`):
+
+- **db-users**: the db-admin creates accounts `<name>_<nutzer>` (e.g. `gruppe1_kasse`). They use the db-admin's project but can only run the released queries under "Nutzerfunktionen". Passwords are shown once (CSV/print), like in the Accountverwaltung. db-users can be locked, unlocked, given new passwords and deleted. Deleting a db-user keeps the project. db-users inherit the teacher, course prefix and scheduled dates of their db-admin, so the teacher sees them (listed below their db-admin) and deleting the db-admin deletes them too.
+- **Freigaben**: a matrix of queries × db-users ("Alle" also covers db-users created later). New queries are visible to nobody but the db-admin. The settings are stored in `_zugriff.json` in the project folder, using the short names (`kasse`), so they are part of the project zip:
+
+  ```json
+  {"Preise": "*", "Umsatz": ["kasse"]}
+  ```
+
+- **Old projects**: the old file-name convention (`kasse_Umsatz.sql` visible only to `<name>_kasse`, files without `_` visible to everyone) is gone. The first time a project without `_zugriff.json` is opened, it is converted once: `kasse_Umsatz.sql` becomes `Umsatz.sql` released to `kasse`, `<<kasse_Umsatz>>` references are rewritten, and every renamed or changed file is backed up as `<name>.sql_bak` first. If the new name is taken, the file keeps its old name. Uploading an old project zip (without `_zugriff.json`) converts it the same way.
+- Not available for db-admins whose name contains a further `_` (e.g. `max_mueller_admin`, see issue #89), and not while reviewing someone else's project.
+- **Existing accounts after the update**:
+  - Existing `<name>_<nutzer>` db-users appear automatically in their db-admin's tab (they are matched by name). They keep seeing the same queries, because their project is converted on first use (see above).
+  - Accounts created in Django admin before the Accountverwaltung have no group admin. Teachers don't see them, nobody can review them, and their db-users don't inherit course or dates. Only db-users created later inherit those.
+  - Old plain user accounts without `_` (e.g. `firma` next to `firma_admin`) keep seeing all queries. They are not listed in the tab. Deleting one removes only that account, not the project.
+  - Bookmarked links to renamed queries (e.g. `?file=kasse_Umsatz`) no longer work.
 
 ### Scheduled locks and deletions
 

@@ -257,3 +257,5 @@ class UserAgentMiddleware(MiddlewareMixin):
             del request.session['review']
             return
         user.in_review = True
+        # Reviewing a db-user: its short name, so the teacher sees exactly that db-user's view.
+        user.review_as_db_user = review.get('db_user') or ''

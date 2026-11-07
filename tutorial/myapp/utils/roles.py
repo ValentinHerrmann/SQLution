@@ -31,10 +31,27 @@ def can_manage_accounts(user):
 
 
 def is_db_admin(user):
-    """Accounts that may edit a database: '<name>_admin' accounts, and group admins while reviewing."""
-    if not (user and user.is_authenticated):
+    """Accounts that may edit a database: '<name>_admin' accounts, and group admins while reviewing.
+
+    Not while reviewing a db-user: that view has no db-admin rights.
+    """
+    if not (user and user.is_authenticated) or getattr(user, 'review_as_db_user', ''):
         return False
     return user.username.endswith('_admin') or bool(getattr(user, 'in_review', False))
+
+
+def can_manage_db_users(user):
+    """'<base>_admin' accounts manage the db-users ('<base>_<name>') of their own project (issue #74).
+
+    Not while reviewing someone else's project, and not if the base contains '_':
+    such accounts use a different data folder than their name suggests (issue #89).
+    """
+    if not (user and user.is_authenticated) or getattr(user, 'in_review', False):
+        return False
+    if not user.username.endswith('_admin'):
+        return False
+    base = user.username[:-len('_admin')]
+    return bool(base) and '_' not in base
 
 
 def managed_queryset(actor):

@@ -15,12 +15,6 @@ SQLution - Accountverwaltung
   .um-modal ul { max-height: 220px; overflow-y: auto; }
   #prefix-feedback.ok { color: #28a745; }
   #prefix-feedback.bad { color: #dc3545; }
-  @media print {
-    body * { visibility: hidden; }
-    #password-box, #password-box * { visibility: visible; }
-    #password-box { position: absolute; left: 0; top: 0; width: 100%; }
-    #password-box .no-print { display: none; }
-  }
 </style>
 
 <div class="container-fluid mt-2">
@@ -35,26 +29,7 @@ SQLution - Accountverwaltung
     <div class="alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'success' %}alert-success{% elif message.tags == 'warning' %}alert-warning{% else %}alert-info{% endif %}" role="alert">{{ message }}</div>
   {% endfor %}
 
-  {% if new_passwords %}
-    <div class="card um-card border-warning" id="password-box">
-      <div class="card-body">
-        <h5 class="card-title">Zugangsdaten</h5>
-        <p class="mb-2"><strong>Diese Passwörter werden nur jetzt angezeigt.</strong> Lade sie herunter oder drucke sie aus, bevor du die Seite verlässt.</p>
-        <table class="table table-sm" id="password-table">
-          <thead><tr><th>Nutzername</th><th>Passwort</th></tr></thead>
-          <tbody>
-            {% for username, password in new_passwords %}
-              <tr><td><code>{{ username }}</code></td><td><code>{{ password }}</code></td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
-        <div class="no-print">
-          <button type="button" class="btn btn-primary btn-sm" id="download-passwords"><i class="fas fa-file-csv"></i> Als CSV herunterladen</button>
-          <button type="button" class="btn btn-outline-primary btn-sm" onclick="window.print()"><i class="fas fa-print"></i> Drucken</button>
-        </div>
-      </div>
-    </div>
-  {% endif %}
+  {% include "_password_box.html" %}
 
   <div class="row">
     <!-- Role & prefixes -->
@@ -110,9 +85,14 @@ SQLution - Accountverwaltung
                   <label for="names" class="sr-only">Namen, einer pro Zeile</label>
                   <textarea class="form-control" id="names" name="names" rows="3" placeholder="Ein Name pro Zeile, z.B. gruppe1">{{ form_data.names }}</textarea>
                 </div>
-                <div id="names-series" class="form-row mt-1">
-                  <div class="col-8"><label for="series_base" class="sr-only">Basisname</label><input type="text" class="form-control" id="series_base" name="series_base" placeholder="Basisname, z.B. gruppe" value="{{ form_data.series_base }}"></div>
-                  <div class="col-4"><label for="series_count" class="sr-only">Anzahl</label><input type="number" class="form-control" id="series_count" name="series_count" min="1" max="{{ max_batch }}" placeholder="Anzahl" value="{{ form_data.series_count }}"></div>
+                <div id="names-series" class="mt-1">
+                  <label for="series_base" class="sr-only">Basisname</label>
+                  <input type="text" class="form-control mb-1" id="series_base" name="series_base" placeholder="Basisname, z.B. gruppe" value="{{ form_data.series_base }}">
+                  <div class="d-flex" style="gap: 8px;"><!-- not .form-row: stylesheet.css gives it a 20px gap that breaks the columns -->
+                    <div style="flex: 1;"><label for="series_first" class="um-hint mb-0">von</label><input type="number" class="form-control" id="series_first" name="series_first" min="0" value="{{ form_data.series_first|default:'1' }}"></div>
+                    <div style="flex: 1;"><label for="series_last" class="um-hint mb-0">bis</label><input type="number" class="form-control" id="series_last" name="series_last" min="0" value="{{ form_data.series_last }}"></div>
+                    <div style="flex: 1;"><label for="series_digits" class="um-hint mb-0">Stellen</label><input type="number" class="form-control" id="series_digits" name="series_digits" min="1" max="{{ max_series_digits }}" placeholder="auto" title="Stellen der Nummer (leer = automatisch). Für eine spätere Fortsetzung der Serie gleich lassen." value="{{ form_data.series_digits }}"></div>
+                  </div>
                 </div>
                 <small class="form-text um-hint">Ergibt z.B. <code id="name-preview">…</code></small>
               </div>
@@ -218,7 +198,7 @@ SQLution - Accountverwaltung
                 <tr data-course="{{ row.prefix }}" data-username="{{ row.user.username }}" data-id="{{ row.user.pk }}">
                   <td><label for="select-{{ row.user.pk }}" class="sr-only">{{ row.user.username }} auswählen</label><input type="checkbox" id="select-{{ row.user.pk }}" name="ids" value="{{ row.user.pk }}" class="row-select"></td>
                   <td>
-                    <strong>{{ row.user.username }}</strong>{% if row.online %}<span class="um-online" title="Gerade eingeloggt"></span>{% endif %}
+                    {% if row.db_user_of %}<span class="um-hint" title="Nutzer des Projekts {{ row.db_user_of }}">&#8627;</span> {% endif %}<strong>{{ row.user.username }}</strong>{% if row.online %}<span class="um-online" title="Gerade eingeloggt"></span>{% endif %}
                     {% if row.is_group_admin %}<span class="badge badge-info">{{ group_admin_name }}</span>{% endif %}
                     {% if row.cascade %}<span class="cascade-data" hidden>{{ row.cascade|join:"," }}</span>{% endif %}
                   </td>
@@ -229,7 +209,13 @@ SQLution - Accountverwaltung
                   <td><small>{{ row.profile.lock_at|date:"d.m.Y H:i"|default:"–" }}</small></td>
                   <td><small>{{ row.profile.delete_at|date:"d.m.Y H:i"|default:"–" }}</small></td>
                   <td class="text-nowrap">
-                    <button type="button" class="btn btn-sm btn-outline-primary" data-review-url="{% url 'user_management_review' row.user.pk %}" title="Projekt als Kopie öffnen (dein eigenes Projekt bleibt unverändert)"><i class="fas fa-eye"></i> Review</button>
+                    {% if row.reviewable %}
+                      {% if row.db_user_of %}
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-review-url="{% url 'user_management_review' row.user.pk %}" title="Nutzersicht ansehen: die freigegebenen Abfragen, auf einer Kopie des Projekts"><i class="fas fa-eye"></i> Review</button>
+                      {% else %}
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-review-url="{% url 'user_management_review' row.user.pk %}" title="Projekt als Kopie öffnen (dein eigenes Projekt bleibt unverändert)"><i class="fas fa-eye"></i> Review</button>
+                      {% endif %}
+                    {% endif %}
                     <button type="button" class="btn btn-sm btn-outline-secondary" data-single-action="download" title="Daten herunterladen"><i class="fas fa-download"></i></button>
                     <button type="button" class="btn btn-sm btn-outline-danger" data-single-action="delete" title="Löschen"><i class="fas fa-trash-alt"></i></button>
                     {% if is_global %}
@@ -321,8 +307,8 @@ SQLution - Accountverwaltung
     });
     const box = document.getElementById('delete-cascade');
     if (cascade.length) {
-      box.textContent = 'Achtung: Darunter sind Gruppenadmins. Alle ' + cascade.length +
-        ' von ihnen betreuten Accounts werden ebenfalls gelöscht: ' + cascade.join(', ');
+      box.textContent = 'Achtung: ' + cascade.length + ' weitere Accounts (betreute Accounts von Gruppenadmins ' +
+        'bzw. Nutzer der Projekte) werden ebenfalls gelöscht: ' + cascade.join(', ');
       box.style.display = '';
     } else {
       box.style.display = 'none';
@@ -398,8 +384,10 @@ SQLution - Accountverwaltung
     let name;
     if (modeSeries.checked) {
       const base = document.querySelector('[name=series_base]').value || 'gruppe';
-      const count = Number.parseInt(document.querySelector('[name=series_count]').value || '1', 10) || 1;
-      name = slug(base) + String(1).padStart(String(count).length, '0');
+      const first = Number.parseInt(document.querySelector('[name=series_first]').value || '1', 10) || 0;
+      const last = Number.parseInt(document.querySelector('[name=series_last]').value, 10) || first;
+      const digits = Number.parseInt(document.querySelector('[name=series_digits]').value, 10) || String(last).length;
+      name = slug(base) + String(first).padStart(digits, '0');
     } else {
       name = slug(document.querySelector('[name=names]').value.split('\n')[0]) || 'gruppe1';
     }
@@ -407,7 +395,7 @@ SQLution - Accountverwaltung
     preview.textContent = (p ? p + '-' : '') + name + '_admin';
   }
   document.querySelectorAll('[name=mode]').forEach(r => r.addEventListener('change', updateMode));
-  document.querySelectorAll('#create-form textarea, #create-form [name=series_base], #create-form [name=series_count]')
+  document.querySelectorAll('#create-form textarea, #names-series input')
     .forEach(el => el.addEventListener('input', updatePreview));
 
   let timer = null;
@@ -427,24 +415,6 @@ SQLution - Accountverwaltung
   prefixInput.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(checkPrefix, 300); });
   updateMode();
   checkPrefix();
-
-  // ---- passwords as CSV ----
-  const dl = document.getElementById('download-passwords');
-  if (dl) dl.addEventListener('click', () => {
-    const lines = [['Nutzername', 'Passwort']];
-    document.querySelectorAll('#password-table tbody tr').forEach(tr => {
-      lines.push(Array.from(tr.querySelectorAll('td')).map(td => td.textContent.trim()));
-    });
-    const csv = '\uFEFF' + lines.map(l => l.map(v => '"' + v.replaceAll('"', '""') + '"').join(';')).join('\r\n');
-    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'zugangsdaten.csv';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  });
 })();
 </script>
 {% endblock %}

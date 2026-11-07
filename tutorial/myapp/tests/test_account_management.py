@@ -121,8 +121,10 @@ def test_slugify_and_username():
     assert am.slugify_name(' Gruppe Ä_1 ') == 'gruppe-ae-1'
     assert am.username_for(am.build_base('q11inf', 'gruppe1')) == 'q11inf-gruppe1_admin'
     assert am.username_for(am.build_base('', 'gruppe1')) == 'gruppe1_admin'
-    assert am.expand_series('gruppe', 12)[:2] == ['gruppe01', 'gruppe02']
-    assert am.expand_series('gruppe', 3) == ['gruppe1', 'gruppe2', 'gruppe3']
+    assert am.expand_series('gruppe', 1, 12)[:2] == ['gruppe01', 'gruppe02']
+    assert am.expand_series('gruppe', 1, 3) == ['gruppe1', 'gruppe2', 'gruppe3']
+    assert am.expand_series('gruppe', 13, 15) == ['gruppe13', 'gruppe14', 'gruppe15']
+    assert am.expand_series('gruppe', 9, 10, 3) == ['gruppe009', 'gruppe010']
 
 
 def test_create_with_prefix(teacher):
@@ -141,7 +143,7 @@ def test_create_with_prefix(teacher):
 
 
 def test_shared_password_applies_to_batch(teacher):
-    result = create(teacher, am.expand_series('team', 3), prefix='kurs', shared_password='Sonnenblume-2026')
+    result = create(teacher, am.expand_series('team', 1, 3), prefix='kurs', shared_password='Sonnenblume-2026')
     assert {p for _, p in result.created} == {'Sonnenblume-2026'}
 
 
@@ -284,7 +286,7 @@ def test_prefix_check_endpoint(teacher, other_teacher):
 def test_create_view_shows_passwords_once(teacher):
     c = client_for(teacher)
     response = c.post('/user_management/create/', {
-        'prefix': 'q11inf', 'mode': 'series', 'series_base': 'gruppe', 'series_count': '3',
+        'prefix': 'q11inf', 'mode': 'series', 'series_base': 'gruppe', 'series_first': '1', 'series_last': '3',
         'lock_at': '', 'delete_at': '',
     })
     assert response.status_code == 302
@@ -293,6 +295,25 @@ def test_create_view_shows_passwords_once(teacher):
     assert 'Zugangsdaten' in page
     assert 'q11inf-gruppe1_admin' in page
     assert 'Zugangsdaten' not in c.get('/user_management/').content.decode()
+
+
+def test_create_view_series_range_and_errors(teacher):
+    c = client_for(teacher)
+    c.post('/user_management/create/', {
+        'mode': 'series', 'series_base': 'team', 'series_first': '13', 'series_last': '15', 'series_digits': '3',
+    })
+    assert sorted(User.objects.filter(username__startswith='team').values_list('username', flat=True)) == [
+        'team013_admin', 'team014_admin', 'team015_admin']
+
+    for fields, error in [
+        ({'series_base': '', 'series_last': '3'}, 'Basisnamen'),
+        ({'series_base': 'x', 'series_first': '5', 'series_last': '3'}, 'bis ≥ von'),
+        ({'series_base': 'x', 'series_last': '3', 'series_digits': '9'}, '„Stellen“'),
+        ({'series_base': 'x', 'series_first': '1', 'series_last': '500'}, 'Höchstens'),
+    ]:
+        response = c.post('/user_management/create/', {'mode': 'series', **fields})
+        assert any(error in m for m in message_texts(response)), fields
+    assert not User.objects.filter(username__startswith='x').exists()
 
 
 def test_create_view_with_dates(teacher):

@@ -41,6 +41,7 @@ PREFIX_RE = re.compile(r'^[a-z0-9]{1,16}$')
 ACCOUNT_SUFFIX = '_admin'
 MAX_USERNAME_LENGTH = 150
 MAX_BATCH_SIZE = 200          # sanity limit per create request (typo guard, not a quota)
+MAX_SERIES_DIGITS = 6
 SCHEDULE_INTERVAL_SECONDS = 60
 DELETE_CONFIRMATION = 'LÖSCHEN'
 
@@ -215,10 +216,13 @@ def release_unused_prefixes() -> int:
     return deleted
 
 
-def expand_series(base_name, count) -> list:
-    """('gruppe', 12) -> ['gruppe01', …, 'gruppe12']."""
-    width = len(str(count))
-    return [f"{base_name}{i:0{width}d}" for i in range(1, count + 1)]
+def expand_series(base_name, first, last, digits=None) -> list:
+    """('gruppe', 1, 12) -> ['gruppe01', …, 'gruppe12'], ('gruppe', 13, 15, 3) -> ['gruppe013', …, 'gruppe015'].
+
+    `digits` defaults to the digits of `last`. Set it explicitly to continue an existing series later.
+    """
+    width = digits or len(str(last))
+    return [f"{base_name}{i:0{width}d}" for i in range(first, last + 1)]
 
 
 # --------------------------------------------------------------------------------------
@@ -500,8 +504,19 @@ def _remove_review_copies_of(user_id):
             _remove_directory(os.path.join(REVIEW_ROOT, entry))
 
 
+def owns_data_folder(user) -> bool:
+    """'<base>_admin' owns its data folder. A plain '<base>' account only if there is no '<base>_admin':
+    otherwise it is an old user account of that project (it sees all queries) and only uses the folder.
+    db-users ('<base>_<name>') never own it."""
+    if user.username.endswith(ACCOUNT_SUFFIX):
+        return True
+    if '_' in user.username:
+        return False
+    return not User.objects.filter(username=user.username + ACCOUNT_SUFFIX).exists()
+
+
 def accounts_affected_by_deletion(user) -> list:
-    """`user`, accounts sharing its data folder, and (for group admins) all managed accounts, recursively."""
+    """`user`, the db-users of its data folder (if it owns one), and (for group admins) all managed accounts, recursively."""
     affected = []
     seen = set()
 
@@ -510,9 +525,10 @@ def accounts_affected_by_deletion(user) -> list:
             return
         seen.add(u.pk)
         affected.append(u)
-        base = get_user_home_directory(u.username).rstrip('/').split('/')[-1]
-        for sibling in User.objects.filter(username__istartswith=f"{base}_").exclude(pk=u.pk):
-            visit(sibling)
+        if owns_data_folder(u):
+            base = get_user_home_directory(u.username).rstrip('/').split('/')[-1]
+            for sibling in User.objects.filter(username__istartswith=f"{base}_").exclude(pk=u.pk):
+                visit(sibling)
         for managed in User.objects.filter(profile__managed_by=u):
             visit(managed)
 
@@ -532,7 +548,7 @@ def _collect_deletion_targets(users) -> list:
 
 
 def _check_deletable(to_delete, actor):
-    """Never delete the global admin, the acting account, or anything sharing its data folder."""
+    """Never delete the global admin, the acting account, or the owner of its data folder."""
     protected = {GLOBAL_ADMIN_USERNAME}
     actor_home = None
     if actor is not None:
@@ -541,7 +557,7 @@ def _check_deletable(to_delete, actor):
     for u in to_delete:
         if u.username in protected:
             raise AccountManagementError(f'„{u.username}“ kann hier nicht gelöscht werden.')
-        if actor_home and get_user_home_directory(u.username) == actor_home:
+        if actor_home and owns_data_folder(u) and get_user_home_directory(u.username) == actor_home:
             raise AccountManagementError(f'„{u.username}“ teilt sich den Datenordner mit deinem Account.')
 
 
@@ -560,10 +576,11 @@ def _purge_account(user):
 
     end_sessions([user])
     home = get_user_home_directory(user.username)
-    _remove_directory(home)
+    if owns_data_folder(user):  # a db-user's folder is its db-admin's project
+        _remove_directory(home)
+        _delete_zipped_folders(home)
     _remove_directory(get_review_directory(user.pk))  # the account's own review slot (if it reviewed others)
     _remove_review_copies_of(user.pk)                  # copies of this account in other reviewers' slots
-    _delete_zipped_folders(home)
     AccessAttempt.objects.filter(username=user.username).delete()
     user.delete()  # profile is removed by CASCADE; AuditLog rows keep the username
 
@@ -571,7 +588,8 @@ def _purge_account(user):
 def delete_accounts(users, actor=None) -> list:
     """Delete accounts without leaving data behind (login audit logs are kept on purpose).
 
-    Deleting a group admin also deletes every account they manage.
+    Deleting a group admin also deletes every account they manage, deleting a db-admin
+    also deletes its db-users. Deleting a db-user keeps the project it uses.
     Returns the deleted usernames.
     """
     to_delete = _collect_deletion_targets(users)

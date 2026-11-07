@@ -5,6 +5,7 @@ from myapp.utils.utils import *
 from myapp.utils.decorators import *
 from myapp.models import *
 from myapp.utils.directories import fullpath
+from myapp.utils import query_access
 from myapp.views.helpers import *
 from myapp.utils.sqlite_connector import * 
 
@@ -69,7 +70,7 @@ def overview(request):
         dir = get_user_directory(request.user.username)
         sql_files = []
         if os.path.exists(dir):
-            sql_files = [file for file in os.listdir(dir) if file.endswith('.sql')]
+            sql_files = [name + '.sql' for name in query_access.list_converted_queries(dir)]
             
         for file in sql_files:
             with open(f"{dir}/{file}", "r") as f:
@@ -121,7 +122,7 @@ def sql_ide(request):
     dir = get_user_directory(request.user.username)
     sql_files = []
     if os.path.exists(dir):
-        sql_files = [file for file in os.listdir(dir) if file.endswith('.sql')]
+        sql_files = [name + '.sql' for name in query_access.list_converted_queries(dir)]
         
     for file in sql_files:
         with open(f"{dir}/{file}", "r") as f:
