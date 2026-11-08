@@ -48,6 +48,7 @@ urlpatterns = [
     path('user_management/review/<int:user_id>/', user_management.start_review, name='user_management_review'),
     path('user_management/role/<int:user_id>/', user_management.set_role, name='user_management_role'),
 
+    path('accounts/password/', user_management.change_own_password, name='change_own_password'),
     path('db_users/', db_users.db_users, name='db_users'),
     path('db_users/create/', db_users.create_view, name='db_users_create'),
     path('db_users/bulk/', db_users.bulk_action, name='db_users_bulk'),
