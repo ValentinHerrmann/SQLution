@@ -14,6 +14,7 @@ import zipfile
 from dataclasses import dataclass, field
 from datetime import datetime
 
+from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.sessions.models import Session
@@ -393,13 +394,17 @@ def get_online_user_ids() -> set:
     return ids
 
 
-def end_sessions(users, reason=None) -> int:
-    """Delete every session of the given users and log a forced logout for each."""
+def end_sessions(users, reason=None, keep_session_key=None) -> int:
+    """Delete every session of the given users and log a forced logout for each.
+
+    The session with the key `keep_session_key` (the caller's own) is left alone.
+    """
     by_id = {str(u.pk): u for u in users}
     if not by_id:
         return 0
     ended = 0
-    for session in Session.objects.all():
+    sessions = Session.objects.exclude(session_key=keep_session_key) if keep_session_key else Session.objects.all()
+    for session in sessions:
         try:
             data = session.get_decoded()
         except Exception:
@@ -412,6 +417,14 @@ def end_sessions(users, reason=None) -> int:
         session.delete()
         ended += 1
     return ended
+
+
+def change_own_password(request, user, new_password):
+    """Set a new password, end all other sessions of the user and keep the current one logged in."""
+    user.set_password(new_password)
+    user.save(update_fields=['password'])
+    end_sessions([user], 'Passwort geändert', keep_session_key=request.session.session_key)
+    update_session_auth_hash(request, user)
 
 
 def _log_forced_logout(user, session_data, reason):

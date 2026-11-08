@@ -54,6 +54,13 @@ def can_manage_db_users(user):
     return bool(base) and '_' not in base
 
 
+def can_change_own_password(user):
+    """Admins, group admins and '<base>_admin' accounts may change their own password; not while reviewing."""
+    if not (user and user.is_authenticated) or getattr(user, 'in_review', False):
+        return False
+    return can_manage_accounts(user) or can_manage_db_users(user)
+
+
 def managed_queryset(actor):
     """All accounts `actor` may manage. Every user-management action resolves its targets through this."""
     from django.contrib.auth.models import User

@@ -232,6 +232,9 @@ SQLution - Accountverwaltung
       </form>
     </div>
   </div>
+  {% if not review %}
+    {% include "_own_password_box.html" %}
+  {% endif %}
 </div>
 
 <!-- Hidden forms for row actions -->

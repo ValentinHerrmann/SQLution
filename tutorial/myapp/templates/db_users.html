@@ -148,6 +148,9 @@ SQLution - Nutzer & Freigaben
       {% endif %}
     </div>
   </div>
+  {% if not review %}
+    {% include "_own_password_box.html" %}
+  {% endif %}
 </div>
 
 <!-- Delete confirmation -->

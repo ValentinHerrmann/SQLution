@@ -1,6 +1,7 @@
 """Accountverwaltung: account management for group admins (teachers) and the global admin (issue #100)."""
 
 from django.contrib import messages
+from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
 from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
@@ -15,12 +16,14 @@ from myapp.utils.directories import get_user_suffix
 from myapp.utils.roles import (
     GLOBAL_ADMIN_USERNAME,
     GROUP_ADMIN_GROUP,
+    can_change_own_password,
     can_manage_accounts,
     is_global_admin,
     managed_queryset,
 )
 
 PAGE = 'user_management'
+DB_USERS_PAGE = 'db_users'
 CREATE_FORM_FIELDS = ('prefix', 'mode', 'names', 'series_base', 'series_first', 'series_last', 'series_digits',
                       'delete_at', 'lock_at')
 
@@ -307,3 +310,22 @@ def set_role(request, user_id):
         messages.success(request, f'{target.username} ist kein Gruppenadmin mehr. '
                                   'Die zugeordneten Accounts bleiben bestehen.')
     return redirect(PAGE)
+
+
+# ---- own password (issue #165) ----
+
+@login_required
+@user_passes_test(can_change_own_password)
+@require_POST
+@csrf_protect
+def change_own_password(request):
+    page = PAGE if can_manage_accounts(request.user) else DB_USERS_PAGE
+    form = PasswordChangeForm(request.user, request.POST)
+    if not form.is_valid():
+        for errors in form.errors.values():
+            for error in errors:
+                messages.error(request, error)
+        return redirect(page)
+    am.change_own_password(request, request.user, form.cleaned_data['new_password1'])
+    messages.success(request, 'Dein Passwort wurde geändert. Andere Sitzungen wurden beendet.')
+    return redirect(page)
